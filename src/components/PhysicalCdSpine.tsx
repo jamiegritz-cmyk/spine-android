@@ -478,41 +478,46 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
       }}
       title={`${release.artist} — ${release.title}`}
     >
-      {/* Outer Jewel Case Plastic Frame */}
+      {/* Outer Clear Polystyrene Jewel Case Plastic Frame */}
       <div
-        className={`w-full h-full rounded-[1.5px] relative flex flex-col overflow-hidden transition-all ${
+        className={`w-full h-full rounded-[2.5px] relative flex flex-col overflow-hidden transition-all bg-gradient-to-r from-white/30 via-white/10 via-black/20 to-black/60 p-[2px] ${
           isSelected
-            ? 'shadow-[0_0_18px_rgba(255,255,255,0.25),0_14px_28px_rgba(0,0,0,0.95)] ring-[1.2px] ring-white/50'
-            : 'shadow-[0_4px_10px_rgba(0,0,0,0.65)] hover:shadow-[0_6px_14px_rgba(0,0,0,0.8)]'
+            ? 'shadow-[0_0_20px_rgba(255,255,255,0.3),0_16px_32px_rgba(0,0,0,0.95)] ring-[1.5px] ring-white/60'
+            : 'shadow-[0_4px_12px_rgba(0,0,0,0.7)] hover:shadow-[0_6px_16px_rgba(0,0,0,0.85)]'
         }`}
       >
-        {/* TOP TRANSPARENT ACRYLIC CAP (Delicate audio CD molded hub notch) */}
-        <div className="w-full h-2.5 shrink-0 bg-gradient-to-b from-white/35 via-white/10 to-transparent border-b border-white/20 relative flex items-center justify-center">
-          <div className="w-1 h-1 rounded-full border border-white/50 bg-white/25 shadow-inner" />
-          <div className="absolute inset-x-0 top-0 h-[0.5px] bg-white/60" />
+        {/* TOP TRANSPARENT ACRYLIC RAIL (Delicate audio CD molded hub notch) */}
+        <div className="w-full h-3 shrink-0 bg-gradient-to-b from-white/45 via-white/15 to-transparent border-b border-white/20 relative flex items-center justify-center">
+          <div className="w-1.5 h-1.5 rounded-full border border-white/60 bg-white/30 shadow-inner" />
+          <div className="absolute inset-x-0 top-0 h-[0.5px] bg-white/70" />
         </div>
 
-        {/* MIDDLE: Paper Spine Insert derived from Album Artwork */}
-        <div className="flex-1 w-full relative overflow-hidden">
+        {/* MIDDLE: Paper Spine Insert RECESSED inside the transparent plastic shell */}
+        <div className="flex-1 w-full rounded-[1px] relative overflow-hidden shadow-inner my-0.5 border-x border-black/30">
           {renderSpineContent()}
 
           {/* LEFT SPECULAR HIGHLIGHT (Clear acrylic edge refraction) */}
-          <div className="absolute inset-y-0 left-0 w-[1.5px] bg-gradient-to-r from-white/50 via-white/15 to-transparent pointer-events-none" />
+          <div className="absolute inset-y-0 left-0 w-[1.5px] bg-gradient-to-r from-white/60 via-white/20 to-transparent pointer-events-none" />
 
           {/* RIGHT GROOVE SHADOW (Jewel case seam) */}
-          <div className="absolute inset-y-0 right-0 w-[1.5px] bg-gradient-to-l from-black/75 via-black/30 to-transparent pointer-events-none" />
+          <div className="absolute inset-y-0 right-0 w-[1.5px] bg-gradient-to-l from-black/80 via-black/30 to-transparent pointer-events-none" />
 
-          {/* Golden Warm Illumination when selected */}
+          {/* Transparent acrylic edge illumination when pulled forward */}
           {isSelected && (
-            <div className="absolute inset-0 bg-gradient-to-t from-amber-400/20 via-transparent to-amber-300/25 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-t from-white/15 via-transparent to-white/25 pointer-events-none" />
           )}
         </div>
 
-        {/* BOTTOM TRANSPARENT ACRYLIC CAP (Jewel case plastic foot) */}
-        <div className="w-full h-2.5 shrink-0 bg-gradient-to-t from-white/25 via-white/10 to-transparent border-t border-white/20 relative flex items-center justify-center">
-          <div className="w-1.5 h-[1px] bg-white/40 rounded-full" />
-          <div className="absolute inset-x-0 bottom-0 h-[0.5px] bg-black/60" />
+        {/* BOTTOM TRANSPARENT ACRYLIC RAIL (Jewel case plastic foot) */}
+        <div className="w-full h-2.5 shrink-0 bg-gradient-to-t from-white/35 via-white/10 to-transparent border-t border-white/20 relative flex items-center justify-center">
+          <div className="w-2 h-[1px] bg-white/50 rounded-full" />
+          <div className="absolute inset-x-0 bottom-0 h-[0.5px] bg-black/70" />
         </div>
+
+        {/* Outer edge specular line along left plastic edge */}
+        <div className="absolute inset-y-0 left-0 w-[1px] bg-white/50 pointer-events-none" />
+        {/* Outer edge seam line along right plastic edge */}
+        <div className="absolute inset-y-0 right-0 w-[1px] bg-black/80 pointer-events-none" />
       </div>
     </div>
   );
