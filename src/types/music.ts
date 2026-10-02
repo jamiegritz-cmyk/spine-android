@@ -28,6 +28,7 @@ export type SpineStyleType =
   | 'oasis_morning_glory'
   | 'the_charlatans'
   | 'rem_automatic'
+  | 'concrete_echoes'
   | 'default'
   | 'custom';
 

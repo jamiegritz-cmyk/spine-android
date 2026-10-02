@@ -241,9 +241,9 @@ private fun PortraitPlayerLayout(
             releases = uiState.displayedReleases,
             selectedIndex = uiState.selectedReleaseIndex,
             onSelectRelease = onSelectRelease,
-            shelfHeight = 375.dp,
-            caseHeight = 295.dp,
-            caseWidth = 22.dp,
+            shelfHeight = 385.dp,
+            caseHeight = 310.dp,
+            caseWidth = 23.dp,
             modifier = Modifier.fillMaxWidth()
         )
     }

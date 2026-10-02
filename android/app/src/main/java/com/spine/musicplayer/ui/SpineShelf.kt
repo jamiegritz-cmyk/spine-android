@@ -463,18 +463,18 @@ fun CdSpineItem(
             ) {
                 Text(
                     text = "${release.artist.uppercase(Locale.ROOT)}  ${release.title.uppercase(Locale.ROOT)}",
-                    color = Color.White.copy(alpha = if (isCentered) 1.0f else 0.82f),
-                    fontSize = 7.8.sp,
-                    fontWeight = if (isCentered) FontWeight.Bold else FontWeight.SemiBold,
+                    color = Color.White.copy(alpha = if (isCentered) 1.0f else 0.92f),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
                     fontFamily = FontFamily.SansSerif,
-                    letterSpacing = 0.5.sp,
+                    letterSpacing = 0.4.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
                         .graphicsLayer {
                             rotationZ = 90f
                         }
-                        .width(caseHeight - caseWidth - 58.dp)
+                        .width(caseHeight - caseWidth - 54.dp)
                 )
             }
 
@@ -483,23 +483,23 @@ fun CdSpineItem(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
-                    .background(Color.Black.copy(alpha = 0.45f))
+                    .background(Color.Black.copy(alpha = 0.5f))
                     .padding(vertical = 2.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
                     text = release.catalogNumber.split("-").lastOrNull()?.takeLast(4) ?: "6405",
-                    color = Color.White.copy(alpha = 0.85f),
-                    fontSize = 6.8.sp,
-                    fontWeight = FontWeight.Medium,
+                    color = Color.White.copy(alpha = 0.9f),
+                    fontSize = 7.5.sp,
+                    fontWeight = FontWeight.Bold,
                     fontFamily = FontFamily.Monospace
                 )
                 Spacer(modifier = Modifier.height(1.dp))
                 // Digital Audio compact disc symbol
                 Box(
                     modifier = Modifier
-                        .size(4.dp, 2.dp)
-                        .background(Color.White.copy(alpha = 0.55f), RoundedCornerShape(0.5.dp))
+                        .size(4.5.dp, 2.5.dp)
+                        .background(Color.White.copy(alpha = 0.7f), RoundedCornerShape(0.5.dp))
                 )
             }
         }

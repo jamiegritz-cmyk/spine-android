@@ -12,6 +12,23 @@ import concreteEchoesArt from '../assets/images/album_concrete_echoes_1790946342
 
 export const DEFAULT_CD_COLLECTION: Release[] = [
   {
+    id: 'post_rock_concrete_echoes',
+    title: 'Concrete Echoes',
+    artist: 'Post-Rock',
+    year: 2024,
+    artworkUrl: concreteEchoesArt,
+    spineColor: '#f1f1ee',
+    spineTextColor: '#111111',
+    catalogNumber: 'PR 004',
+    genre: 'Post-Rock',
+    spineStyle: 'concrete_echoes',
+    tracks: [
+      { id: 'ce_1', title: 'Monolith', artist: 'Post-Rock', duration: 340, trackNumber: 1, syntheticSeed: 2 },
+      { id: 'ce_2', title: 'Brutalist Sky', artist: 'Post-Rock', duration: 285, trackNumber: 2, syntheticSeed: 3 },
+      { id: 'ce_3', title: 'Static & Stone', artist: 'Post-Rock', duration: 412, trackNumber: 3, syntheticSeed: 0 }
+    ]
+  },
+  {
     id: 'rks_audiotree_live',
     title: 'Rainbow Kitten Surprise on Audiotree Live [Explicit]',
     artist: 'Rainbow Kitten Surprise',

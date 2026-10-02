@@ -289,8 +289,8 @@ export const CdShelf: React.FC<CdShelfProps> = ({
           className="w-full h-full overflow-x-auto scrollbar-none flex items-end relative z-20 pb-0"
           style={{
             // Center padding allows every single CD to sit dead-center
-            paddingLeft: 'calc(50% - 9.5px)',
-            paddingRight: 'calc(50% - 9.5px)'
+            paddingLeft: 'calc(50% - 11.25px)',
+            paddingRight: 'calc(50% - 11.25px)'
           }}
         >
           <div className="flex items-end gap-[1.5px] select-none">

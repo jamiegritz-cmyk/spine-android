@@ -14,8 +14,8 @@ import { Search, X } from 'lucide-react';
 
 export default function App() {
   const [releases, setReleases] = useState<Release[]>(DEFAULT_CD_COLLECTION);
-  // Default to Oasis - Definitely Maybe matching reference image
-  const [selectedReleaseId, setSelectedReleaseId] = useState<string>('oasis_definitely_maybe');
+  // Default to Post-Rock - Concrete Echoes matching user reference mock-up
+  const [selectedReleaseId, setSelectedReleaseId] = useState<string>('post_rock_concrete_echoes');
   const [currentTrackIndex, setCurrentTrackIndex] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   // 1:12 current time and 340s duration -> exactly 1:12 and -4:28 as in reference image

@@ -10,6 +10,7 @@ interface PhysicalCdSpineProps {
 /**
  * Authentic Standard Audio CD Jewel Case Spine (125mm x 10mm proportion).
  * Slim, narrow, with transparent clear polystyrene edges and realistic paper inlay.
+ * Enlarged/zoomed typography and artwork slices for effortless legibility while scrolling.
  */
 export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
   release,
@@ -18,13 +19,51 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
 }) => {
   const renderSpineContent = () => {
     switch (release.spineStyle) {
+      case 'concrete_echoes':
+        return (
+          <div className="w-full h-full flex flex-col justify-between py-1 bg-[#edece8] text-[#121212] relative overflow-hidden font-sans">
+            {/* Top Artwork Thumbnail */}
+            <div className="w-full shrink-0 flex items-center justify-center pt-0.5 pb-1">
+              <div className="w-4 h-4.5 rounded-[1px] overflow-hidden border border-black/30 shadow-xs">
+                <img
+                  src={release.artworkUrl}
+                  alt=""
+                  draggable={false}
+                  className="w-full h-full object-cover grayscale pointer-events-none"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+            </div>
+
+            {/* Vertical typography: POST-ROCK CONCRETE ECHOES */}
+            <div className="flex-1 w-full flex items-center justify-center overflow-hidden">
+              <span
+                className="whitespace-nowrap text-[10px] font-sans font-black tracking-tight text-neutral-900 select-none uppercase"
+                style={{
+                  writingMode: 'vertical-rl',
+                  textOrientation: 'mixed',
+                  maxHeight: '160px'
+                }}
+              >
+                POST-ROCK <span className="font-extrabold text-black">CONCRETE ECHOES</span>
+              </span>
+            </div>
+
+            {/* Bottom: Catalog PR 004 */}
+            <div className="w-full shrink-0 flex flex-col items-center pb-0.5 text-[7px] font-mono font-bold text-neutral-800">
+              <span>PR</span>
+              <span>004</span>
+            </div>
+          </div>
+        );
+
       case 'oasis_definitely_maybe':
         return (
           <div className="w-full h-full flex flex-col justify-between py-1 bg-[#f6f0dd] text-[#1c1917] relative overflow-hidden font-sans">
             {/* Top Oasis Boxed Logo */}
             <div className="w-full flex items-center justify-center pt-1 pb-0.5 shrink-0">
-              <div className="px-1 py-[1px] bg-black rounded-[1.5px] shadow-xs transform rotate-90">
-                <span className="text-[6.5px] font-black tracking-tighter text-white font-sans lowercase leading-none">
+              <div className="px-1.5 py-[1.5px] bg-black rounded-[2px] shadow-xs transform rotate-90">
+                <span className="text-[7.5px] font-black tracking-tighter text-white font-sans lowercase leading-none">
                   oasis
                 </span>
               </div>
@@ -33,12 +72,12 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
             {/* Script Definitely Maybe Title */}
             <div className="flex-1 w-full flex items-center justify-center relative overflow-hidden">
               <span
-                className="whitespace-nowrap text-[7.5px] font-serif italic font-semibold text-black select-none"
+                className="whitespace-nowrap text-[10px] font-serif italic font-bold text-black select-none"
                 style={{
                   writingMode: 'vertical-rl',
                   textOrientation: 'mixed',
-                  letterSpacing: '0.03em',
-                  maxHeight: '120px'
+                  letterSpacing: '0.04em',
+                  maxHeight: '150px'
                 }}
               >
                 Definitely Maybe
@@ -47,7 +86,7 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
 
             {/* Bottom Living Room Photo Motif & Catalog */}
             <div className="w-full shrink-0 flex flex-col items-center pb-0.5 gap-0.5">
-              <div className="w-3 h-3.5 rounded-[1px] overflow-hidden border border-black/30 shadow-inner">
+              <div className="w-3.5 h-4 rounded-[1.5px] overflow-hidden border border-black/40 shadow-inner">
                 <img
                   src={release.artworkUrl}
                   alt=""
@@ -56,7 +95,7 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
                   referrerPolicy="no-referrer"
                 />
               </div>
-              <span className="text-[5.5px] font-mono text-black/60 scale-90">CRECD</span>
+              <span className="text-[6.5px] font-mono font-bold text-black/70">CRECD</span>
             </div>
           </div>
         );
@@ -65,30 +104,30 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
         return (
           <div className="w-full h-full flex flex-col justify-between py-1 bg-[#ffffff] text-[#0f172a] relative overflow-hidden">
             {/* Top digital glitch lines */}
-            <div className="w-full h-4 shrink-0 opacity-75 overflow-hidden border-b border-neutral-300">
+            <div className="w-full h-4.5 shrink-0 opacity-85 overflow-hidden border-b border-neutral-300">
               <div className="w-full h-full bg-gradient-to-b from-sky-200/60 to-transparent flex flex-col justify-around px-0.5">
-                <div className="w-full h-[1px] bg-sky-500/70" />
-                <div className="w-3/4 h-[1px] bg-slate-800" />
+                <div className="w-full h-[1.5px] bg-sky-500/80" />
+                <div className="w-4/5 h-[1.5px] bg-slate-800" />
               </div>
             </div>
 
             {/* Vertical typography: RADIOHEAD OK COMPUTER */}
             <div className="flex-1 w-full flex items-center justify-center overflow-hidden">
               <span
-                className="whitespace-nowrap text-[7.5px] font-sans font-bold tracking-tight text-neutral-900 select-none uppercase"
+                className="whitespace-nowrap text-[9.5px] font-sans font-black tracking-tight text-neutral-900 select-none uppercase"
                 style={{
                   writingMode: 'vertical-rl',
                   textOrientation: 'mixed',
-                  maxHeight: '125px'
+                  maxHeight: '150px'
                 }}
               >
-                RADIOHEAD <span className="text-sky-700 font-normal">OK COMPUTER</span>
+                RADIOHEAD <span className="text-sky-700 font-bold">OK COMPUTER</span>
               </span>
             </div>
 
             {/* Bottom Parlophone symbol & Catalog */}
-            <div className="w-full shrink-0 flex flex-col items-center pb-0.5 text-[5.5px] font-mono text-neutral-500">
-              <span className="font-bold scale-90">NODATA</span>
+            <div className="w-full shrink-0 flex flex-col items-center pb-0.5 text-[6.5px] font-mono text-neutral-600">
+              <span className="font-bold">NODATA</span>
             </div>
           </div>
         );
@@ -99,7 +138,7 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
             {/* Top Drop-T Beatles Logo */}
             <div className="w-full flex items-center justify-center pt-1 shrink-0">
               <span
-                className="text-[6.5px] font-serif font-bold tracking-wider text-neutral-200"
+                className="text-[8px] font-serif font-black tracking-wider text-neutral-100"
                 style={{
                   writingMode: 'vertical-rl',
                   textOrientation: 'mixed'
@@ -112,11 +151,11 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
             {/* Middle Abbey Road text */}
             <div className="flex-1 w-full flex items-center justify-center">
               <span
-                className="whitespace-nowrap text-[7.5px] font-sans font-medium text-neutral-300 select-none uppercase tracking-wider"
+                className="whitespace-nowrap text-[9.5px] font-sans font-bold text-neutral-100 select-none uppercase tracking-wider"
                 style={{
                   writingMode: 'vertical-rl',
                   textOrientation: 'mixed',
-                  maxHeight: '120px'
+                  maxHeight: '150px'
                 }}
               >
                 ABBEY ROAD
@@ -125,7 +164,7 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
 
             {/* Bottom: Zebra Crosswalk photo slice */}
             <div className="w-full shrink-0 flex flex-col items-center pb-0.5 gap-0.5">
-              <div className="w-3 h-4 rounded-[1px] overflow-hidden border border-white/20">
+              <div className="w-3.5 h-4.5 rounded-[1.5px] overflow-hidden border border-white/30 shadow-inner">
                 <img
                   src={release.artworkUrl}
                   alt=""
@@ -134,7 +173,7 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
                   referrerPolicy="no-referrer"
                 />
               </div>
-              <div className="w-2 h-[1px] bg-green-500/80 rounded-full" />
+              <div className="w-2.5 h-[1.5px] bg-green-500 rounded-full" />
             </div>
           </div>
         );
@@ -144,7 +183,7 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
           <div className="w-full h-full flex flex-col justify-between py-1 bg-[#0a0a0a] text-white relative overflow-hidden">
             <div className="w-full pt-1 flex items-center justify-center">
               <span
-                className="text-[6.5px] font-sans font-bold tracking-widest text-neutral-300"
+                className="text-[8px] font-sans font-black tracking-widest text-neutral-200"
                 style={{
                   writingMode: 'vertical-rl',
                   textOrientation: 'mixed'
@@ -155,19 +194,19 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
             </div>
 
             {/* Middle Prism & Spectrum Rainbow */}
-            <div className="flex-1 w-full flex flex-col items-center justify-center gap-0.5 my-0.5">
-              <div className="w-2.5 h-2.5 border border-white/60 rotate-45 flex items-center justify-center">
-                <div className="w-1 h-1 bg-white/40" />
+            <div className="flex-1 w-full flex flex-col items-center justify-center gap-1 my-0.5">
+              <div className="w-3 h-3 border border-white/70 rotate-45 flex items-center justify-center">
+                <div className="w-1.5 h-1.5 bg-white/50" />
               </div>
               <div
-                className="w-0.5 h-9 rounded-full my-0.5"
+                className="w-1 h-11 rounded-full my-0.5"
                 style={{
                   background: 'linear-gradient(to bottom, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #a855f7)'
                 }}
               />
             </div>
 
-            <div className="w-full shrink-0 pb-0.5 text-center text-[5.5px] font-mono text-neutral-500">
+            <div className="w-full shrink-0 pb-0.5 text-center text-[6.5px] font-mono font-bold text-neutral-400">
               HARVEST
             </div>
           </div>
@@ -177,18 +216,18 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
         return (
           <div className="w-full h-full flex flex-col justify-between py-1 bg-[#eab308] text-[#1c1917] relative overflow-hidden">
             <div className="w-full pt-1 flex items-center justify-center">
-              <span className="text-[7.5px] font-black tracking-tighter text-blue-900 font-sans lowercase">
+              <span className="text-[9px] font-black tracking-tighter text-blue-900 font-sans lowercase">
                 blur
               </span>
             </div>
 
             <div className="flex-1 w-full flex items-center justify-center">
               <span
-                className="whitespace-nowrap text-[7.5px] font-sans font-black tracking-widest text-neutral-900 select-none uppercase"
+                className="whitespace-nowrap text-[9.5px] font-sans font-black tracking-widest text-neutral-900 select-none uppercase"
                 style={{
                   writingMode: 'vertical-rl',
                   textOrientation: 'mixed',
-                  maxHeight: '120px'
+                  maxHeight: '150px'
                 }}
               >
                 PARKLIFE
@@ -197,10 +236,10 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
 
             {/* Bottom Greyhound dog illustration */}
             <div className="w-full shrink-0 flex flex-col items-center pb-0.5 gap-0.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-neutral-900 flex items-center justify-center text-[5.5px] text-yellow-400 font-bold">
+              <div className="w-3 h-3 rounded-full bg-neutral-900 flex items-center justify-center text-[6.5px] text-yellow-400 font-bold">
                 🐕
               </div>
-              <span className="text-[5px] font-mono text-neutral-800">FOODCD</span>
+              <span className="text-[6px] font-mono font-bold text-neutral-800">FOODCD</span>
             </div>
           </div>
         );
@@ -209,23 +248,23 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
         return (
           <div className="w-full h-full flex flex-col justify-between py-1 bg-[#1c261e] text-slate-200 relative overflow-hidden">
             <div className="w-full pt-1 flex items-center justify-center">
-              <span className="text-[6px] font-sans font-light tracking-wide text-neutral-400 lowercase">
+              <span className="text-[7.5px] font-sans font-medium tracking-wide text-neutral-300 lowercase">
                 the verve
               </span>
             </div>
             <div className="flex-1 w-full flex items-center justify-center">
               <span
-                className="whitespace-nowrap text-[7.5px] font-serif font-bold text-slate-100 select-none uppercase tracking-wider"
+                className="whitespace-nowrap text-[9.5px] font-serif font-bold text-slate-100 select-none uppercase tracking-wider"
                 style={{
                   writingMode: 'vertical-rl',
                   textOrientation: 'mixed',
-                  maxHeight: '120px'
+                  maxHeight: '150px'
                 }}
               >
                 URBAN HYMNS
               </span>
             </div>
-            <div className="w-full shrink-0 pb-0.5 text-center text-[5.5px] font-mono text-neutral-500">
+            <div className="w-full shrink-0 pb-0.5 text-center text-[6.5px] font-mono text-neutral-400">
               HUTCD
             </div>
           </div>
@@ -235,21 +274,21 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
         return (
           <div className="w-full h-full flex flex-col justify-between py-1 bg-[#0b172a] text-white relative overflow-hidden">
             <div className="w-full pt-1 flex items-center justify-center">
-              <div className="w-2 h-2 rounded-full bg-amber-400/90 shadow-[0_0_4px_rgba(251,191,36,0.8)]" />
+              <div className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_5px_rgba(251,191,36,0.9)]" />
             </div>
             <div className="flex-1 w-full flex items-center justify-center">
               <span
-                className="whitespace-nowrap text-[7.5px] font-sans font-semibold tracking-wider text-amber-300 select-none uppercase"
+                className="whitespace-nowrap text-[9.5px] font-sans font-bold tracking-wider text-amber-300 select-none uppercase"
                 style={{
                   writingMode: 'vertical-rl',
                   textOrientation: 'mixed',
-                  maxHeight: '120px'
+                  maxHeight: '150px'
                 }}
               >
-                COLDPLAY <span className="font-normal text-white">PARACHUTES</span>
+                COLDPLAY <span className="font-semibold text-white">PARACHUTES</span>
               </span>
             </div>
-            <div className="w-full shrink-0 pb-0.5 text-center text-[5.5px] font-mono text-amber-400/60">
+            <div className="w-full shrink-0 pb-0.5 text-center text-[6.5px] font-mono text-amber-300/80">
               PARLOPHONE
             </div>
           </div>
@@ -259,21 +298,21 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
         return (
           <div className="w-full h-full flex flex-col justify-between py-1 bg-[#3a352c] text-amber-200 relative overflow-hidden">
             <div className="w-full pt-1 flex items-center justify-center">
-              <span className="text-[6.5px] text-yellow-300 font-bold">🍋</span>
+              <span className="text-[8px] text-yellow-300 font-bold">🍋</span>
             </div>
             <div className="flex-1 w-full flex items-center justify-center">
               <span
-                className="whitespace-nowrap text-[7px] font-sans font-black tracking-widest text-amber-100 select-none uppercase"
+                className="whitespace-nowrap text-[9px] font-sans font-black tracking-widest text-amber-100 select-none uppercase"
                 style={{
                   writingMode: 'vertical-rl',
                   textOrientation: 'mixed',
-                  maxHeight: '120px'
+                  maxHeight: '150px'
                 }}
               >
                 THE STONE ROSES
               </span>
             </div>
-            <div className="w-full shrink-0 pb-0.5 text-center text-[5.5px] font-mono text-neutral-400">
+            <div className="w-full shrink-0 pb-0.5 text-center text-[6.5px] font-mono text-neutral-400">
               ORE CD
             </div>
           </div>
@@ -283,21 +322,21 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
         return (
           <div className="w-full h-full flex flex-col justify-between py-1 bg-[#0284c7] text-white relative overflow-hidden">
             <div className="w-full pt-1 flex items-center justify-center">
-              <div className="w-2 h-0.5 bg-red-500 rounded-xs shadow-[0_0_3px_red]" />
+              <div className="w-2.5 h-1 bg-red-500 rounded-xs shadow-[0_0_3px_red]" />
             </div>
             <div className="flex-1 w-full flex items-center justify-center">
               <span
-                className="whitespace-nowrap text-[7.5px] font-sans font-bold tracking-tight text-white select-none uppercase"
+                className="whitespace-nowrap text-[9.5px] font-sans font-bold tracking-tight text-white select-none uppercase"
                 style={{
                   writingMode: 'vertical-rl',
                   textOrientation: 'mixed',
-                  maxHeight: '120px'
+                  maxHeight: '150px'
                 }}
               >
                 THE KILLERS <span className="text-red-200">HOT FUSS</span>
               </span>
             </div>
-            <div className="w-full shrink-0 pb-0.5 text-center text-[5.5px] font-mono text-sky-200">
+            <div className="w-full shrink-0 pb-0.5 text-center text-[6.5px] font-mono text-sky-200">
               LIZARD
             </div>
           </div>
@@ -307,21 +346,21 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
         return (
           <div className="w-full h-full flex flex-col justify-between py-1 bg-[#7f1d1d] text-amber-200 relative overflow-hidden">
             <div className="w-full pt-1 flex items-center justify-center">
-              <span className="text-[6.5px] text-amber-300 font-serif">👑</span>
+              <span className="text-[8px] text-amber-300 font-serif">👑</span>
             </div>
             <div className="flex-1 w-full flex items-center justify-center">
               <span
-                className="whitespace-nowrap text-[7.5px] font-serif font-black tracking-wider text-amber-100 select-none uppercase"
+                className="whitespace-nowrap text-[9.5px] font-serif font-black tracking-wider text-amber-100 select-none uppercase"
                 style={{
                   writingMode: 'vertical-rl',
                   textOrientation: 'mixed',
-                  maxHeight: '120px'
+                  maxHeight: '150px'
                 }}
               >
-                QUEEN <span className="font-sans font-normal text-[6.5px]">GREATEST HITS</span>
+                QUEEN <span className="font-sans font-bold text-[8px]">GREATEST HITS</span>
               </span>
             </div>
-            <div className="w-full shrink-0 pb-0.5 text-center text-[5.5px] font-mono text-amber-300/70">
+            <div className="w-full shrink-0 pb-0.5 text-center text-[6.5px] font-mono text-amber-300/80">
               EMI
             </div>
           </div>
@@ -331,22 +370,22 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
         return (
           <div className="w-full h-full flex flex-col justify-between py-1 bg-[#09090b] text-white relative overflow-hidden">
             <div className="w-full pt-1 flex items-center justify-center">
-              <span className="text-[6.5px] font-black text-white">AM</span>
+              <span className="text-[8px] font-black text-white">AM</span>
             </div>
             <div className="flex-1 w-full flex flex-col items-center justify-center gap-0.5 my-0.5">
               <span
-                className="whitespace-nowrap text-[7.5px] font-sans font-semibold tracking-wider text-neutral-100 select-none uppercase"
+                className="whitespace-nowrap text-[9.5px] font-sans font-bold tracking-wider text-neutral-100 select-none uppercase"
                 style={{
                   writingMode: 'vertical-rl',
                   textOrientation: 'mixed',
-                  maxHeight: '120px'
+                  maxHeight: '150px'
                 }}
               >
                 ARCTIC MONKEYS
               </span>
-              <div className="w-[1px] h-8 bg-white/80 rounded-full" />
+              <div className="w-[1.5px] h-9 bg-white/90 rounded-full" />
             </div>
-            <div className="w-full shrink-0 pb-0.5 text-center text-[5.5px] font-mono text-neutral-400">
+            <div className="w-full shrink-0 pb-0.5 text-center text-[6.5px] font-mono text-neutral-400">
               DOMINO
             </div>
           </div>
@@ -356,23 +395,23 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
         return (
           <div className="w-full h-full flex flex-col justify-between py-1 bg-[#ffffff] text-neutral-900 relative overflow-hidden">
             <div className="w-full pt-1 flex items-center justify-center">
-              <div className="w-2.5 h-2.5 rounded-full border border-black flex items-center justify-center">
-                <span className="text-[5.5px] font-black text-black">P</span>
+              <div className="w-3 h-3 rounded-full border border-black flex items-center justify-center">
+                <span className="text-[6.5px] font-black text-black">P</span>
               </div>
             </div>
             <div className="flex-1 w-full flex items-center justify-center">
               <span
-                className="whitespace-nowrap text-[7.5px] font-sans font-bold tracking-tight text-neutral-900 select-none uppercase"
+                className="whitespace-nowrap text-[9.5px] font-sans font-black tracking-tight text-neutral-900 select-none uppercase"
                 style={{
                   writingMode: 'vertical-rl',
                   textOrientation: 'mixed',
-                  maxHeight: '120px'
+                  maxHeight: '150px'
                 }}
               >
-                PULP <span className="font-normal text-neutral-600">DIFFERENT CLASS</span>
+                PULP <span className="font-bold text-neutral-600">DIFFERENT CLASS</span>
               </span>
             </div>
-            <div className="w-full shrink-0 pb-0.5 text-center text-[5.5px] font-mono text-neutral-500">
+            <div className="w-full shrink-0 pb-0.5 text-center text-[6.5px] font-mono text-neutral-500">
               ISLAND
             </div>
           </div>
@@ -383,17 +422,17 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
           <div className="w-full h-full flex flex-col justify-between py-1 bg-[#d5c7a3] text-neutral-900 relative overflow-hidden">
             <div className="flex-1 w-full flex items-center justify-center">
               <span
-                className="whitespace-nowrap text-[7.5px] font-serif font-bold tracking-wider text-neutral-900 select-none uppercase"
+                className="whitespace-nowrap text-[9.5px] font-serif font-black tracking-wider text-neutral-900 select-none uppercase"
                 style={{
                   writingMode: 'vertical-rl',
                   textOrientation: 'mixed',
-                  maxHeight: '120px'
+                  maxHeight: '150px'
                 }}
               >
-                DAVID BOWIE <span className="italic font-normal">HUNKY DORY</span>
+                DAVID BOWIE <span className="italic font-bold">HUNKY DORY</span>
               </span>
             </div>
-            <div className="w-full shrink-0 pb-0.5 text-center text-[5.5px] font-mono text-neutral-600">
+            <div className="w-full shrink-0 pb-0.5 text-center text-[6.5px] font-mono text-neutral-600">
               RCA
             </div>
           </div>
@@ -404,17 +443,17 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
           <div className="w-full h-full flex flex-col justify-between py-1 bg-[#ea580c] text-white relative overflow-hidden">
             <div className="flex-1 w-full flex items-center justify-center">
               <span
-                className="whitespace-nowrap text-[7.5px] font-sans font-black tracking-wider text-white select-none uppercase"
+                className="whitespace-nowrap text-[9.5px] font-sans font-black tracking-wider text-white select-none uppercase"
                 style={{
                   writingMode: 'vertical-rl',
                   textOrientation: 'mixed',
-                  maxHeight: '120px'
+                  maxHeight: '150px'
                 }}
               >
-                MUSE <span className="font-light text-[6.5px]">ORIGIN OF SYMMETRY</span>
+                MUSE <span className="font-medium text-[8px]">ORIGIN OF SYMMETRY</span>
               </span>
             </div>
-            <div className="w-full shrink-0 pb-0.5 text-center text-[5.5px] font-mono text-orange-200">
+            <div className="w-full shrink-0 pb-0.5 text-center text-[6.5px] font-mono text-orange-200">
               MUSHROOM
             </div>
           </div>
@@ -427,8 +466,8 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
             className="w-full h-full flex flex-col justify-between py-1 text-white relative overflow-hidden"
             style={{ backgroundColor: release.spineColor || '#222222' }}
           >
-            {/* Top artwork slice thumbnail */}
-            <div className="w-full h-5 shrink-0 overflow-hidden border-b border-white/20">
+            {/* Top artwork slice thumbnail - enlarged for clarity */}
+            <div className="w-full h-6 shrink-0 overflow-hidden border-b border-white/20">
               <img
                 src={release.artworkUrl}
                 alt=""
@@ -438,16 +477,16 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
               />
             </div>
 
-            {/* Rotated text */}
+            {/* Rotated text - bold and crisp for effortless readability while scrolling */}
             <div className="flex-1 w-full flex items-center justify-center overflow-hidden py-0.5">
               <span
-                className="whitespace-nowrap text-[7.5px] font-sans font-bold tracking-tight select-none uppercase"
+                className="whitespace-nowrap text-[9.5px] font-sans font-bold tracking-tight select-none uppercase"
                 style={{
                   writingMode: 'vertical-rl',
                   textOrientation: 'mixed',
                   color: release.spineTextColor || '#ffffff',
-                  textShadow: '0 1px 2px rgba(0,0,0,0.8)',
-                  maxHeight: '120px'
+                  textShadow: '0 1px 2px rgba(0,0,0,0.85)',
+                  maxHeight: '150px'
                 }}
               >
                 {release.artist} <span className="opacity-60">/</span> {release.title}
@@ -455,7 +494,7 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
             </div>
 
             {/* Bottom catalog ID */}
-            <div className="w-full shrink-0 pb-0.5 text-center text-[5.5px] font-mono opacity-60">
+            <div className="w-full shrink-0 pb-0.5 text-center text-[6.5px] font-mono opacity-70">
               {release.catalogNumber}
             </div>
           </div>
@@ -469,12 +508,12 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
       onDragStart={(e) => e.preventDefault()}
       className={`cd-spine-item group relative transition-all duration-300 ease-out cursor-pointer shrink-0 select-none ${
         isSelected
-          ? '-translate-y-5 scale-y-[1.03] scale-x-[1.02] z-30'
-          : 'hover:-translate-y-1 z-10'
+          ? '-translate-y-6 scale-y-[1.03] scale-x-[1.02] z-30'
+          : 'hover:-translate-y-1.5 z-10'
       }`}
       style={{
-        width: '19px', // Authentic slim 10mm CD jewel case proportion
-        height: '240px' // Increased ~13% so bases naturally meet and rest directly on the shelf
+        width: '22.5px', // Authentic slim 10mm CD jewel case proportion
+        height: '280px' // Refined visible scale so album titles and artist names are easily readable while scrolling
       }}
       title={`${release.artist} — ${release.title}`}
     >
@@ -482,7 +521,7 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
       <div
         className={`w-full h-full rounded-[2.5px] relative flex flex-col overflow-hidden transition-all bg-gradient-to-r from-white/30 via-white/10 via-black/20 to-black/60 p-[2px] ${
           isSelected
-            ? 'shadow-[0_0_24px_rgba(255,255,255,0.3),0_18px_36px_rgba(0,0,0,0.95)] ring-[1.5px] ring-white/60'
+            ? 'shadow-[0_0_24px_rgba(255,255,255,0.35),0_18px_36px_rgba(0,0,0,0.95)] ring-[1.5px] ring-white/70'
             : 'shadow-[0_2px_4px_rgba(0,0,0,0.95)] hover:shadow-[0_4px_10px_rgba(0,0,0,0.95)]'
         }`}
       >
@@ -508,10 +547,10 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
           )}
         </div>
 
-        {/* BOTTOM TRANSPARENT ACRYLIC RAIL (Jewel case plastic foot) */}
-        <div className="w-full h-2.5 shrink-0 bg-gradient-to-t from-white/35 via-white/10 to-transparent border-t border-white/20 relative flex items-center justify-center">
-          <div className="w-2 h-[1px] bg-white/50 rounded-full" />
-          <div className="absolute inset-x-0 bottom-0 h-[0.5px] bg-black/70" />
+        {/* BOTTOM TRANSPARENT ACRYLIC RAIL (Jewel case plastic foot that sits on shelf) */}
+        <div className="w-full h-3 shrink-0 bg-gradient-to-t from-black/50 via-white/10 to-transparent border-t border-white/20 relative flex items-center justify-center">
+          <div className="w-2.5 h-[1px] bg-white/50 rounded-full" />
+          <div className="absolute inset-x-0 bottom-0 h-[1px] bg-black/90" />
         </div>
 
         {/* Outer edge specular line along left plastic edge */}
