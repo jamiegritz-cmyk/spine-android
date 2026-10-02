@@ -169,3 +169,4 @@ class MediaStoreAudioScanner(private val context: Context) {
         emptyList()
     }
 }
+}
