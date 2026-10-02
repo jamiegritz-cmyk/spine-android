@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
+import com.spine.musicplayer.data.CoverArtRepository
 import com.spine.musicplayer.data.MediaStoreAudioScanner
 import com.spine.musicplayer.model.Release
 import com.spine.musicplayer.model.ReleaseType
