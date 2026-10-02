@@ -1,7 +1,7 @@
 {
-  "name": "Spine - CD Shelf Music Player",
-  "short_name": "Spine",
-  "description": "Visual physical CD collection music player for Pixel 9 with thin jewel case spines on a wooden shelf and local music playback.",
+  "name": "GRAIZ - Retro Cassette & CD Music Player",
+  "short_name": "GRAIZ",
+  "description": "Visual physical retro cassette and CD collection music player for Pixel 9 with jewel case spines on a wooden shelf and local music playback.",
   "start_url": "/",
   "id": "/",
   "display": "standalone",

@@ -1,6 +1,6 @@
 {
-  "name": "Spine - Native Android CD Shelf Music Player",
-  "description": "Visual physical CD collection music player for Android with thin jewel case spines on a wooden shelf and local music playback.",
+  "name": "GRAIZ - Retro Cassette & CD Music Player",
+  "description": "Visual physical retro cassette and CD collection music player for Android with jewel case spines on a wooden shelf and local music playback.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

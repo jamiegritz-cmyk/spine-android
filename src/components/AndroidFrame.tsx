@@ -37,9 +37,10 @@ export const AndroidFrame: React.FC<AndroidFrameProps> = ({
       <header className="w-full max-w-5xl mb-2 flex items-center justify-between px-2 text-xs">
         {/* Left: App Identity */}
         <div className="flex items-center gap-2">
-          <span className="font-bold tracking-widest text-sm text-neutral-200">SPINE</span>
+          <img src="/icon-192.svg" alt="GRAIZ" className="w-5 h-5 rounded-md" />
+          <span className="font-bold tracking-widest text-sm text-neutral-200">GRAIZ</span>
           <span className="text-[11px] text-neutral-500 font-mono hidden sm:inline">
-            Native Android CD Shelf
+            Native Android CD & Cassette Player
           </span>
         </div>
 
@@ -111,10 +112,10 @@ export const AndroidFrame: React.FC<AndroidFrameProps> = ({
           </div>
         </div>
 
-        {/* Android App Header (Three independent layout regions: Left (SPINE), Centre (Fixed Controls), Right (Catalog)) */}
-        <div className="w-full h-11 px-5 flex items-center justify-between shrink-0 bg-[#11100F] z-30 border-b border-neutral-900/60 relative">
+        {/* Android App Header */}
+        <div className="w-full h-11 px-5 flex items-center justify-between shrink-0 bg-[#11100F] z-30 border-b border-neutral-900/60">
           {/* Left: GRAIZ/menu area */}
-          <div className="flex items-center gap-3 shrink-0 z-10">
+          <div className="flex items-center gap-3 shrink-0">
             <span className="font-black tracking-[0.2em] text-sm text-neutral-100 select-none">
               GRAIZ
             </span>
@@ -127,8 +128,8 @@ export const AndroidFrame: React.FC<AndroidFrameProps> = ({
             </button>
           </div>
 
-          {/* Centre: Fixed Albums / Singles / A-Z / Refresh controls (Anchored dead-center) */}
-          <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5 shrink-0 z-10 pointer-events-auto">
+          {/* Right: Albums / Singles / A-Z -> Refresh (no numbers or debug text after Refresh) */}
+          <div className="flex items-center gap-1.5 shrink-0 pointer-events-auto">
             {onFilterModeChange && (
               <div className="flex items-center bg-[#1F1D1B] p-0.5 rounded-lg border border-neutral-800/80">
                 <button
@@ -177,13 +178,6 @@ export const AndroidFrame: React.FC<AndroidFrameProps> = ({
                 </svg>
               </button>
             )}
-          </div>
-
-          {/* Right: Selected album metadata (anchored to right, can truncate) */}
-          <div className="flex items-center justify-end shrink-0 max-w-[76px] overflow-hidden z-10">
-            <span className="font-mono text-xs text-neutral-400 font-medium truncate">
-              {catalogNumber}
-            </span>
           </div>
         </div>
 

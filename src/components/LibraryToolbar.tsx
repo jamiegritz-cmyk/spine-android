@@ -33,7 +33,7 @@ export const LibraryToolbar: React.FC<LibraryToolbarProps> = ({
       <div className="flex items-center justify-between gap-3">
         {/* Brand Kicker with unboxed release count */}
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold tracking-wider text-neutral-300">SPINE</span>
+          <span className="text-xs font-semibold tracking-wider text-neutral-300">GRAIZ</span>
           <span className="text-[11px] text-neutral-500 font-mono">
             {totalReleases} {totalReleases === 1 ? 'release' : 'releases'}
           </span>
