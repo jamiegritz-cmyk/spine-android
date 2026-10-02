@@ -218,13 +218,14 @@ fun SpineShelf(
 
         // Continuous horizontal shelf of authentic CD jewel cases
         val currentCenterBase = currentCenterInt
+        val shelfLipHeight = 38.dp
 
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(caseHeight + 40.dp)
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 36.dp)
+                .padding(bottom = shelfLipHeight) // Cases rest directly on top of the wooden shelf surface
         ) {
             for (slot in (-visibleSlots / 2)..(visibleSlots / 2)) {
                 val caseIndex = (((currentCenterBase + slot) % n) + n) % n
@@ -260,11 +261,29 @@ fun SpineShelf(
             }
         }
 
+        // Contact shadow where the CD jewel case bottoms meet the wooden shelf
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(3.dp)
+                .align(Alignment.BottomCenter)
+                .padding(bottom = shelfLipHeight)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            Color(0x99000000),
+                            Color(0xEE000000)
+                        )
+                    )
+                )
+        )
+
         // Heavy Walnut Wooden Shelf Base & Lip with rich wood grain & specular bevel
         WoodenShelfLip(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(38.dp)
+                .height(shelfLipHeight)
                 .align(Alignment.BottomCenter)
         )
     }

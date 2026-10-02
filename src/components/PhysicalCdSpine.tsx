@@ -473,8 +473,8 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
           : 'hover:-translate-y-1 z-10'
       }`}
       style={{
-        width: '18px', // Authentic slim 10mm CD jewel case proportion
-        height: '212px' // Authentic audio CD jewel case height (125mm proportion, not DVD)
+        width: '19px', // Authentic slim 10mm CD jewel case proportion
+        height: '240px' // Increased ~13% so bases naturally meet and rest directly on the shelf
       }}
       title={`${release.artist} — ${release.title}`}
     >
@@ -482,8 +482,8 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
       <div
         className={`w-full h-full rounded-[2.5px] relative flex flex-col overflow-hidden transition-all bg-gradient-to-r from-white/30 via-white/10 via-black/20 to-black/60 p-[2px] ${
           isSelected
-            ? 'shadow-[0_0_20px_rgba(255,255,255,0.3),0_16px_32px_rgba(0,0,0,0.95)] ring-[1.5px] ring-white/60'
-            : 'shadow-[0_4px_12px_rgba(0,0,0,0.7)] hover:shadow-[0_6px_16px_rgba(0,0,0,0.85)]'
+            ? 'shadow-[0_0_24px_rgba(255,255,255,0.3),0_18px_36px_rgba(0,0,0,0.95)] ring-[1.5px] ring-white/60'
+            : 'shadow-[0_2px_4px_rgba(0,0,0,0.95)] hover:shadow-[0_4px_10px_rgba(0,0,0,0.95)]'
         }`}
       >
         {/* TOP TRANSPARENT ACRYLIC RAIL (Delicate audio CD molded hub notch) */}

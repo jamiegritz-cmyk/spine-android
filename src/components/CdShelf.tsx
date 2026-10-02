@@ -275,7 +275,7 @@ export const CdShelf: React.FC<CdShelfProps> = ({
         <div className="absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-black/85 via-black/35 to-transparent pointer-events-none z-10" />
         <div className="absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-black/70 to-transparent pointer-events-none z-10" />
 
-        {/* The Continuous Conveyor Belt Container */}
+        {/* The Continuous Conveyor Belt Container (Bottom-aligned so CD cases rest directly on the wooden shelf) */}
         <div
           ref={containerRef}
           onMouseDown={onMouseDown}
@@ -286,14 +286,14 @@ export const CdShelf: React.FC<CdShelfProps> = ({
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
           onTouchCancel={onTouchEnd}
-          className="w-full h-full overflow-x-auto scrollbar-none flex items-center relative z-20"
+          className="w-full h-full overflow-x-auto scrollbar-none flex items-end relative z-20 pb-0"
           style={{
             // Center padding allows every single CD to sit dead-center
-            paddingLeft: 'calc(50% - 9px)',
-            paddingRight: 'calc(50% - 9px)'
+            paddingLeft: 'calc(50% - 9.5px)',
+            paddingRight: 'calc(50% - 9.5px)'
           }}
         >
-          <div className="flex items-center gap-[1.5px] py-1 select-none">
+          <div className="flex items-end gap-[1.5px] select-none">
             {releases.map((rel, index) => {
               const isSelected = index === selectedIndex;
               return (
@@ -317,19 +317,22 @@ export const CdShelf: React.FC<CdShelfProps> = ({
             })}
           </div>
         </div>
+
+        {/* Subtle physical contact shadow where CD case bases meet the wooden shelf */}
+        <div className="absolute inset-x-0 bottom-0 h-2 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none z-25" />
       </div>
 
-      {/* 3. BOTTOM SOLID WOODEN SHELF BASE */}
+      {/* 3. BOTTOM SOLID WOODEN SHELF BASE (Raised solid wooden ledge) */}
       <div
-        className="w-full h-5 sm:h-5.5 relative z-30 shadow-[0_-4px_16px_rgba(0,0,0,0.85)] border-t border-[#6b4426]/50 shrink-0 pointer-events-none"
+        className="w-full h-6 sm:h-6.5 relative z-30 shadow-[0_-4px_20px_rgba(0,0,0,0.9)] border-t border-[#6b4426]/60 shrink-0 pointer-events-none"
         style={{
           backgroundImage: `url(${woodTexture})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center 60%'
         }}
       >
-        <div className="absolute inset-x-0 top-0 h-[1.5px] bg-gradient-to-r from-amber-900/50 via-amber-600/70 to-amber-900/50" />
-        <div className="absolute inset-x-0 top-0 h-2 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
+        <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-amber-900/60 via-amber-500/80 to-amber-900/60 shadow-xs" />
+        <div className="absolute inset-x-0 top-0 h-2.5 bg-gradient-to-b from-black/70 to-transparent pointer-events-none" />
         <div className="absolute inset-x-0 bottom-0 h-[1px] bg-black/90" />
       </div>
     </div>
