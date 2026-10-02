@@ -12,6 +12,10 @@ data class Track(
     val contentUri: Uri
 )
 
+enum class ReleaseType {
+    ALBUM, SINGLE
+}
+
 data class Release(
     val id: String,
     val title: String,
@@ -21,7 +25,8 @@ data class Release(
     val tracks: List<Track>,
     val spineColorHex: String,
     val catalogNumber: String,
-    val genre: String = "Physical Audio"
+    val genre: String = "Physical Audio",
+    val type: ReleaseType = if (tracks.size <= 2) ReleaseType.SINGLE else ReleaseType.ALBUM
 ) {
     val totalDurationMs: Long get() = tracks.sumOf { it.durationMs }
 }

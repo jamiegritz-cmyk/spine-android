@@ -469,20 +469,20 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
       onDragStart={(e) => e.preventDefault()}
       className={`cd-spine-item group relative transition-all duration-300 ease-out cursor-pointer shrink-0 select-none ${
         isSelected
-          ? '-translate-y-2 scale-y-[1.02] scale-x-[1.02] z-30'
+          ? '-translate-y-5 scale-y-[1.03] scale-x-[1.02] z-30'
           : 'hover:-translate-y-1 z-10'
       }`}
       style={{
         width: '18px', // Authentic slim 10mm CD jewel case proportion
-        height: '208px' // Authentic audio CD jewel case height (125mm proportion, not DVD)
+        height: '212px' // Authentic audio CD jewel case height (125mm proportion, not DVD)
       }}
       title={`${release.artist} — ${release.title}`}
     >
       {/* Outer Jewel Case Plastic Frame */}
       <div
-        className={`w-full h-full rounded-[1px] relative flex flex-col overflow-hidden transition-all ${
+        className={`w-full h-full rounded-[1.5px] relative flex flex-col overflow-hidden transition-all ${
           isSelected
-            ? 'shadow-[0_0_15px_rgba(251,191,36,0.65),0_10px_20px_rgba(0,0,0,0.9)] ring-[1.5px] ring-amber-300/90'
+            ? 'shadow-[0_0_18px_rgba(255,255,255,0.25),0_14px_28px_rgba(0,0,0,0.95)] ring-[1.2px] ring-white/50'
             : 'shadow-[0_4px_10px_rgba(0,0,0,0.65)] hover:shadow-[0_6px_14px_rgba(0,0,0,0.8)]'
         }`}
       >

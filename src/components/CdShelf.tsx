@@ -211,18 +211,16 @@ export const CdShelf: React.FC<CdShelfProps> = ({
         if (Math.abs(currentVelocity) > 0.4) {
           animFrameIdRef.current = requestAnimationFrame(momentumStep);
         } else {
+          // Movement ceases: DO NOT SNAP!
+          // Whichever CD is at the center line at this exact moment stays selected.
           animFrameIdRef.current = null;
-          // Settle gently onto the nearest centered CD
-          const target = getCenterScrollForIndex(lastCenteredIndexRef.current);
-          animateSnapTo(target, 200);
         }
       };
 
       animFrameIdRef.current = requestAnimationFrame(momentumStep);
     } else {
-      // Gentle release: snap smoothly to the currently centered CD
-      const target = getCenterScrollForIndex(lastCenteredIndexRef.current);
-      animateSnapTo(target, 220);
+      // Gentle release: DO NOT SNAP!
+      // Leave the CD shelf exactly where it is.
     }
   };
 

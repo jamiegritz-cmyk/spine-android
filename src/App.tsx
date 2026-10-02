@@ -25,7 +25,7 @@ export default function App() {
   const [repeatMode, setRepeatMode] = useState<RepeatMode>('off');
 
   // Filter & Search & Modals
-  const [filterCategory, setFilterCategory] = useState<'all' | 'albums' | 'singles'>('all');
+  const [filterCategory, setFilterCategory] = useState<'all' | 'albums' | 'singles'>('albums');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [orientation, setOrientation] = useState<DeviceOrientation>('portrait');
@@ -33,8 +33,9 @@ export default function App() {
   const [isLocalPickerOpen, setIsLocalPickerOpen] = useState<boolean>(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState<boolean>(false);
   const [isCorrectModalOpen, setIsCorrectModalOpen] = useState<boolean>(false);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
-  // Compute filtered releases for the CD shelf
+  // Compute filtered releases for the CD shelf - Always sorted A-Z
   const filteredReleases = useMemo(() => {
     let list = [...releases];
 
@@ -54,6 +55,9 @@ export default function App() {
       });
     }
 
+    // Always sorted alphabetically A–Z as requested
+    list.sort((a, b) => a.title.localeCompare(b.title));
+
     return list;
   }, [releases, filterCategory, searchQuery]);
 
@@ -61,8 +65,8 @@ export default function App() {
   const currentRelease = useMemo(() => {
     return (
       filteredReleases.find((r) => r.id === selectedReleaseId) ||
-      filteredReleases[3] || // Oasis Definitely Maybe
-      releases[3]
+      filteredReleases[0] ||
+      releases[0]
     );
   }, [filteredReleases, selectedReleaseId, releases]);
 
@@ -213,6 +217,13 @@ export default function App() {
     setReleases((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
   };
 
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    setTimeout(() => {
+      setIsRefreshing(false);
+    }, 800);
+  };
+
   return (
     <AndroidFrame
       orientation={orientation}
@@ -221,6 +232,11 @@ export default function App() {
       onOpenLocalPicker={() => setIsLocalPickerOpen(true)}
       onOpenSearch={() => setIsSearchOpen(true)}
       onOpenCorrectModal={() => setIsCorrectModalOpen(true)}
+      catalogNumber={currentRelease?.catalogNumber || 'RA-6405'}
+      filterMode={filterCategory === 'singles' ? 'singles' : 'albums'}
+      onFilterModeChange={(m) => setFilterCategory(m)}
+      onRefresh={handleRefresh}
+      isRefreshing={isRefreshing}
     >
       {/* Search Bar Overlay when toggled */}
       {isSearchOpen && (

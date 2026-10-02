@@ -12,6 +12,56 @@ import concreteEchoesArt from '../assets/images/album_concrete_echoes_1790946342
 
 export const DEFAULT_CD_COLLECTION: Release[] = [
   {
+    id: 'rks_audiotree_live',
+    title: 'Rainbow Kitten Surprise on Audiotree Live [Explicit]',
+    artist: 'Rainbow Kitten Surprise',
+    year: 2017,
+    artworkUrl: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600&auto=format&fit=crop&q=80',
+    spineColor: '#1c1a17',
+    spineTextColor: '#f5f5f4',
+    catalogNumber: 'RA-6405',
+    genre: 'Indie Rock / Folk',
+    spineStyle: 'default',
+    tracks: [
+      { id: 'rks_1', title: 'Counting Cards', artist: 'Rainbow Kitten Surprise', duration: 191, trackNumber: 1, syntheticSeed: 0 },
+      { id: 'rks_2', title: 'Cocaine Jesus', artist: 'Rainbow Kitten Surprise', duration: 231, trackNumber: 2, syntheticSeed: 1 },
+      { id: 'rks_3', title: 'Lady Lie', artist: 'Rainbow Kitten Surprise', duration: 198, trackNumber: 3, syntheticSeed: 2 },
+      { id: 'rks_4', title: 'First Class', artist: 'Rainbow Kitten Surprise', duration: 204, trackNumber: 4, syntheticSeed: 3 }
+    ]
+  },
+  {
+    id: 'qotsa_songs_for_the_deaf',
+    title: 'Songs for the Deaf',
+    artist: 'Queens of the Stone Age',
+    year: 2002,
+    artworkUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&auto=format&fit=crop&q=80',
+    spineColor: '#9e1b4d',
+    spineTextColor: '#ffffff',
+    catalogNumber: 'QS-8821',
+    genre: 'Hard Rock',
+    spineStyle: 'default',
+    tracks: [
+      { id: 'qotsa_1', title: 'No One Knows', artist: 'Queens of the Stone Age', duration: 255, trackNumber: 1, syntheticSeed: 1 },
+      { id: 'qotsa_2', title: 'Go with the Flow', artist: 'Queens of the Stone Age', duration: 187, trackNumber: 2, syntheticSeed: 2 }
+    ]
+  },
+  {
+    id: 'portishead_dummy',
+    title: 'Dummy',
+    artist: 'Portishead',
+    year: 1994,
+    artworkUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80',
+    spineColor: '#8b1e2d',
+    spineTextColor: '#ffffff',
+    catalogNumber: 'PH-9411',
+    genre: 'Trip Hop',
+    spineStyle: 'default',
+    tracks: [
+      { id: 'ph_1', title: 'Mysterons', artist: 'Portishead', duration: 302, trackNumber: 1, syntheticSeed: 3 },
+      { id: 'ph_2', title: 'Glory Box', artist: 'Portishead', duration: 308, trackNumber: 2, syntheticSeed: 0 }
+    ]
+  },
+  {
     id: 'blur_parklife',
     title: 'Parklife',
     artist: 'Blur',

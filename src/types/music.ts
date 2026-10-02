@@ -28,6 +28,7 @@ export type SpineStyleType =
   | 'oasis_morning_glory'
   | 'the_charlatans'
   | 'rem_automatic'
+  | 'default'
   | 'custom';
 
 export interface Release {

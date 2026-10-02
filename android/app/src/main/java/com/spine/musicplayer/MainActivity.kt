@@ -56,6 +56,8 @@ class MainActivity : ComponentActivity() {
                     onSeek = playerViewModel::seekTo,
                     onToggleShuffle = playerViewModel::toggleShuffle,
                     onCycleRepeat = playerViewModel::cycleRepeatMode,
+                    onRefresh = playerViewModel::refreshLibrary,
+                    onFilterChange = playerViewModel::setFilterMode,
                     modifier = Modifier.fillMaxSize()
                 )
             }

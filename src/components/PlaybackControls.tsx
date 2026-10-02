@@ -125,16 +125,16 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
           <SkipBack className="w-5 h-5 fill-current" />
         </button>
 
-        {/* Prominent Play / Pause Outline/Filled Circle Button */}
+        {/* Prominent Play / Pause Solid White Circle Button (Matching reference mock-up) */}
         <button
           onClick={onPlayPause}
-          className="w-12 h-12 rounded-full border-2 border-white/90 hover:border-white hover:bg-white/10 text-white flex items-center justify-center transition-all active:scale-95 cursor-pointer shadow-lg shadow-black/40"
+          className="w-14 h-14 rounded-full bg-white hover:bg-neutral-200 text-black flex items-center justify-center transition-all active:scale-95 cursor-pointer shadow-xl shadow-black/70"
           title={isPlaying ? 'Pause' : 'Play'}
         >
           {isPlaying ? (
-            <Pause className="w-5 h-5 fill-current" />
+            <Pause className="w-6 h-6 fill-current text-black" />
           ) : (
-            <Play className="w-5 h-5 fill-current translate-x-0.5" />
+            <Play className="w-6 h-6 fill-current translate-x-0.5 text-black" />
           )}
         </button>
 
