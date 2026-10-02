@@ -66,9 +66,6 @@ dependencies {
     // Coil for album artwork loading from MediaStore content URIs
     implementation("io.coil-kt:coil-compose:2.7.0")
 
-    // Accompanist / Permissions
-    implementation("com.google.accompanist:accompanist-permissions:0.36.0")
-
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
 

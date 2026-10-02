@@ -249,57 +249,71 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     val uiState: StateFlow<PlayerUiState> = _uiState.asStateFlow()
 
     init {
-        setupPlayerListener()
-        startPositionTracker()
+        try {
+            setupPlayerListener()
+            startPositionTracker()
+        } catch (_: Exception) {
+            // Guard background initialization
+        }
     }
 
     private fun setupPlayerListener() {
-        exoPlayer.addListener(object : Player.Listener {
-            override fun onIsPlayingChanged(isPlaying: Boolean) {
-                _uiState.value = _uiState.value.copy(isPlaying = isPlaying)
-            }
-
-            override fun onPlaybackStateChanged(playbackState: Int) {
-                if (playbackState == Player.STATE_READY) {
-                    _uiState.value = _uiState.value.copy(durationMs = exoPlayer.duration.coerceAtLeast(0L))
-                } else if (playbackState == Player.STATE_ENDED) {
-                    handleTrackEnded()
+        try {
+            exoPlayer.addListener(object : Player.Listener {
+                override fun onIsPlayingChanged(isPlaying: Boolean) {
+                    _uiState.value = _uiState.value.copy(isPlaying = isPlaying)
                 }
-            }
-        })
+
+                override fun onPlaybackStateChanged(playbackState: Int) {
+                    if (playbackState == Player.STATE_READY) {
+                        _uiState.value = _uiState.value.copy(durationMs = exoPlayer.duration.coerceAtLeast(0L))
+                    } else if (playbackState == Player.STATE_ENDED) {
+                        handleTrackEnded()
+                    }
+                }
+            })
+        } catch (_: Exception) {
+        }
     }
 
     private fun startPositionTracker() {
         viewModelScope.launch {
-            while (true) {
-                if (exoPlayer.isPlaying) {
-                    _uiState.value = _uiState.value.copy(
-                        currentPositionMs = exoPlayer.currentPosition.coerceAtLeast(0L)
-                    )
+            try {
+                while (true) {
+                    if (exoPlayer.isPlaying) {
+                        _uiState.value = _uiState.value.copy(
+                            currentPositionMs = exoPlayer.currentPosition.coerceAtLeast(0L)
+                        )
+                    }
+                    delay(200)
                 }
-                delay(200)
+            } catch (_: Exception) {
             }
         }
     }
 
     fun loadLocalMusic() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-            val scannedReleases = audioScanner.scanLocalReleases()
-            val activeReleases = if (scannedReleases.isNotEmpty()) {
-                scannedReleases
-            } else {
-                _uiState.value.releases // Retain preview/demo releases until real music is added
-            }
+            try {
+                _uiState.value = _uiState.value.copy(isLoading = true)
+                val scannedReleases = audioScanner.scanLocalReleases()
+                val activeReleases = if (scannedReleases.isNotEmpty()) {
+                    scannedReleases
+                } else {
+                    _uiState.value.releases // Retain preview/demo releases until real music is added
+                }
 
-            _uiState.value = _uiState.value.copy(
-                releases = activeReleases,
-                selectedReleaseIndex = 0,
-                currentTrackIndex = 0,
-                isLoading = false,
-                permissionGranted = true
-            )
-            prepareCurrentTrack()
+                _uiState.value = _uiState.value.copy(
+                    releases = activeReleases,
+                    selectedReleaseIndex = 0,
+                    currentTrackIndex = 0,
+                    isLoading = false,
+                    permissionGranted = true
+                )
+                prepareCurrentTrack(autoplay = false)
+            } catch (_: Exception) {
+                _uiState.value = _uiState.value.copy(isLoading = false)
+            }
         }
     }
 
@@ -367,11 +381,18 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     private fun prepareCurrentTrack(autoplay: Boolean = false) {
         val track = _uiState.value.currentTrack ?: return
-        val mediaItem = MediaItem.fromUri(track.contentUri)
-        exoPlayer.setMediaItem(mediaItem)
-        exoPlayer.prepare()
-        if (autoplay) {
-            exoPlayer.play()
+        if (track.contentUri == Uri.EMPTY || track.contentUri.toString().isEmpty()) {
+            return
+        }
+        try {
+            val mediaItem = MediaItem.fromUri(track.contentUri)
+            exoPlayer.setMediaItem(mediaItem)
+            exoPlayer.prepare()
+            if (autoplay) {
+                exoPlayer.play()
+            }
+        } catch (_: Exception) {
+            // Guard against media file playback initialization errors
         }
     }
 

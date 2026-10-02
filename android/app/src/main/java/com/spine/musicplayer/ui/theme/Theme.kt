@@ -29,12 +29,17 @@ fun SpineTheme(
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
-            val window = (view.context as Activity).window
-            window.statusBarColor = Color(0xFF141312).toArgb()
-            window.navigationBarColor = Color(0xFF141210).toArgb()
-            WindowCompat.getInsetsController(window, view).apply {
-                isAppearanceLightStatusBars = false
-                isAppearanceLightNavigationBars = false
+            val activity = view.context as? Activity ?: return@SideEffect
+            try {
+                val window = activity.window
+                window.statusBarColor = Color(0xFF141312).toArgb()
+                window.navigationBarColor = Color(0xFF141210).toArgb()
+                WindowCompat.getInsetsController(window, view).apply {
+                    isAppearanceLightStatusBars = false
+                    isAppearanceLightNavigationBars = false
+                }
+            } catch (_: Exception) {
+                // Ignore edge-to-edge / window access exceptions on newer Android runtimes
             }
         }
     }

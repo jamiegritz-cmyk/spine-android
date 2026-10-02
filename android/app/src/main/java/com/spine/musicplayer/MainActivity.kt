@@ -1,10 +1,13 @@
 package com.spine.musicplayer
 
 import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -12,9 +15,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberPermissionState
+import androidx.core.content.ContextCompat
 import com.spine.musicplayer.ui.PlayerScreen
 import com.spine.musicplayer.ui.theme.SpineTheme
 import com.spine.musicplayer.viewmodel.PlayerViewModel
@@ -23,7 +24,6 @@ class MainActivity : ComponentActivity() {
 
     private val playerViewModel: PlayerViewModel by viewModels()
 
-    @OptIn(ExperimentalPermissionsApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -37,13 +37,28 @@ class MainActivity : ComponentActivity() {
                     Manifest.permission.READ_EXTERNAL_STORAGE
                 }
 
-                val permissionState = rememberPermissionState(permission = audioPermission)
+                val permissionLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.RequestPermission()
+                ) { isGranted ->
+                    if (isGranted) {
+                        playerViewModel.loadLocalMusic()
+                    }
+                }
 
-                LaunchedEffect(permissionState.status.isGranted) {
-                    if (permissionState.status.isGranted) {
+                LaunchedEffect(Unit) {
+                    val isGranted = ContextCompat.checkSelfPermission(
+                        this@MainActivity,
+                        audioPermission
+                    ) == PackageManager.PERMISSION_GRANTED
+
+                    if (isGranted) {
                         playerViewModel.loadLocalMusic()
                     } else {
-                        permissionState.launchPermissionRequest()
+                        try {
+                            permissionLauncher.launch(audioPermission)
+                        } catch (_: Exception) {
+                            // Non-fatal if permission dialog cannot be triggered immediately
+                        }
                     }
                 }
 

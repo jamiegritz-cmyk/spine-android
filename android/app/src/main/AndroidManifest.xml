@@ -20,7 +20,7 @@
         android:theme="@style/Theme.Spine">
 
         <activity
-            android:name=".MainActivity"
+            android:name="com.spine.musicplayer.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.Spine"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize">
