@@ -1,35 +1,45 @@
 package com.spine.musicplayer.data
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
-import com.spine.musicplayer.data.network.CoverArtArchiveClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
-import java.net.URL
 import java.security.MessageDigest
 
 /**
- * Repository responsible for:
- * 1. Extracting and caching embedded ID3 album art from local audio files.
- * 2. Identifying missing releases on MusicBrainz.
- * 3. Fetching genuine front artwork from the Cover Art Archive.
- * 4. Caching all artwork locally on the Android device's disk.
+ * Separate, replaceable interface for optional online artwork providers.
+ * Adheres to GRAIZ policy: do not assume online metadata services grant commercial rights
+ * to reproduce artwork. Keeps online providers decoupled and non-reliant.
  */
-class CoverArtRepository(private val context: Context) {
+interface OnlineArtworkProvider {
+    suspend fun resolveCoverArtUri(album: String, artist: String): String?
+}
 
-    private val networkClient = CoverArtArchiveClient()
+/**
+ * Repository enforcing the strict three-tier artwork architecture:
+ * 1. Embedded Artwork: First priority. Uses genuine embedded picture metadata directly from user's audio file.
+ * 2. Manual User Artwork: Second priority. Allows user to select a picture file from their device storage.
+ * 3. Replaceable Online Provider: Third priority, completely decoupled and disabled by default
+ *    unless an explicitly licensed commercial provider is supplied.
+ */
+class CoverArtRepository(
+    private val context: Context,
+    private val optionalOnlineProvider: OnlineArtworkProvider? = null
+) {
+
     private val artworkCacheDir: File by lazy {
-        File(context.cacheDir, "spine_artwork").apply { mkdirs() }
+        File(context.cacheDir, "graiz_artwork").apply { mkdirs() }
     }
 
     /**
-     * Obtains artwork for an album: checks local disk cache, then queries MusicBrainz + CAA.
+     * Resolves artwork with strict priority:
+     * 1. Check local embedded or manually assigned cache file.
+     * 2. If missing, optionally delegates to a licensed OnlineArtworkProvider if configured.
      */
     suspend fun getOrFetchArtwork(album: String, artist: String): Uri? = withContext(Dispatchers.IO) {
+        // Priority 1 & 2: Local cache (embedded picture or user-selected picture)
         val cacheKey = hashKey("$album-$artist")
         val cachedFile = File(artworkCacheDir, "$cacheKey.jpg")
 
@@ -37,11 +47,10 @@ class CoverArtRepository(private val context: Context) {
             return@withContext Uri.fromFile(cachedFile)
         }
 
-        // Query MusicBrainz and Cover Art Archive
-        val onlineUrlString = networkClient.findCoverArt(album, artist) ?: return@withContext null
-
+        // Priority 3: Optional, explicitly licensed provider (pluggable/replaceable)
+        val onlineUrl = optionalOnlineProvider?.resolveCoverArtUri(album, artist) ?: return@withContext null
         try {
-            val url = URL(onlineUrlString)
+            val url = java.net.URL(onlineUrl)
             url.openStream().use { input ->
                 FileOutputStream(cachedFile).use { output ->
                     input.copyTo(output)
@@ -54,15 +63,34 @@ class CoverArtRepository(private val context: Context) {
     }
 
     /**
-     * Saves raw embedded picture bytes from MediaMetadataRetriever directly to local cache.
+     * Priority 1: Saves raw embedded picture bytes from MediaMetadataRetriever directly to local cache.
      */
     suspend fun saveEmbeddedPicture(album: String, artist: String, pictureBytes: ByteArray): Uri? =
         withContext(Dispatchers.IO) {
             try {
-                val cacheKey = hashKey("$album-$artist-embedded")
+                val cacheKey = hashKey("$album-$artist")
                 val targetFile = File(artworkCacheDir, "$cacheKey.jpg")
                 FileOutputStream(targetFile).use { fos ->
                     fos.write(pictureBytes)
+                }
+                Uri.fromFile(targetFile)
+            } catch (_: Exception) {
+                null
+            }
+        }
+
+    /**
+     * Priority 2: Saves a user manually selected artwork from device storage for an album.
+     */
+    suspend fun saveUserSelectedArtwork(album: String, artist: String, sourceUri: Uri): Uri? =
+        withContext(Dispatchers.IO) {
+            try {
+                val cacheKey = hashKey("$album-$artist")
+                val targetFile = File(artworkCacheDir, "$cacheKey.jpg")
+                context.contentResolver.openInputStream(sourceUri)?.use { input ->
+                    FileOutputStream(targetFile).use { output ->
+                        input.copyTo(output)
+                    }
                 }
                 Uri.fromFile(targetFile)
             } catch (_: Exception) {

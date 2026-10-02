@@ -3,31 +3,120 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
+    <!-- Cassette Tape at Top -->
     <group
-        android:scaleX="0.6"
-        android:scaleY="0.6"
-        android:translateX="21.6"
-        android:translateY="21.6">
-        <!-- CD Jewel Case Outer Outline -->
+        android:translateX="18"
+        android:translateY="14">
+        <!-- Clear acrylic shell -->
         <path
-            android:fillColor="#1E1E1E"
-            android:strokeColor="#FFFFFF"
-            android:strokeWidth="3"
-            android:pathData="M14,14 L94,14 L94,94 L14,94 Z" />
-        <!-- Hinge Strip -->
+            android:fillColor="#1C1A18"
+            android:strokeColor="#55FFFFFF"
+            android:strokeWidth="1"
+            android:pathData="M2,2 h68 a3,3 0 0,1 3,3 v36 a3,3 0 0,1 -3,3 h-68 a3,3 0 0,1 -3,-3 v-36 a3,3 0 0,1 3,-3 z" />
+
+        <!-- Cassette paper label -->
         <path
-            android:fillColor="#333333"
-            android:pathData="M14,14 L24,14 L24,94 L14,94 Z" />
-        <!-- Disc Outer Ring -->
+            android:fillColor="#F5F3E9"
+            android:pathData="M7,6 h58 a1,1 0 0,1 1,1 v24 a1,1 0 0,1 -1,1 h-58 a1,1 0 0,1 -1,-1 v-24 a1,1 0 0,1 1,-1 z" />
+        <!-- Red stripe -->
         <path
-            android:strokeColor="#E0E0E0"
-            android:strokeWidth="2"
-            android:pathData="M59,54 m-28,0 a28,28 0 1,0 56,0 a28,28 0 1,0 -56,0" />
-        <!-- Disc Center Hole -->
+            android:fillColor="#D32F2F"
+            android:pathData="M7,15 h58 v3 h-58 z" />
+        <!-- Orange stripe -->
         <path
-            android:fillColor="#121212"
-            android:strokeColor="#FFFFFF"
-            android:strokeWidth="2"
-            android:pathData="M59,54 m-8,0 a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0" />
+            android:fillColor="#FB8C00"
+            android:pathData="M7,18 h58 v3 h-58 z" />
+        <!-- Yellow stripe -->
+        <path
+            android:fillColor="#FFB300"
+            android:pathData="M7,21 h58 v4 h-58 z" />
+
+        <!-- Tape window cutout -->
+        <path
+            android:fillColor="#12100E"
+            android:strokeColor="#CCCCCC"
+            android:strokeWidth="0.5"
+            android:pathData="M16,12 h40 l-3,16 h-34 z" />
+
+        <!-- Left Spool Hub -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M25,20 m-6,0 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0" />
+        <path
+            android:fillColor="#12100E"
+            android:pathData="M25,20 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+
+        <!-- Right Spool Hub -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M47,20 m-6,0 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0" />
+        <path
+            android:fillColor="#12100E"
+            android:pathData="M47,20 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+    </group>
+
+    <!-- Walnut Wooden Shelf Divider -->
+    <path
+        android:fillColor="#5D3A24"
+        android:strokeColor="#A06941"
+        android:strokeWidth="0.8"
+        android:pathData="M10,56 h88 v6 h-88 z" />
+
+    <!-- Lower Cassette Spines Rack -->
+    <group android:translateY="62">
+        <path android:fillColor="#EDE7D9" android:pathData="M12,0 h6 v34 h-6 z" />
+        <path android:fillColor="#21201D" android:pathData="M19,0 h6 v34 h-6 z" />
+        <path android:fillColor="#1B1917" android:pathData="M26,0 h6 v34 h-6 z" />
+        <path android:fillColor="#B71C1C" android:pathData="M33,0 h7 v34 h-7 z" />
+        <path android:fillColor="#262524" android:pathData="M41,0 h6 v34 h-6 z" />
+        <path android:fillColor="#E65100" android:pathData="M48,0 h7 v34 h-7 z" />
+        <path android:fillColor="#1E232A" android:pathData="M56,0 h7 v34 h-7 z" />
+        <path android:fillColor="#EFECE2" android:pathData="M64,0 h7 v34 h-7 z" />
+        <path android:fillColor="#0D47A1" android:pathData="M72,0 h6 v34 h-6 z" />
+        <path android:fillColor="#C62828" android:pathData="M79,0 h7 v34 h-7 z" />
+        <path android:fillColor="#EDE7D9" android:pathData="M87,0 h7 v34 h-7 z" />
+    </group>
+
+    <!-- Bold GRAIZ Logo -->
+    <group
+        android:translateX="14"
+        android:translateY="68">
+        <!-- Logo Shadow -->
+        <path
+            android:fillColor="#D0000000"
+            android:pathData="M1,6 h15 v2 h-10 v8 h10 v-4 h-5 v-2 h7 v7 h-17 z M18,6 h13 v8 h-3 l4,6 h-4 l-3,-5 h-3 v5 h-4 z M33,20 l8,-14 h4 l8,14 h-4 l-2,-5 h-8 l-2,5 z M52,6 h4 v14 h-4 z M58,6 h14 v3 l-9,9 h9 v3 h-14 v-3 l9,-9 h-9 z" />
+        
+        <!-- Off-white Lettering -->
+        <!-- 'G' -->
+        <path
+            android:fillColor="#F8F6ED"
+            android:pathData="M0,5 h15 v2 h-10 v8 h10 v-4 h-5 v-2 h7 v7 h-17 z" />
+        <!-- 'R' -->
+        <path
+            android:fillColor="#F8F6ED"
+            android:pathData="M17,5 h13 v8 h-3 l4,6 h-4 l-3,-5 h-3 v5 h-4 z M21,8 h5 v3 h-5 z" />
+        <!-- 'A' -->
+        <path
+            android:fillColor="#F8F6ED"
+            android:pathData="M32,19 l8,-14 h4 l8,14 h-4 l-2,-5 h-8 l-2,5 z M38,11 h4 l-2,-4 z" />
+        <!-- 'A' Chevron Warm Stripes -->
+        <path
+            android:fillColor="#D32F2F"
+            android:pathData="M38,14 l3,-5 l1,2 l-2,3 z" />
+        <path
+            android:fillColor="#FB8C00"
+            android:pathData="M40,14 l2,-3 l1,2 l-1,1 z" />
+        <path
+            android:fillColor="#FFB300"
+            android:pathData="M41,14 l1,-1 l1,1 z" />
+        <!-- 'I' -->
+        <path
+            android:fillColor="#F8F6ED"
+            android:pathData="M51,5 h4 v14 h-4 z" />
+        <!-- 'Z' -->
+        <path
+            android:fillColor="#F8F6ED"
+            android:pathData="M57,5 h14 v3 l-9,9 h9 v3 h-14 v-3 l9,-9 h-9 z" />
     </group>
 </vector>

@@ -57,6 +57,7 @@ data class PlayerUiState(
 class PlayerViewModel(application: Application) : AndroidViewModel(application) {
 
     private val audioScanner = MediaStoreAudioScanner(application)
+    private val coverArtRepository = CoverArtRepository(application)
     private val exoPlayer: ExoPlayer = ExoPlayer.Builder(application).build()
 
     private val defaultReleases: List<Release> = listOf(
@@ -328,14 +329,26 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun updateReleaseArtwork(releaseId: String, newArtworkUri: Uri) {
-        val updatedReleases = _uiState.value.releases.map { release ->
-            if (release.id == releaseId) {
-                release.copy(artworkUri = newArtworkUri)
+        viewModelScope.launch {
+            val targetRelease = _uiState.value.releases.find { it.id == releaseId }
+            val savedUri = if (targetRelease != null) {
+                coverArtRepository.saveUserSelectedArtwork(
+                    targetRelease.title,
+                    targetRelease.artist,
+                    newArtworkUri
+                ) ?: newArtworkUri
             } else {
-                release
+                newArtworkUri
             }
+            val updatedReleases = _uiState.value.releases.map { release ->
+                if (release.id == releaseId) {
+                    release.copy(artworkUri = savedUri)
+                } else {
+                    release
+                }
+            }
+            _uiState.value = _uiState.value.copy(releases = updatedReleases)
         }
-        _uiState.value = _uiState.value.copy(releases = updatedReleases)
     }
 
     fun selectRelease(index: Int) {

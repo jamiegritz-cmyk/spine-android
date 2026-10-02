@@ -113,10 +113,10 @@ export const AndroidFrame: React.FC<AndroidFrameProps> = ({
 
         {/* Android App Header (Three independent layout regions: Left (SPINE), Centre (Fixed Controls), Right (Catalog)) */}
         <div className="w-full h-11 px-5 flex items-center justify-between shrink-0 bg-[#11100F] z-30 border-b border-neutral-900/60 relative">
-          {/* Left: Spine/menu area */}
+          {/* Left: GRAIZ/menu area */}
           <div className="flex items-center gap-3 shrink-0 z-10">
             <span className="font-black tracking-[0.2em] text-sm text-neutral-100 select-none">
-              SPINE
+              GRAIZ
             </span>
             <button
               onClick={onOpenLocalPicker}

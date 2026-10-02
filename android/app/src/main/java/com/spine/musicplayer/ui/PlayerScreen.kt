@@ -133,12 +133,12 @@ private fun PortraitPlayerLayout(
                 .padding(horizontal = 20.dp),
             contentAlignment = Alignment.Center
         ) {
-            // Left: Spine title
+            // Left: GRAIZ brand title
             Box(
                 modifier = Modifier.align(Alignment.CenterStart)
             ) {
                 Text(
-                    text = "SPINE",
+                    text = "GRAIZ",
                     style = MaterialTheme.typography.titleMedium.copy(
                         letterSpacing = 3.sp,
                         fontWeight = FontWeight.Bold,

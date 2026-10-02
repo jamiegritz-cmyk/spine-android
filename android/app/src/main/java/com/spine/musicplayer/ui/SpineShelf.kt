@@ -55,7 +55,7 @@ import kotlin.math.roundToInt
  * - Recessed printed paper spine inlay inside the clear case (artwork doesn't touch outer edge).
  * - Subtle plastic specular highlights, corner bevels, and inter-case shadow seams.
  * - Direct 1:1 thumb-drag tracking, momentum scrolling, and NO post-release snapping.
- * - Robust hardware haptic tick via HapticFeedbackHelper on every single center CD transition.
+ * - Haptic feedback connected DIRECTLY to the actual centred-CD index state change.
  * - Selected center CD pulled forward with accentuated transparent acrylic edge reflections.
  */
 @Composable
@@ -92,28 +92,49 @@ fun SpineShelf(
     val scrollOffset = remember { Animatable(-selectedIndex * itemWidthPx) }
     val coroutineScope = rememberCoroutineScope()
 
-    var lastCenterIndex by remember { mutableIntStateOf(selectedIndex) }
+    // 1. Reactive calculation of current center integer and active release index
+    val currentCenterInt by remember(itemWidthPx) {
+        derivedStateOf {
+            floor((-scrollOffset.value / itemWidthPx) + 0.5f).toInt()
+        }
+    }
+
+    val activeCenterIndex by remember(n) {
+        derivedStateOf {
+            ((currentCenterInt % n) + n) % n
+        }
+    }
+
+    // 2. CONNECT HAPTIC DIRECTLY TO THE CENTRED-CD STATE TRANSITION
+    // This triggers reliably whether moving slowly, dragging quickly, flicking,
+    // momentum scrolling, or snapping. Exactly ONE tick per index transition.
+    var lastEmittedIndex by remember { mutableIntStateOf(selectedIndex) }
+
+    LaunchedEffect(activeCenterIndex) {
+        if (activeCenterIndex != lastEmittedIndex) {
+            lastEmittedIndex = activeCenterIndex
+            onSelectRelease(activeCenterIndex)
+            // Trigger native hardware haptic tick
+            hapticHelper.performCdTick(view)
+        }
+    }
 
     // Keep shelf centered on external programmatic selection (e.g. skip track or library select)
     LaunchedEffect(selectedIndex) {
-        val currentCenter = ((floor((-scrollOffset.value / itemWidthPx) + 0.5f).toInt() % n) + n) % n
-        if (currentCenter != selectedIndex) {
+        if (activeCenterIndex != selectedIndex) {
             val rawCenter = -scrollOffset.value / itemWidthPx
-            val currentCenterInt = floor(rawCenter + 0.5f).toInt()
-            val diff = ((selectedIndex - (currentCenterInt % n)) % n)
+            val curInt = floor(rawCenter + 0.5f).toInt()
+            val diff = ((selectedIndex - (curInt % n)) % n)
             val shortestDiff = when {
                 diff > n / 2 -> diff - n
                 diff < -n / 2 -> diff + n
                 else -> diff
             }
-            val targetInt = currentCenterInt + shortestDiff
+            val targetInt = curInt + shortestDiff
             scrollOffset.animateTo(
                 targetValue = -targetInt * itemWidthPx,
                 animationSpec = spring(stiffness = Spring.StiffnessLow)
             )
-            lastCenterIndex = selectedIndex
-            // Fire haptic tick on programmatic selection change
-            hapticHelper.performCdTick(view)
         }
     }
 
@@ -139,18 +160,6 @@ fun SpineShelf(
 
                             launch {
                                 scrollOffset.snapTo(scrollOffset.value + dragAmount)
-
-                                // Continuous center selection while dragging
-                                val rawCenterPos = -scrollOffset.value / itemWidthPx
-                                val centerInt = floor(rawCenterPos + 0.5f).toInt()
-                                val activeIndex = ((centerInt % n) + n) % n
-
-                                if (activeIndex != lastCenterIndex) {
-                                    lastCenterIndex = activeIndex
-                                    onSelectRelease(activeIndex)
-                                    // Robust native Android haptic tick: exactly once per CD transition
-                                    hapticHelper.performCdTick(view)
-                                }
                             }
                         }
 
@@ -161,17 +170,10 @@ fun SpineShelf(
                             val velocity = velocityTracker.calculateVelocity().x
                             if (abs(velocity) > 120f) {
                                 launch {
-                                    scrollOffset.animateDecay(velocity, exponentialDecay(frictionMultiplier = 1.25f)) {
-                                        val rawCenterPos = -value / itemWidthPx
-                                        val centerInt = floor(rawCenterPos + 0.5f).toInt()
-                                        val activeIndex = ((centerInt % n) + n) % n
-
-                                        if (activeIndex != lastCenterIndex) {
-                                            lastCenterIndex = activeIndex
-                                            onSelectRelease(activeIndex)
-                                            hapticHelper.performCdTick(view)
-                                        }
-                                    }
+                                    scrollOffset.animateDecay(
+                                        initialVelocity = velocity,
+                                        animationSpec = exponentialDecay(frictionMultiplier = 1.25f)
+                                    )
                                     // Movement ceased: no snapTo or animateTo.
                                 }
                             }
@@ -215,7 +217,7 @@ fun SpineShelf(
         )
 
         // Continuous horizontal shelf of authentic CD jewel cases
-        val currentCenterInt = floor((-scrollOffset.value / itemWidthPx) + 0.5f).toInt()
+        val currentCenterBase = currentCenterInt
 
         Box(
             modifier = Modifier
@@ -225,10 +227,10 @@ fun SpineShelf(
                 .padding(bottom = 36.dp)
         ) {
             for (slot in (-visibleSlots / 2)..(visibleSlots / 2)) {
-                val caseIndex = (((currentCenterInt + slot) % n) + n) % n
+                val caseIndex = (((currentCenterBase + slot) % n) + n) % n
                 val release = releases[caseIndex]
 
-                val xPos = centerX + (currentCenterInt + slot) * itemWidthPx + scrollOffset.value - (itemWidthPx / 2f)
+                val xPos = centerX + (currentCenterBase + slot) * itemWidthPx + scrollOffset.value - (itemWidthPx / 2f)
                 val distFromCenter = abs(xPos + (itemWidthPx / 2f) - centerX)
                 val isCentered = distFromCenter < (itemWidthPx / 2f)
 
@@ -250,9 +252,6 @@ fun SpineShelf(
                                         targetOffset,
                                         animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
                                     )
-                                    lastCenterIndex = caseIndex
-                                    onSelectRelease(caseIndex)
-                                    hapticHelper.performCdTick(view)
                                 }
                             }
                         }
@@ -334,7 +333,6 @@ fun CdSpineItem(
                 .fillMaxSize()
                 .clip(RoundedCornerShape(2.5.dp))
                 .background(
-                    // Translucent polystyrene plastic casing (visible along all outer borders)
                     Brush.horizontalGradient(
                         colors = listOf(
                             Color(0x40FFFFFF), // Left transparent plastic wall reflection
@@ -376,7 +374,6 @@ fun CdSpineItem(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                // Physical inset: paper insert sits visibly RECESSED behind clear plastic walls
                 .padding(start = 2.4.dp, end = 2.4.dp, top = 14.dp, bottom = 12.dp)
                 .clip(RoundedCornerShape(1.dp))
                 .background(parsedColor)

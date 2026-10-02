@@ -1,4 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+import fs from 'fs';
+import path from 'path';
+import sharp from 'sharp';
+
+const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
   <defs>
     <!-- Background Gradient -->
     <radialGradient id="bgGlow" cx="50%" cy="40%" r="60%">
@@ -186,4 +190,43 @@
     <!-- 'Z' -->
     <path d="M280,2 L344,2 L344,16 L302,64 L344,64 L344,78 L280,78 L280,64 L322,16 L280,16 Z" fill="#F8F6ED"/>
   </g>
-</svg>
+</svg>`;
+
+async function main() {
+  const svgBuffer = Buffer.from(svg);
+
+  // Write SVG assets
+  fs.writeFileSync(path.resolve('public', 'icon-512.svg'), svg);
+  fs.writeFileSync(path.resolve('public', 'icon-192.svg'), svg);
+
+  // Generate web PNG icons
+  await sharp(svgBuffer).resize(192, 192).png().toFile(path.resolve('public', 'icon-192.png'));
+  await sharp(svgBuffer).resize(512, 512).png().toFile(path.resolve('public', 'icon-512.png'));
+  console.log('Generated public web icons (192 and 512)');
+
+  // Generate Android mipmaps
+  const mipmaps = [
+    { folder: 'mipmap-mdpi', size: 48 },
+    { folder: 'mipmap-hdpi', size: 72 },
+    { folder: 'mipmap-xhdpi', size: 96 },
+    { folder: 'mipmap-xxhdpi', size: 144 },
+    { folder: 'mipmap-xxxhdpi', size: 192 },
+  ];
+
+  const androidResDir = path.resolve('android', 'app', 'src', 'main', 'res');
+
+  for (const m of mipmaps) {
+    const dir = path.join(androidResDir, m.folder);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    const targetPng = path.join(dir, 'ic_launcher.png');
+    const targetRoundPng = path.join(dir, 'ic_launcher_round.png');
+
+    await sharp(svgBuffer).resize(m.size, m.size).png().toFile(targetPng);
+    await sharp(svgBuffer).resize(m.size, m.size).png().toFile(targetRoundPng);
+    console.log(`Generated ${targetPng} (${m.size}x${m.size})`);
+  }
+}
+
+main().catch(console.error);
