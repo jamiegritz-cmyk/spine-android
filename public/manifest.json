@@ -1,0 +1,33 @@
+{
+  "name": "Spine - CD Shelf Music Player",
+  "short_name": "Spine",
+  "description": "Visual physical CD collection music player for Pixel 9 with thin jewel case spines on a wooden shelf and local music playback.",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#121212",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["music", "audio", "entertainment"]
+}

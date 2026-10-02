@@ -1,0 +1,6 @@
+{
+  "name": "Spine - Native Android CD Shelf Music Player",
+  "description": "Visual physical CD collection music player for Android with thin jewel case spines on a wooden shelf and local music playback.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

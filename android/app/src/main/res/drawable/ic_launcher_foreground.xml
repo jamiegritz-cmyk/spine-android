@@ -1,0 +1,33 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:scaleX="0.6"
+        android:scaleY="0.6"
+        android:translateX="21.6"
+        android:translateY="21.6">
+        <!-- CD Jewel Case Outer Outline -->
+        <path
+            android:fillColor="#1E1E1E"
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="3"
+            android:pathData="M14,14 L94,14 L94,94 L14,94 Z" />
+        <!-- Hinge Strip -->
+        <path
+            android:fillColor="#333333"
+            android:pathData="M14,14 L24,14 L24,94 L14,94 Z" />
+        <!-- Disc Outer Ring -->
+        <path
+            android:strokeColor="#E0E0E0"
+            android:strokeWidth="2"
+            android:pathData="M59,54 m-28,0 a28,28 0 1,0 56,0 a28,28 0 1,0 -56,0" />
+        <!-- Disc Center Hole -->
+        <path
+            android:fillColor="#121212"
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="2"
+            android:pathData="M59,54 m-8,0 a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0" />
+    </group>
+</vector>
