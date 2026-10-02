@@ -125,28 +125,35 @@ private fun PortraitPlayerLayout(
             .background(Color(0xFF11100F)),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // 1. Top Bar: SPINE title, Albums/Singles pill, Refresh button, Catalog Number
-        Row(
+        // 1. Top Bar: Three independent layout regions (Left: SPINE, Centre: Fixed Controls, Right: Catalog)
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 10.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .height(48.dp)
+                .padding(horizontal = 20.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = "SPINE",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    letterSpacing = 3.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFFF5F5F4),
-                    fontSize = 15.sp
+            // Left: Spine title
+            Box(
+                modifier = Modifier.align(Alignment.CenterStart)
+            ) {
+                Text(
+                    text = "SPINE",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        letterSpacing = 3.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFF5F5F4),
+                        fontSize = 15.sp
+                    )
                 )
-            )
+            }
 
-            // Albums | Singles Switch & A-Z indicator
+            // Centre: FIXED/ANCHORED Albums / Singles / A-Z / Refresh controls
+            // Positioned at exact screen center so it never shifts when album/catalog changes
             Row(
+                modifier = Modifier.align(Alignment.Center),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 AlbumsSinglesSegment(
                     currentMode = uiState.filterMode,
@@ -158,15 +165,24 @@ private fun PortraitPlayerLayout(
                     isRefreshing = uiState.isRefreshing,
                     onClick = onRefresh
                 )
+            }
 
-                // Catalog code from mock-up (e.g. "RA-6405")
+            // Right: Selected album metadata / catalog number (anchored to right end)
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .widthIn(max = 76.dp),
+                contentAlignment = Alignment.CenterEnd
+            ) {
                 Text(
                     text = currentRelease?.catalogNumber ?: "RA-6405",
                     style = MaterialTheme.typography.bodySmall.copy(
                         color = Color(0xFFA8A29E),
                         fontFamily = FontFamily.Monospace,
                         fontSize = 12.sp
-                    )
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
@@ -317,7 +333,7 @@ private fun LandscapePlayerLayout(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
+                    Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
                         Text(
                             text = currentTrack?.title ?: currentRelease?.title ?: "Select an Album",
                             style = MaterialTheme.typography.titleMedium.copy(
@@ -338,10 +354,10 @@ private fun LandscapePlayerLayout(
                         )
                     }
 
-                    // Top controls: Albums/Singles + Refresh + Catalog
+                    // Anchored Library Control Region: Fixed position, independent of metadata
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         AlbumsSinglesSegment(
                             currentMode = uiState.filterMode,
@@ -351,11 +367,22 @@ private fun LandscapePlayerLayout(
                             isRefreshing = uiState.isRefreshing,
                             onClick = onRefresh
                         )
+                    }
+
+                    // Anchored Catalog metadata slot
+                    Box(
+                        modifier = Modifier
+                            .widthIn(max = 72.dp)
+                            .padding(start = 6.dp),
+                        contentAlignment = Alignment.CenterEnd
+                    ) {
                         Text(
                             text = currentRelease?.catalogNumber ?: "RA-6405",
                             color = Color(0xFF78716C),
                             fontFamily = FontFamily.Monospace,
-                            fontSize = 11.sp
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }

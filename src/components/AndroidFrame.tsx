@@ -111,9 +111,10 @@ export const AndroidFrame: React.FC<AndroidFrameProps> = ({
           </div>
         </div>
 
-        {/* Android App Header (Matching reference mockup: SPINE on left, RA-6405 on right, with Albums|Singles toggle & refresh) */}
-        <div className="w-full h-11 px-5 flex items-center justify-between shrink-0 bg-[#11100F] z-30 border-b border-neutral-900/60">
-          <div className="flex items-center gap-3">
+        {/* Android App Header (Three independent layout regions: Left (SPINE), Centre (Fixed Controls), Right (Catalog)) */}
+        <div className="w-full h-11 px-5 flex items-center justify-between shrink-0 bg-[#11100F] z-30 border-b border-neutral-900/60 relative">
+          {/* Left: Spine/menu area */}
+          <div className="flex items-center gap-3 shrink-0 z-10">
             <span className="font-black tracking-[0.2em] text-sm text-neutral-100 select-none">
               SPINE
             </span>
@@ -126,13 +127,13 @@ export const AndroidFrame: React.FC<AndroidFrameProps> = ({
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Albums | Singles Segmented Toggle */}
+          {/* Centre: Fixed Albums / Singles / A-Z / Refresh controls (Anchored dead-center) */}
+          <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5 shrink-0 z-10 pointer-events-auto">
             {onFilterModeChange && (
               <div className="flex items-center bg-[#1F1D1B] p-0.5 rounded-lg border border-neutral-800/80">
                 <button
                   onClick={() => onFilterModeChange('albums')}
-                  className={`px-2 py-0.5 rounded-md text-[11px] font-medium transition-all ${
+                  className={`px-2.5 py-0.5 rounded-md text-[11px] font-medium transition-all ${
                     filterMode === 'albums'
                       ? 'bg-[#383430] text-white shadow-xs'
                       : 'text-neutral-400 hover:text-neutral-200'
@@ -142,7 +143,7 @@ export const AndroidFrame: React.FC<AndroidFrameProps> = ({
                 </button>
                 <button
                   onClick={() => onFilterModeChange('singles')}
-                  className={`px-2 py-0.5 rounded-md text-[11px] font-medium transition-all ${
+                  className={`px-2.5 py-0.5 rounded-md text-[11px] font-medium transition-all ${
                     filterMode === 'singles'
                       ? 'bg-[#383430] text-white shadow-xs'
                       : 'text-neutral-400 hover:text-neutral-200'
@@ -176,9 +177,11 @@ export const AndroidFrame: React.FC<AndroidFrameProps> = ({
                 </svg>
               </button>
             )}
+          </div>
 
-            {/* Catalog Number matching mock-up: RA-6405 */}
-            <span className="font-mono text-xs text-neutral-400 font-medium pl-1">
+          {/* Right: Selected album metadata (anchored to right, can truncate) */}
+          <div className="flex items-center justify-end shrink-0 max-w-[76px] overflow-hidden z-10">
+            <span className="font-mono text-xs text-neutral-400 font-medium truncate">
               {catalogNumber}
             </span>
           </div>
