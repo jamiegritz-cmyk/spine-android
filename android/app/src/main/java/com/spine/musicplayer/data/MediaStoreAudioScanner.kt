@@ -114,7 +114,9 @@ class MediaStoreAudioScanner(private val context: Context) {
             "#701A75", "#831843", "#881337", "#431407", "#365314"
         )
 
-        tracksByAlbum.mapIndexed { index, (albumName, tracks) ->
+        tracksByAlbum.entries.mapIndexed { index, entry ->
+            val albumName = entry.key
+            val albumTracks = entry.value
             val artist = albumArtistMap[albumName] ?: "Various Artists"
             var artworkUri = albumArtMap[albumName]
 
@@ -157,7 +159,7 @@ class MediaStoreAudioScanner(private val context: Context) {
                 artist = artist,
                 year = albumYearMap[albumName],
                 artworkUri = artworkUri,
-                tracks = tracks.sortedBy { it.trackNumber },
+                tracks = albumTracks.sortedBy { track -> track.trackNumber },
                 spineColorHex = spineColor,
                 catalogNumber = catNum
             )
