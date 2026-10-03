@@ -59,7 +59,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     private val audioScanner = MediaStoreAudioScanner(application)
     private val coverArtRepository = CoverArtRepository(application)
-    private val exoPlayer: ExoPlayer = ExoPlayer.Builder(application).build()
+    private val exoPlayer: ExoPlayer? = try { ExoPlayer.Builder(application).build() } catch (t: Throwable) { android.util.Log.e("GRAIZ", "ExoPlayer init failed", t); null }
 
     private val defaultReleases: List<Release> = listOf(
         Release(
@@ -259,14 +259,14 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     private fun setupPlayerListener() {
         try {
-            exoPlayer.addListener(object : Player.Listener {
+            exoPlayer?.addListener(object : Player.Listener {
                 override fun onIsPlayingChanged(isPlaying: Boolean) {
                     _uiState.value = _uiState.value.copy(isPlaying = isPlaying)
                 }
 
                 override fun onPlaybackStateChanged(playbackState: Int) {
                     if (playbackState == Player.STATE_READY) {
-                        _uiState.value = _uiState.value.copy(durationMs = exoPlayer.duration.coerceAtLeast(0L))
+                        _uiState.value = _uiState.value.copy(durationMs = (exoPlayer?.duration ?: 0L).coerceAtLeast(0L))
                     } else if (playbackState == Player.STATE_ENDED) {
                         handleTrackEnded()
                     }
@@ -280,9 +280,9 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             try {
                 while (true) {
-                    if (exoPlayer.isPlaying) {
+                    if (exoPlayer?.isPlaying == true) {
                         _uiState.value = _uiState.value.copy(
-                            currentPositionMs = exoPlayer.currentPosition.coerceAtLeast(0L)
+                            currentPositionMs = (exoPlayer?.currentPosition ?: 0L).coerceAtLeast(0L)
                         )
                     }
                     delay(200)
@@ -386,10 +386,10 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         }
         try {
             val mediaItem = MediaItem.fromUri(track.contentUri)
-            exoPlayer.setMediaItem(mediaItem)
-            exoPlayer.prepare()
+            exoPlayer?.setMediaItem(mediaItem)
+            exoPlayer?.prepare()
             if (autoplay) {
-                exoPlayer.play()
+                exoPlayer?.play()
             }
         } catch (_: Exception) {
             // Guard against media file playback initialization errors
@@ -397,19 +397,20 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun togglePlayPause() {
-        if (exoPlayer.isPlaying) {
-            exoPlayer.pause()
+        val isPlaying = exoPlayer?.isPlaying == true
+        if (isPlaying) {
+            exoPlayer?.pause()
         } else {
-            if (exoPlayer.playbackState == Player.STATE_IDLE) {
+            if (exoPlayer?.playbackState == Player.STATE_IDLE) {
                 prepareCurrentTrack(autoplay = true)
             } else {
-                exoPlayer.play()
+                exoPlayer?.play()
             }
         }
     }
 
     fun seekTo(positionMs: Long) {
-        exoPlayer.seekTo(positionMs)
+        exoPlayer?.seekTo(positionMs)
         _uiState.value = _uiState.value.copy(currentPositionMs = positionMs)
     }
 
@@ -430,7 +431,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun previousTrack() {
-        if (exoPlayer.currentPosition > 3000) {
+        if ((exoPlayer?.currentPosition ?: 0L) > 3000L) {
             seekTo(0)
             return
         }
@@ -466,21 +467,21 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     private fun handleTrackEnded() {
         when (_uiState.value.repeatMode) {
-            RepeatMode.ONE -> seekTo(0).also { exoPlayer.play() }
+            RepeatMode.ONE -> seekTo(0).also { exoPlayer?.play() }
             RepeatMode.ALL -> nextTrack()
             RepeatMode.OFF -> {
                 val release = _uiState.value.currentRelease ?: return
                 if (_uiState.value.currentTrackIndex + 1 < release.tracks.size) {
                     nextTrack()
                 } else {
-                    exoPlayer.pause()
+                    exoPlayer?.pause()
                 }
             }
         }
     }
 
     override fun onCleared() {
-        exoPlayer.release()
+        exoPlayer?.release()
         super.onCleared()
     }
 }

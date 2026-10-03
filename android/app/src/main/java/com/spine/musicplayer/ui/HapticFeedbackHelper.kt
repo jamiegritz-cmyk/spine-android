@@ -17,36 +17,40 @@ import android.view.View
  */
 class HapticFeedbackHelper(private val context: Context) {
 
-    private val vibrator: Vibrator? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        val manager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager
-        manager?.defaultVibrator
-    } else {
-        @Suppress("DEPRECATION")
-        context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+    private val vibrator: Vibrator? = try {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val manager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager
+            manager?.defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+        }
+    } catch (_: Throwable) {
+        null
     }
 
     /**
      * Performs a single subtle mechanical tick haptic event on centered-CD state transition.
      */
     fun performCdTick(view: View? = null) {
-        // 1. View-based Haptic with flags to override muted settings
-        if (view != null) {
-            try {
-                view.isHapticFeedbackEnabled = true
-                val flags = HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING or
-                        HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING
-                view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK, flags)
-            } catch (_: Exception) {
+        try {
+            // 1. View-based Haptic with flags to override muted settings
+            if (view != null) {
                 try {
-                    view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-                } catch (_: Exception) {
-                    // Ignore
+                    view.isHapticFeedbackEnabled = true
+                    val flags = HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING or
+                            HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING
+                    view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK, flags)
+                } catch (_: Throwable) {
+                    try {
+                        view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                    } catch (_: Throwable) {
+                        // Ignore
+                    }
                 }
             }
-        }
 
-        // 2. Hardware Vibrator / Actuator with TOUCH usage attributes (crucial on Pixel 9)
-        try {
+            // 2. Hardware Vibrator / Actuator with TOUCH usage attributes (crucial on Pixel 9)
             if (vibrator != null && vibrator.hasVibrator()) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     val attributes = VibrationAttributes.Builder()
@@ -65,8 +69,8 @@ class HapticFeedbackHelper(private val context: Context) {
                     vibrator.vibrate(12)
                 }
             }
-        } catch (_: Exception) {
-            // Hardware fallback handled
+        } catch (_: Throwable) {
+            // Hardware fallback handled safely
         }
     }
 }

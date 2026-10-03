@@ -60,9 +60,7 @@ fun PlayerScreen(
 
     Scaffold(
         containerColor = Color(0xFF0F0E0D),
-        modifier = modifier
-            .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.safeDrawing)
+        modifier = modifier.fillMaxSize()
     ) { innerPadding ->
         if (isLandscape) {
             LandscapePlayerLayout(

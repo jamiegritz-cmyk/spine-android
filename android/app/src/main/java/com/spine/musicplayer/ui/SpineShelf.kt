@@ -83,7 +83,7 @@ fun SpineShelf(
 
     val context = LocalContext.current
     val view = LocalView.current
-    val hapticHelper = remember(context) { HapticFeedbackHelper(context) }
+    val hapticHelper = remember(context) { try { HapticFeedbackHelper(context) } catch (_: Throwable) { null } }
     val density = LocalDensity.current
     val itemWidthPx = with(density) { caseWidth.toPx() }
     val n = releases.size
@@ -115,7 +115,7 @@ fun SpineShelf(
             lastEmittedIndex = activeCenterIndex
             onSelectRelease(activeCenterIndex)
             // Trigger native hardware haptic tick
-            hapticHelper.performCdTick(view)
+            try { hapticHelper?.performCdTick(view) } catch (_: Throwable) {}
         }
     }
 
