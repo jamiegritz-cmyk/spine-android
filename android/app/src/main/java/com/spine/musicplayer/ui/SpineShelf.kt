@@ -403,24 +403,45 @@ fun CdSpineItem(
                 .drawBehind {
                     // Left edge specular highlight (clear acrylic bevel reflection)
                     drawLine(
-                        color = Color.White.copy(alpha = if (isSelected) 0.65f else 0.40f),
+                        color = Color.White.copy(alpha = if (isSelected) 0.70f else 0.45f),
                         start = Offset(0.5f, 0f),
                         end = Offset(0.5f, size.height),
                         strokeWidth = 1.2f
                     )
+                    // Left dark recessed side edge (distinct jewel case plastic wall depth)
+                    drawLine(
+                        color = Color.Black.copy(alpha = 0.65f),
+                        start = Offset(1.2.dp.toPx(), 0f),
+                        end = Offset(1.2.dp.toPx(), size.height),
+                        strokeWidth = 1.2.dp.toPx()
+                    )
                     // Secondary inner refraction line
                     drawLine(
-                        color = Color.White.copy(alpha = 0.18f),
-                        start = Offset(2f, 0f),
-                        end = Offset(2f, size.height),
+                        color = Color.White.copy(alpha = 0.22f),
+                        start = Offset(2.2.dp.toPx(), 0f),
+                        end = Offset(2.2.dp.toPx(), size.height),
                         strokeWidth = 0.8f
+                    )
+                    // Right dark recessed side edge (distinct jewel case plastic wall depth)
+                    drawLine(
+                        color = Color.Black.copy(alpha = 0.55f),
+                        start = Offset(size.width - 2.0.dp.toPx(), 0f),
+                        end = Offset(size.width - 2.0.dp.toPx(), size.height),
+                        strokeWidth = 1.0.dp.toPx()
                     )
                     // Right edge seam / hinge groove shadow
                     drawLine(
-                        color = Color.Black.copy(alpha = 0.70f),
+                        color = Color.Black.copy(alpha = 0.75f),
                         start = Offset(size.width - 0.5f, 0f),
                         end = Offset(size.width - 0.5f, size.height),
                         strokeWidth = 1.5f
+                    )
+                    // Right edge subtle specular highlight
+                    drawLine(
+                        color = Color.White.copy(alpha = if (isSelected) 0.35f else 0.18f),
+                        start = Offset(size.width - 1.0f, 0f),
+                        end = Offset(size.width - 1.0f, size.height),
+                        strokeWidth = 0.8f
                     )
                     // Top clear plastic edge highlight
                     drawLine(
