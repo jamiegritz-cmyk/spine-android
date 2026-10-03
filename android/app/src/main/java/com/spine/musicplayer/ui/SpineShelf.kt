@@ -20,10 +20,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
@@ -123,9 +126,11 @@ fun SpineShelf(
         modifier = modifier
             .fillMaxWidth()
             .height(shelfHeight)
-            .background(Color(0xFF0F0D0B))
+            .padding(horizontal = 8.dp)
+            .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp, bottomStart = 0.dp, bottomEnd = 0.dp))
+            .background(Color(0xFF090807))
     ) {
-        // Shelf Cavity Shadow & Dark Walnut Grain Backplate
+        // Recessed Cabinet Cavity with Ambient Shadows & Subtle Physical Outer Rim
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -133,9 +138,9 @@ fun SpineShelf(
                     drawRect(
                         brush = Brush.verticalGradient(
                             colors = listOf(
-                                Color(0xFF050504),
-                                Color(0xFF14110E),
-                                Color(0xFF1F1A15)
+                                Color(0xFF030303),
+                                Color(0xFF100E0C),
+                                Color(0xFF1A1612)
                             )
                         )
                     )
@@ -144,12 +149,27 @@ fun SpineShelf(
                         brush = Brush.verticalGradient(
                             colors = listOf(
                                 Color(0xEE000000),
-                                Color(0x88000000),
+                                Color(0x77000000),
                                 Color.Transparent
                             ),
                             startY = 0f,
-                            endY = 120f
+                            endY = 130f
                         )
+                    )
+                    // Subtle dark/grey physical edge rim defining the outer enclosure
+                    drawRoundRect(
+                        color = Color(0xFF2C2723),
+                        topLeft = Offset(0.5f, 0.5f),
+                        size = Size(size.width - 1f, size.height),
+                        cornerRadius = CornerRadius(20.dp.toPx(), 20.dp.toPx()),
+                        style = Stroke(width = 1.2.dp.toPx())
+                    )
+                    // Faint overhead ambient rim highlight along the top curve
+                    drawLine(
+                        color = Color(0xFF554C43).copy(alpha = 0.4f),
+                        start = Offset(22.dp.toPx(), 1f),
+                        end = Offset(size.width - 22.dp.toPx(), 1f),
+                        strokeWidth = 1f
                     )
                 }
         )
