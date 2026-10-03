@@ -142,7 +142,7 @@ private fun PortraitPlayerLayout(
 
     // Very subtle tactile paper / lightly brushed texture on near-black background
     val tactileBgBrush = rememberTactileTextureBrush(
-        baseColor = Color(0xFF141312),
+        baseColor = Color(0xFF0F1012),
         grainVariance = 3,
         seed = 42L
     )
@@ -380,7 +380,7 @@ private fun LandscapePlayerLayout(
     val currentRelease = uiState.currentRelease
 
     val tactileBgBrush = rememberTactileTextureBrush(
-        baseColor = Color(0xFF141312),
+        baseColor = Color(0xFF0F1012),
         grainVariance = 3,
         seed = 42L
     )
@@ -611,12 +611,12 @@ fun JewelCaseArtwork(
         modifier = modifier
             .aspectRatio(1f) // Strict square CD jewel case proportion
             .shadow(
-                elevation = 14.dp,
-                shape = RoundedCornerShape(3.dp),
-                ambientColor = Color.Black.copy(alpha = 0.7f),
-                spotColor = Color.Black.copy(alpha = 0.85f)
+                elevation = 12.dp,
+                shape = RoundedCornerShape(3.2.dp),
+                ambientColor = Color.Black.copy(alpha = 0.6f),
+                spotColor = Color.Black.copy(alpha = 0.8f)
             )
-            .background(Color(0x18FFFFFF), RoundedCornerShape(3.dp))
+            .background(Color(0x08FFFFFF), RoundedCornerShape(3.2.dp))
             .then(
                 if (onClick != null) {
                     Modifier.clickable(onClick = onClick)
@@ -625,19 +625,29 @@ fun JewelCaseArtwork(
                 }
             )
             .drawBehind {
-                // Subtle clear acrylic outer bevel rim
+                // Outer clear acrylic perimeter bevel
                 drawRoundRect(
                     brush = Brush.linearGradient(
                         colors = listOf(
-                            Color.White.copy(alpha = 0.32f),
-                            Color.White.copy(alpha = 0.08f),
-                            Color.Black.copy(alpha = 0.55f)
+                            Color.White.copy(alpha = 0.36f),
+                            Color.White.copy(alpha = 0.10f),
+                            Color.Black.copy(alpha = 0.45f)
                         ),
                         start = Offset(0f, 0f),
                         end = Offset(size.width, size.height)
                     ),
-                    cornerRadius = CornerRadius(3.dp.toPx(), 3.dp.toPx()),
+                    cornerRadius = CornerRadius(3.2.dp.toPx(), 3.2.dp.toPx()),
                     style = Stroke(width = 1.0.dp.toPx())
+                )
+
+                // Visible plastic wall thickness refraction line
+                val wallInset = 1.2.dp.toPx()
+                drawRoundRect(
+                    color = Color.White.copy(alpha = 0.12f),
+                    topLeft = Offset(wallInset, wallInset),
+                    size = androidx.compose.ui.geometry.Size(size.width - wallInset * 2, size.height - wallInset * 2),
+                    cornerRadius = CornerRadius(2.2.dp.toPx(), 2.2.dp.toPx()),
+                    style = Stroke(width = 0.7f)
                 )
             }
     ) {
@@ -645,7 +655,7 @@ fun JewelCaseArtwork(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(start = 13.dp, top = 3.dp, end = 3.dp, bottom = 3.dp)
+                .padding(start = 13.5.dp, top = 3.5.dp, end = 3.5.dp, bottom = 3.5.dp)
                 .clip(RoundedCornerShape(1.5.dp))
                 .background(Color(0xFF1E1D1B))
         ) {
@@ -682,46 +692,68 @@ fun JewelCaseArtwork(
         // Left Clear Acrylic Hinge Margin (Authentic physical CD jewel case hinge)
         Box(
             modifier = Modifier
-                .width(13.dp)
+                .width(13.5.dp)
                 .fillMaxHeight()
                 .drawBehind {
                     // Left translucent ribbed bevel
                     drawRect(
                         brush = Brush.horizontalGradient(
                             colors = listOf(
-                                Color.White.copy(alpha = 0.16f),
+                                Color.White.copy(alpha = 0.15f),
                                 Color.Transparent,
-                                Color.Black.copy(alpha = 0.30f)
+                                Color.Black.copy(alpha = 0.25f)
                             )
                         )
                     )
+                    // Molded vertical ribs along the hinge
+                    val rib1 = size.width * 0.28f
+                    val rib2 = size.width * 0.50f
+                    val rib3 = size.width * 0.72f
+                    drawLine(
+                        color = Color.White.copy(alpha = 0.16f),
+                        start = Offset(rib1, 0f),
+                        end = Offset(rib1, size.height),
+                        strokeWidth = 0.8f
+                    )
+                    drawLine(
+                        color = Color.White.copy(alpha = 0.16f),
+                        start = Offset(rib2, 0f),
+                        end = Offset(rib2, size.height),
+                        strokeWidth = 0.8f
+                    )
+                    drawLine(
+                        color = Color.White.copy(alpha = 0.16f),
+                        start = Offset(rib3, 0f),
+                        end = Offset(rib3, size.height),
+                        strokeWidth = 0.8f
+                    )
                     // Inner refraction vertical seam
                     drawLine(
-                        color = Color.White.copy(alpha = 0.18f),
+                        color = Color.White.copy(alpha = 0.20f),
                         start = Offset(size.width - 0.5f, 0f),
                         end = Offset(size.width - 0.5f, size.height),
                         strokeWidth = 1.0f
                     )
                     // Molded circular hinge tabs
                     val tabRadius = 2.2.dp.toPx()
-                    val tabX = size.width * 0.45f
+                    val tabX = size.width * 0.48f
                     drawCircle(
-                        color = Color.White.copy(alpha = 0.35f),
+                        color = Color.White.copy(alpha = 0.38f),
                         radius = tabRadius,
                         center = Offset(tabX, size.height * 0.20f)
                     )
                     drawCircle(
-                        color = Color.Black.copy(alpha = 0.40f),
+                        color = Color.Black.copy(alpha = 0.45f),
                         radius = tabRadius - 0.8f,
                         center = Offset(tabX, size.height * 0.20f)
                     )
                     drawCircle(
-                        color = Color.White.copy(alpha = 0.35f),
+                        color = Color.White.copy(alpha = 0.38f),
                         radius = tabRadius,
                         center = Offset(tabX, size.height * 0.80f)
                     )
                     drawCircle(
-                        color = Color.Black.copy(alpha = 0.40f),
+                        color = Color.Black.copy(alpha = 0.45f),
                         radius = tabRadius - 0.8f,
                         center = Offset(tabX, size.height * 0.80f)
                     )
@@ -737,10 +769,10 @@ fun JewelCaseArtwork(
                     drawRect(
                         brush = Brush.linearGradient(
                             colors = listOf(
-                                Color.White.copy(alpha = 0.12f),
-                                Color.White.copy(alpha = 0.03f),
+                                Color.White.copy(alpha = 0.11f),
+                                Color.White.copy(alpha = 0.02f),
                                 Color.Transparent,
-                                Color.Black.copy(alpha = 0.06f)
+                                Color.Black.copy(alpha = 0.05f)
                             ),
                             start = Offset(0f, 0f),
                             end = Offset(size.width, size.height * 0.72f)
@@ -752,7 +784,7 @@ fun JewelCaseArtwork(
                         brush = Brush.linearGradient(
                             colors = listOf(
                                 Color.Transparent,
-                                Color.White.copy(alpha = 0.07f),
+                                Color.White.copy(alpha = 0.06f),
                                 Color.Transparent
                             ),
                             start = Offset(size.width * 0.20f, 0f),
@@ -762,13 +794,13 @@ fun JewelCaseArtwork(
 
                     // Top/Left clear perimeter highlight line
                     drawLine(
-                        color = Color.White.copy(alpha = 0.38f),
+                        color = Color.White.copy(alpha = 0.36f),
                         start = Offset(1f, 1f),
                         end = Offset(size.width - 2f, 1f),
                         strokeWidth = 1.0f
                     )
                     drawLine(
-                        color = Color.White.copy(alpha = 0.30f),
+                        color = Color.White.copy(alpha = 0.28f),
                         start = Offset(1f, 1f),
                         end = Offset(1f, size.height - 2f),
                         strokeWidth = 1.0f
@@ -776,13 +808,13 @@ fun JewelCaseArtwork(
 
                     // Bottom/Right dark bevel shadow line
                     drawLine(
-                        color = Color.Black.copy(alpha = 0.60f),
+                        color = Color.Black.copy(alpha = 0.55f),
                         start = Offset(size.width - 1f, 2f),
                         end = Offset(size.width - 1f, size.height - 1f),
                         strokeWidth = 1.2f
                     )
                     drawLine(
-                        color = Color.Black.copy(alpha = 0.60f),
+                        color = Color.Black.copy(alpha = 0.55f),
                         start = Offset(2f, size.height - 1f),
                         end = Offset(size.width - 1f, size.height - 1f),
                         strokeWidth = 1.2f
@@ -791,7 +823,7 @@ fun JewelCaseArtwork(
                     // Thumb tab opening notch on the right border
                     val notchY = size.height * 0.50f
                     drawLine(
-                        color = Color.Black.copy(alpha = 0.45f),
+                        color = Color.Black.copy(alpha = 0.40f),
                         start = Offset(size.width - 1.5.dp.toPx(), notchY - 8.dp.toPx()),
                         end = Offset(size.width - 1.5.dp.toPx(), notchY + 8.dp.toPx()),
                         strokeWidth = 1.2f
