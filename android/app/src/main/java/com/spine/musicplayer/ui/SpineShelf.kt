@@ -125,57 +125,40 @@ fun SpineShelf(
     val caseHeight = if (shelfHeight < 280.dp) (shelfHeight - 48.dp).coerceAtLeast(120.dp) else 280.dp
     val caseWidth = if (shelfHeight < 280.dp) 18.dp else 22.dp
 
+    // Subtle tactile darker/warm charcoal texture for the shelf display cavity
+    val shelfBgBrush = rememberTactileTextureBrush(
+        baseColor = Color(0xFF0C0A09),
+        grainVariance = 4,
+        seed = 101L
+    )
+
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(shelfHeight)
-            .padding(horizontal = 8.dp)
-            .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp, bottomStart = 0.dp, bottomEnd = 0.dp))
-            .background(Color(0xFF090807))
+            .background(shelfBgBrush)
+            .drawBehind {
+                // Subtle horizontal boundary line separating main player background from shelf cavity
+                drawLine(
+                    color = Color(0xFF242220).copy(alpha = 0.65f),
+                    start = Offset(0f, 0f),
+                    end = Offset(size.width, 0f),
+                    strokeWidth = 1.2f
+                )
+                // Ambient top cavity depth shadow extending fully across the shelf
+                drawRect(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Black.copy(alpha = 0.45f),
+                            Color.Black.copy(alpha = 0.15f),
+                            Color.Transparent
+                        ),
+                        startY = 0f,
+                        endY = 48.dp.toPx()
+                    )
+                )
+            }
     ) {
-        // Recessed Cabinet Cavity with Ambient Shadows & Subtle Physical Outer Rim
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .drawBehind {
-                    drawRect(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                Color(0xFF030303),
-                                Color(0xFF100E0C),
-                                Color(0xFF1A1612)
-                            )
-                        )
-                    )
-                    // Deep overhead cavity shadow
-                    drawRect(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                Color(0xEE000000),
-                                Color(0x77000000),
-                                Color.Transparent
-                            ),
-                            startY = 0f,
-                            endY = 130f
-                        )
-                    )
-                    // Subtle dark/grey physical edge rim defining the outer enclosure
-                    drawRoundRect(
-                        color = Color(0xFF2C2723),
-                        topLeft = Offset(0.5f, 0.5f),
-                        size = Size(size.width - 1f, size.height),
-                        cornerRadius = CornerRadius(20.dp.toPx(), 20.dp.toPx()),
-                        style = Stroke(width = 1.2.dp.toPx())
-                    )
-                    // Faint overhead ambient rim highlight along the top curve
-                    drawLine(
-                        color = Color(0xFF554C43).copy(alpha = 0.4f),
-                        start = Offset(22.dp.toPx(), 1f),
-                        end = Offset(size.width - 22.dp.toPx(), 1f),
-                        strokeWidth = 1f
-                    )
-                }
-        )
 
         // Spines Row: Full-Height Authentic CD Jewel Cases Sitting Physically on Wooden Shelf
         LazyRow(
@@ -247,6 +230,10 @@ fun CdSpineItem(
         }
     }
 
+    val caseHash = remember(release.id) { kotlin.math.abs(release.id.hashCode()) }
+    val hasScratch = (caseHash % 3) != 0
+    val scratchYFrac = remember(caseHash) { 0.22f + ((caseHash % 55) / 100f) }
+
     Box(
         modifier = Modifier
             .offset(y = verticalOffset)
@@ -257,7 +244,7 @@ fun CdSpineItem(
             .width(caseWidth) // Slender authentic jewel case spine width
             .height(caseHeight) // Dominant full-height CD spine
             .shadow(elevation, shape = RoundedCornerShape(1.5.dp))
-            .background(Color(0xFF0C0B0A), RoundedCornerShape(1.5.dp))
+            .background(Color(0x1AFFFFFF), RoundedCornerShape(1.5.dp))
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -269,7 +256,7 @@ fun CdSpineItem(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 1.dp, vertical = 2.dp)
+                .padding(horizontal = 1.2.dp, vertical = 2.dp)
                 .clip(RoundedCornerShape(0.5.dp))
                 .background(parsedColor)
         ) {
@@ -461,6 +448,17 @@ fun CdSpineItem(
                             end = Offset(size.width, size.height * 0.4f)
                         )
                     )
+
+                    // Occasional tiny physical micro-scratch across clear plastic case
+                    if (hasScratch) {
+                        val sy = size.height * scratchYFrac
+                        drawLine(
+                            color = Color.White.copy(alpha = 0.10f),
+                            start = Offset(size.width * 0.20f, sy),
+                            end = Offset(size.width * 0.75f, sy + 6.dp.toPx()),
+                            strokeWidth = 0.6f
+                        )
+                    }
                 }
         )
 

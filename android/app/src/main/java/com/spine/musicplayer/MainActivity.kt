@@ -50,6 +50,7 @@ class MainActivity : ComponentActivity() {
                 PlayerScreen(
                     uiState = uiState,
                     onSelectRelease = playerViewModel::selectRelease,
+                    onSelectTrack = playerViewModel::selectTrack,
                     onPlayPause = playerViewModel::togglePlayPause,
                     onNext = playerViewModel::nextTrack,
                     onPrevious = playerViewModel::previousTrack,
