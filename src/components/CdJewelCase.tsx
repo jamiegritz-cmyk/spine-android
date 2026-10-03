@@ -45,44 +45,78 @@ export const CdJewelCase: React.FC<CdJewelCaseProps> = ({
         {/* FRONT: Album Booklet Artwork inside Jewel Case - Clicking toggles playback! */}
         <div
           onClick={!isFlipped ? onTogglePlayPause : undefined}
-          className={`absolute inset-0 [backface-visibility:hidden] rounded-[4px] bg-[#1a1816] shadow-2xl shadow-black/80 border border-white/10 overflow-hidden flex cursor-pointer transition-transform active:scale-[0.98] ${
-            !isFlipped ? 'hover:border-white/20' : ''
+          className={`absolute inset-0 [backface-visibility:hidden] rounded-[3px] bg-white/[0.06] shadow-[0_18px_40px_rgba(0,0,0,0.9),0_6px_16px_rgba(0,0,0,0.75)] border-t border-l border-white/40 border-b border-r border-black/80 overflow-hidden flex cursor-pointer transition-transform active:scale-[0.98] ${
+            !isFlipped ? 'hover:border-white/50' : ''
           }`}
           title={isPlaying ? 'Click to Pause' : 'Click to Play'}
         >
-          {/* Left Clear Acrylic Jewel Case Hinge Strip */}
-          <div className="w-[14px] sm:w-[16px] h-full shrink-0 bg-gradient-to-r from-white/15 via-white/5 to-black/30 border-r border-white/10 relative flex flex-col justify-between py-6 items-center">
-            {/* Upper and lower hinge molded tabs */}
-            <div className="w-2 h-2 rounded-full border border-white/30 bg-white/10" />
-            <div className="w-1.5 h-16 rounded-full bg-white/5 border border-white/10" />
-            <div className="w-2 h-2 rounded-full border border-white/30 bg-white/10" />
+          {/* 1. Left Clear Acrylic Jewel Case Hinge Strip */}
+          <div className="w-[14px] sm:w-[16px] h-full shrink-0 bg-gradient-to-r from-white/20 via-transparent to-black/35 border-r border-white/20 relative flex flex-col justify-between py-5 items-center z-10">
+            {/* Top molded circular hinge pivot with white rim and dark recess */}
+            <div className="w-2.5 h-2.5 rounded-full border border-white/50 bg-white/10 flex items-center justify-center shadow-inner">
+              <div className="w-1.5 h-1.5 rounded-full bg-black/50" />
+            </div>
+
+            {/* Central molded acrylic vertical rib */}
+            <div className="w-[1.5px] h-16 rounded-full bg-white/15 border-r border-black/30" />
+
+            {/* Bottom molded circular hinge pivot with white rim and dark recess */}
+            <div className="w-2.5 h-2.5 rounded-full border border-white/50 bg-white/10 flex items-center justify-center shadow-inner">
+              <div className="w-1.5 h-1.5 rounded-full bg-black/50" />
+            </div>
+
+            {/* Vertical hinge joint seam shadow */}
+            <div className="absolute right-0 inset-y-0 w-[1px] bg-black/60 pointer-events-none" />
           </div>
 
-          {/* Album Cover Art */}
-          <div className="relative flex-1 h-full bg-[#121110] overflow-hidden group/art">
-            <img
-              src={release.artworkUrl}
-              alt={release.title}
-              className="w-full h-full object-cover"
-              referrerPolicy="no-referrer"
-            />
+          {/* 2. Inner Tray with Inset Booklet Insert (Artwork sits visibly INSIDE the case) */}
+          <div className="relative flex-1 h-full p-[3.5px] bg-black/40 overflow-hidden group/art flex">
+            {/* Booklet Paper Insert Container */}
+            <div className="relative w-full h-full rounded-[1.5px] overflow-hidden bg-[#181715] shadow-[0_1px_4px_rgba(0,0,0,0.8),inset_0_0_0_1px_rgba(0,0,0,0.6)]">
+              <img
+                src={release.artworkUrl}
+                alt={release.title}
+                className="w-full h-full object-cover select-none pointer-events-none"
+                referrerPolicy="no-referrer"
+              />
 
-            {/* Subtle Realistic Acrylic Case Sheen Overlay */}
-            <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-transparent via-white/[0.04] to-white/[0.08]" />
+              {/* Booklet paper edge shadow into tray recess */}
+              <div className="absolute inset-0 pointer-events-none border border-black/40 shadow-inner" />
 
-            {/* Subtle Play/Pause Overlay Icon on hover */}
-            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/art:opacity-100 transition-opacity bg-black/25">
-              <div className="w-10 h-10 rounded-full bg-black/60 border border-white/40 flex items-center justify-center text-white shadow-lg backdrop-blur-xs">
-                {isPlaying ? (
-                  <Pause className="w-5 h-5 fill-current" />
-                ) : (
-                  <Play className="w-5 h-5 fill-current translate-x-0.5" />
-                )}
+              {/* Subtle Play/Pause Overlay Icon on hover */}
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/art:opacity-100 transition-opacity bg-black/30">
+                <div className="w-10 h-10 rounded-full bg-black/70 border border-white/50 flex items-center justify-center text-white shadow-xl backdrop-blur-xs">
+                  {isPlaying ? (
+                    <Pause className="w-5 h-5 fill-current" />
+                  ) : (
+                    <Play className="w-5 h-5 fill-current translate-x-0.5" />
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Top and right outer edge plastic hairline */}
-            <div className="absolute inset-0 pointer-events-none border-t border-r border-white/15" />
+            {/* 3. Transparent Polystyrene Front Lid & Highlights Overlay */}
+            {/* Soft diagonal specular reflection across the plastic face */}
+            <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-transparent via-white/[0.07] to-white/[0.14]" />
+
+            {/* Secondary diagonal glare streak */}
+            <div
+              className="absolute inset-0 pointer-events-none opacity-40"
+              style={{
+                background:
+                  'linear-gradient(115deg, transparent 20%, rgba(255,255,255,0.12) 35%, transparent 45%)'
+              }}
+            />
+
+            {/* Inner bevel line establishing 1.5mm acrylic wall thickness */}
+            <div className="absolute inset-[1px] pointer-events-none rounded-[2px] border border-white/15" />
+
+            {/* Right-edge thumb opening notch */}
+            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[2px] h-4 bg-black/70 border-l border-white/30 rounded-l-xs pointer-events-none" />
+
+            {/* Hairline handling micro-scratches on front plastic */}
+            <div className="absolute top-[18%] right-[22%] w-6 h-[0.5px] bg-white/20 transform rotate-12 pointer-events-none" />
+            <div className="absolute bottom-[28%] left-[28%] w-5 h-[0.5px] bg-white/15 transform -rotate-6 pointer-events-none" />
           </div>
         </div>
 

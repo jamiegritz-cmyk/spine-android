@@ -519,44 +519,65 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
     >
       {/* Outer Clear Polystyrene Jewel Case Plastic Frame */}
       <div
-        className={`w-full h-full rounded-[2.5px] relative flex flex-col overflow-hidden transition-all bg-gradient-to-r from-white/30 via-white/10 via-black/20 to-black/60 p-[2px] ${
+        className={`w-full h-full rounded-[2px] relative flex flex-col overflow-hidden transition-all bg-black/40 border border-white/15 ${
           isSelected
-            ? 'shadow-[0_0_24px_rgba(255,255,255,0.35),0_18px_36px_rgba(0,0,0,0.95)] ring-[1.5px] ring-white/70'
-            : 'shadow-[0_2px_4px_rgba(0,0,0,0.95)] hover:shadow-[0_4px_10px_rgba(0,0,0,0.95)]'
+            ? 'shadow-[0_0_24px_rgba(255,255,255,0.30),0_20px_36px_rgba(0,0,0,0.95)] ring-1 ring-white/70'
+            : 'shadow-[0_2px_6px_rgba(0,0,0,0.95)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.95)]'
         }`}
       >
-        {/* TOP TRANSPARENT ACRYLIC RAIL (Delicate audio CD molded hub notch) */}
-        <div className="w-full h-3 shrink-0 bg-gradient-to-b from-white/45 via-white/15 to-transparent border-b border-white/20 relative flex items-center justify-center">
-          <div className="w-1.5 h-1.5 rounded-full border border-white/60 bg-white/30 shadow-inner" />
-          <div className="absolute inset-x-0 top-0 h-[0.5px] bg-white/70" />
+        {/* TOP TRANSPARENT ACRYLIC RAIL (Molded audio CD top cap & hub notch) */}
+        <div className="w-full h-2.5 shrink-0 bg-gradient-to-b from-white/40 via-white/10 to-transparent border-b border-black/40 relative flex items-center justify-center z-10">
+          <div className="w-1.5 h-1.5 rounded-full border border-white/50 bg-white/20 shadow-inner" />
+          <div className="absolute inset-x-0 top-0 h-[0.75px] bg-white/70" />
         </div>
 
-        {/* MIDDLE: Paper Spine Insert RECESSED inside the transparent plastic shell */}
-        <div className="flex-1 w-full rounded-[1px] relative overflow-hidden shadow-inner my-0.5 border-x border-black/30">
-          {renderSpineContent()}
+        {/* MIDDLE: Paper Spine Insert RECESSED inside the transparent plastic shell, flanked by dark plastic side edges */}
+        <div className="flex-1 w-full relative flex overflow-hidden">
+          {/* VISIBLE DARK/BLACK PLASTIC LEFT EDGE (Physical thickness of the jewel case side wall) */}
+          <div className="w-[2px] shrink-0 h-full bg-black/80 border-r border-white/15 relative z-10" />
 
-          {/* LEFT SPECULAR HIGHLIGHT (Clear acrylic edge refraction) */}
-          <div className="absolute inset-y-0 left-0 w-[1.5px] bg-gradient-to-r from-white/60 via-white/20 to-transparent pointer-events-none" />
+          {/* Paper Artwork Inlay (Sitting INSIDE the case) */}
+          <div className="flex-1 h-full relative overflow-hidden shadow-inner bg-[#121212]">
+            {renderSpineContent()}
 
-          {/* RIGHT GROOVE SHADOW (Jewel case seam) */}
-          <div className="absolute inset-y-0 right-0 w-[1.5px] bg-gradient-to-l from-black/80 via-black/30 to-transparent pointer-events-none" />
+            {/* Subtle paper depth shadow inside the plastic channel */}
+            <div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_2px_rgba(0,0,0,0.6)]" />
+          </div>
 
-          {/* Transparent acrylic edge illumination when pulled forward */}
-          {isSelected && (
-            <div className="absolute inset-0 bg-gradient-to-t from-white/15 via-transparent to-white/25 pointer-events-none" />
-          )}
+          {/* VISIBLE DARK/BLACK PLASTIC RIGHT EDGE (Physical thickness of the jewel case side wall) */}
+          <div className="w-[2px] shrink-0 h-full bg-black/80 border-l border-white/10 relative z-10" />
         </div>
 
-        {/* BOTTOM TRANSPARENT ACRYLIC RAIL (Jewel case plastic foot that sits on shelf) */}
-        <div className="w-full h-3 shrink-0 bg-gradient-to-t from-black/50 via-white/10 to-transparent border-t border-white/20 relative flex items-center justify-center">
-          <div className="w-2.5 h-[1px] bg-white/50 rounded-full" />
-          <div className="absolute inset-x-0 bottom-0 h-[1px] bg-black/90" />
+        {/* BOTTOM TRANSPARENT ACRYLIC RAIL (Jewel case plastic base resting on shelf) */}
+        <div className="w-full h-2.5 shrink-0 bg-gradient-to-t from-black/70 via-white/10 to-transparent border-t border-black/40 relative flex items-center justify-center z-10">
+          <div className="w-2.5 h-[1px] bg-white/40 rounded-full" />
+          <div className="absolute inset-x-0 bottom-0 h-[1.5px] bg-black/95" />
         </div>
 
-        {/* Outer edge specular line along left plastic edge */}
-        <div className="absolute inset-y-0 left-0 w-[1px] bg-white/50 pointer-events-none" />
-        {/* Outer edge seam line along right plastic edge */}
-        <div className="absolute inset-y-0 right-0 w-[1px] bg-black/80 pointer-events-none" />
+        {/* THIN TRANSPARENT FRONT SHELL & SUBTLE PLASTIC HIGHLIGHTS (Drawn across the entire face) */}
+        {/* Left outer edge specular highlight */}
+        <div className="absolute inset-y-0 left-0 w-[0.75px] bg-white/60 pointer-events-none z-20" />
+
+        {/* Right outer edge seam shadow & specular glint */}
+        <div className="absolute inset-y-0 right-0 w-[0.75px] bg-black/90 pointer-events-none z-20" />
+        <div className="absolute inset-y-0 right-[0.75px] w-[0.5px] bg-white/20 pointer-events-none z-20" />
+
+        {/* Subtle transparent surface diagonal plastic sheen */}
+        <div
+          className="absolute inset-0 pointer-events-none z-20 opacity-60"
+          style={{
+            background:
+              'linear-gradient(135deg, rgba(255,255,255,0.18) 0%, transparent 45%, rgba(0,0,0,0.20) 100%)'
+          }}
+        />
+
+        {/* Micro-scratch on clear plastic */}
+        <div className="absolute top-[28%] left-[20%] w-[12px] h-[0.5px] bg-white/15 transform rotate-25 pointer-events-none z-20" />
+
+        {/* Transparent acrylic edge illumination when selected */}
+        {isSelected && (
+          <div className="absolute inset-0 bg-gradient-to-t from-white/20 via-transparent to-white/30 pointer-events-none z-20" />
+        )}
       </div>
     </div>
   );
