@@ -23,14 +23,21 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -260,25 +267,96 @@ fun CdSpineItem(
         }
 
         // --- 2. Rotated Spine Typography (Artist - Album Title) ---
+        val typo = rememberSpineTypography(release = release, isSelected = isSelected)
+        val formattedTitle = if (typo.isTitleUppercase) release.title.uppercase() else release.title
+        val formattedArtist = if (typo.isArtistUppercase) release.artist.uppercase() else release.artist
+
+        val fullSpineText = remember(release.title, release.artist, typo) {
+            buildAnnotatedString {
+                if (typo.artistFirst) {
+                    withStyle(
+                        SpanStyle(
+                            fontSize = typo.artistFontSize,
+                            fontWeight = typo.artistFontWeight,
+                            fontFamily = typo.artistFontFamily,
+                            color = typo.artistColor,
+                            letterSpacing = typo.letterSpacing
+                        )
+                    ) {
+                        append(formattedArtist)
+                    }
+                    withStyle(
+                        SpanStyle(
+                            fontSize = typo.artistFontSize,
+                            color = typo.artistColor.copy(alpha = 0.6f)
+                        )
+                    ) {
+                        append(typo.separator)
+                    }
+                    withStyle(
+                        SpanStyle(
+                            fontSize = typo.titleFontSize,
+                            fontWeight = typo.titleFontWeight,
+                            fontFamily = typo.titleFontFamily,
+                            color = typo.titleColor,
+                            letterSpacing = typo.letterSpacing
+                        )
+                    ) {
+                        append(formattedTitle)
+                    }
+                } else {
+                    withStyle(
+                        SpanStyle(
+                            fontSize = typo.titleFontSize,
+                            fontWeight = typo.titleFontWeight,
+                            fontFamily = typo.titleFontFamily,
+                            color = typo.titleColor,
+                            letterSpacing = typo.letterSpacing
+                        )
+                    ) {
+                        append(formattedTitle)
+                    }
+                    withStyle(
+                        SpanStyle(
+                            fontSize = typo.artistFontSize,
+                            color = typo.artistColor.copy(alpha = 0.6f)
+                        )
+                    ) {
+                        append(typo.separator)
+                    }
+                    withStyle(
+                        SpanStyle(
+                            fontSize = typo.artistFontSize,
+                            fontWeight = typo.artistFontWeight,
+                            fontFamily = typo.artistFontFamily,
+                            color = typo.artistColor,
+                            letterSpacing = typo.letterSpacing
+                        )
+                    ) {
+                        append(formattedArtist)
+                    }
+                }
+            }
+        }
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(vertical = 36.dp),
+                .padding(vertical = 18.dp),
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "${release.artist.uppercase()} / ${release.title}",
-                color = Color.White.copy(alpha = if (isSelected) 1.0f else 0.85f),
-                fontSize = 8.5.sp,
-                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
-                fontFamily = FontFamily.SansSerif,
+                text = fullSpineText,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .graphicsLayer {
-                        rotationZ = 90f
-                    }
-                    .width(200.dp)
+                softWrap = false,
+                style = TextStyle(
+                    shadow = Shadow(
+                        color = typo.shadowColor,
+                        offset = Offset(0f, 1f),
+                        blurRadius = 3f
+                    )
+                ),
+                modifier = Modifier.verticalSpineText()
             )
         }
 
@@ -382,4 +460,177 @@ fun WoodenShelfLip(modifier: Modifier = Modifier) {
             )
         }
     )
+}
+
+/**
+ * Custom layout modifier that allows single-line text to measure along the vertical spine length
+ * (up to ~230dp) instead of being constrained to the narrow 22dp spine width.
+ */
+private fun Modifier.verticalSpineText(): Modifier = this.layout { measurable, constraints ->
+    val placeable = measurable.measure(
+        constraints.copy(
+            minWidth = 0,
+            maxWidth = constraints.maxHeight,
+            minHeight = 0,
+            maxHeight = constraints.maxWidth
+        )
+    )
+    layout(placeable.height, placeable.width) {
+        placeable.placeWithLayer(
+            x = (placeable.height - placeable.width) / 2,
+            y = (placeable.width - placeable.height) / 2
+        ) {
+            rotationZ = 90f
+        }
+    }
+}
+
+private data class SpineTypographyConfig(
+    val titleColor: Color,
+    val artistColor: Color,
+    val titleFontWeight: FontWeight,
+    val artistFontWeight: FontWeight,
+    val titleFontFamily: FontFamily,
+    val artistFontFamily: FontFamily,
+    val titleFontSize: TextUnit,
+    val artistFontSize: TextUnit,
+    val letterSpacing: TextUnit,
+    val isTitleUppercase: Boolean,
+    val isArtistUppercase: Boolean,
+    val separator: String,
+    val artistFirst: Boolean,
+    val shadowColor: Color
+)
+
+@Composable
+private fun rememberSpineTypography(
+    release: Release,
+    isSelected: Boolean
+): SpineTypographyConfig {
+    return remember(release.title, release.artist, release.spineColorHex, isSelected) {
+        val parsedColor = try {
+            Color(android.graphics.Color.parseColor(release.spineColorHex))
+        } catch (_: Exception) {
+            Color(0xFF222222)
+        }
+        val luminance = 0.299f * parsedColor.red + 0.587f * parsedColor.green + 0.114f * parsedColor.blue
+        val isLight = luminance > 0.55f
+
+        val hash = abs((release.title + release.artist).hashCode())
+        val styleIndex = hash % 6
+
+        // Dynamic contrast colors
+        val primaryColor = if (isLight) Color(0xFF151412) else Color(0xFFF9F7F4)
+        val secondaryColor = if (isLight) Color(0xFF3C3834) else Color(0xFFD6D1C9)
+        val shadowColor = if (isLight) Color.White.copy(alpha = 0.45f) else Color.Black.copy(alpha = 0.85f)
+
+        // Progressive font scaling for title and artist so the complete text fits
+        val totalLength = release.title.length + release.artist.length
+        val (titleSize, artistSize, spacing) = when {
+            totalLength <= 18 -> Triple(8.5.sp, 7.5.sp, 0.4.sp)
+            totalLength <= 28 -> Triple(7.8.sp, 6.8.sp, 0.2.sp)
+            totalLength <= 40 -> Triple(7.0.sp, 6.0.sp, 0.sp)
+            totalLength <= 55 -> Triple(6.2.sp, 5.5.sp, (-0.2).sp)
+            else -> Triple(5.5.sp, 5.0.sp, (-0.3).sp)
+        }
+
+        when (styleIndex) {
+            0 -> SpineTypographyConfig(
+                titleColor = primaryColor,
+                artistColor = secondaryColor,
+                titleFontWeight = FontWeight.Bold,
+                artistFontWeight = FontWeight.Medium,
+                titleFontFamily = FontFamily.SansSerif,
+                artistFontFamily = FontFamily.SansSerif,
+                titleFontSize = titleSize,
+                artistFontSize = artistSize,
+                letterSpacing = spacing,
+                isTitleUppercase = true,
+                isArtistUppercase = true,
+                separator = "   |   ",
+                artistFirst = false,
+                shadowColor = shadowColor
+            )
+            1 -> SpineTypographyConfig(
+                titleColor = primaryColor,
+                artistColor = secondaryColor,
+                titleFontWeight = FontWeight.SemiBold,
+                artistFontWeight = FontWeight.Normal,
+                titleFontFamily = FontFamily.Monospace,
+                artistFontFamily = FontFamily.Monospace,
+                titleFontSize = titleSize,
+                artistFontSize = artistSize,
+                letterSpacing = spacing,
+                isTitleUppercase = false,
+                isArtistUppercase = true,
+                separator = "   /   ",
+                artistFirst = true,
+                shadowColor = shadowColor
+            )
+            2 -> SpineTypographyConfig(
+                titleColor = primaryColor,
+                artistColor = secondaryColor,
+                titleFontWeight = FontWeight.Bold,
+                artistFontWeight = FontWeight.SemiBold,
+                titleFontFamily = FontFamily.Serif,
+                artistFontFamily = FontFamily.SansSerif,
+                titleFontSize = titleSize,
+                artistFontSize = artistSize,
+                letterSpacing = spacing,
+                isTitleUppercase = false,
+                isArtistUppercase = true,
+                separator = "   •   ",
+                artistFirst = true,
+                shadowColor = shadowColor
+            )
+            3 -> SpineTypographyConfig(
+                titleColor = primaryColor,
+                artistColor = secondaryColor,
+                titleFontWeight = FontWeight.ExtraBold,
+                artistFontWeight = FontWeight.Bold,
+                titleFontFamily = FontFamily.SansSerif,
+                artistFontFamily = FontFamily.SansSerif,
+                titleFontSize = titleSize,
+                artistFontSize = artistSize,
+                letterSpacing = spacing,
+                isTitleUppercase = true,
+                isArtistUppercase = true,
+                separator = "   —   ",
+                artistFirst = false,
+                shadowColor = shadowColor
+            )
+            4 -> SpineTypographyConfig(
+                titleColor = primaryColor,
+                artistColor = secondaryColor,
+                titleFontWeight = FontWeight.Medium,
+                artistFontWeight = FontWeight.Normal,
+                titleFontFamily = FontFamily.SansSerif,
+                artistFontFamily = FontFamily.SansSerif,
+                titleFontSize = titleSize,
+                artistFontSize = artistSize,
+                letterSpacing = spacing + 0.3.sp,
+                isTitleUppercase = false,
+                isArtistUppercase = false,
+                separator = "   :   ",
+                artistFirst = false,
+                shadowColor = shadowColor
+            )
+            else -> SpineTypographyConfig(
+                titleColor = primaryColor,
+                artistColor = secondaryColor,
+                titleFontWeight = FontWeight.Bold,
+                artistFontWeight = FontWeight.Medium,
+                titleFontFamily = FontFamily.SansSerif,
+                artistFontFamily = FontFamily.Monospace,
+                titleFontSize = titleSize,
+                artistFontSize = artistSize,
+                letterSpacing = spacing,
+                isTitleUppercase = true,
+                isArtistUppercase = false,
+                separator = "   •   ",
+                artistFirst = false,
+                shadowColor = shadowColor
+            )
+        }
+    }
 }
