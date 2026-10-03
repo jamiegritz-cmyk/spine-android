@@ -45,92 +45,47 @@ export const CdJewelCase: React.FC<CdJewelCaseProps> = ({
         {/* FRONT: Album Booklet Artwork inside Jewel Case - Clicking toggles playback! */}
         <div
           onClick={!isFlipped ? onTogglePlayPause : undefined}
-          className={`absolute inset-0 [backface-visibility:hidden] rounded-[4px] bg-[#0c0b0a] shadow-[0_22px_45px_rgba(0,0,0,0.95),0_8px_20px_rgba(0,0,0,0.85)] border border-white/30 overflow-hidden flex cursor-pointer transition-transform active:scale-[0.98] ${
-            !isFlipped ? 'hover:border-white/50' : ''
+          className={`absolute inset-0 [backface-visibility:hidden] rounded-[3px] bg-[#161514] shadow-2xl shadow-black/80 border border-white/10 overflow-hidden flex cursor-pointer transition-transform active:scale-[0.98] ${
+            !isFlipped ? 'hover:border-white/20' : ''
           }`}
           title={isPlaying ? 'Click to Pause' : 'Click to Play'}
         >
-          {/* LAYER 1 & 4: Left Clear Acrylic Jewel Case Hinge Section (Exaggerated, unmistakable physical construction) */}
-          <div className="w-[20px] sm:w-[22px] h-full shrink-0 bg-gradient-to-r from-white/25 via-white/5 to-black/60 border-r-2 border-black/90 relative flex flex-col justify-between py-4 items-center z-10">
-            {/* Top molded circular hinge pivot with bright white rim and deep dark hole */}
-            <div className="w-3 h-3 rounded-full border border-white/60 bg-white/15 flex items-center justify-center shadow-inner">
-              <div className="w-1.5 h-1.5 rounded-full bg-black/80" />
-            </div>
-
-            {/* Central molded acrylic vertical rib */}
-            <div className="w-[2px] h-20 rounded-full bg-white/20 border-r border-black/50" />
-
-            {/* Bottom molded circular hinge pivot with bright white rim and deep dark hole */}
-            <div className="w-3 h-3 rounded-full border border-white/60 bg-white/15 flex items-center justify-center shadow-inner">
-              <div className="w-1.5 h-1.5 rounded-full bg-black/80" />
-            </div>
-
-            {/* Distinct vertical hinge joint groove seam */}
-            <div className="absolute right-0 inset-y-0 w-[1.5px] bg-black/95 pointer-events-none" />
-            <div className="absolute right-[1.5px] inset-y-0 w-[0.5px] bg-white/25 pointer-events-none" />
+          {/* Left Clear Acrylic Jewel Case Hinge Strip */}
+          <div className="w-[14px] sm:w-[15px] h-full shrink-0 bg-gradient-to-r from-white/15 via-white/5 to-black/35 border-r border-black/50 relative flex flex-col justify-between py-6 items-center">
+            {/* Upper and lower hinge molded tabs */}
+            <div className="w-2 h-2 rounded-full border border-white/30 bg-white/10" />
+            <div className="w-1 h-14 rounded-full bg-white/5 border border-white/10" />
+            <div className="w-2 h-2 rounded-full border border-white/30 bg-white/10" />
           </div>
 
-          {/* LAYER 1, 4 & 5: Case Tray Interior with Visible Plastic Borders (Top, Right, Bottom) */}
-          <div className="relative flex-1 h-full p-[6px] bg-[#100f0e] overflow-hidden group/art flex">
-            {/* LAYER 2: Printed Album Booklet Insert (Recessed INSIDE the case tray) */}
-            <div className="relative w-full h-full rounded-[2px] overflow-hidden bg-[#181715] shadow-[0_2px_8px_rgba(0,0,0,0.9),inset_0_0_4px_rgba(0,0,0,0.85)] border border-black/80">
-              <img
-                src={release.artworkUrl}
-                alt={release.title}
-                className="w-full h-full object-cover select-none pointer-events-none"
-                referrerPolicy="no-referrer"
-              />
+          {/* Album Cover Art */}
+          <div className="relative flex-1 h-full bg-[#121110] overflow-hidden group/art">
+            <img
+              src={release.artworkUrl}
+              alt={release.title}
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+            />
 
-              {/* Matte printed paper booklet border & recess shadow */}
-              <div className="absolute inset-0 pointer-events-none border border-black/50 shadow-inner" />
+            {/* Subtle Black Recessed/Shaded Plastic Edge (Integrated, no separate graphic frame) */}
+            <div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_0_1px_rgba(0,0,0,0.45),inset_1px_1px_2px_rgba(0,0,0,0.35)]" />
 
-              {/* Play/Pause Overlay Icon on hover */}
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/art:opacity-100 transition-opacity bg-black/35">
-                <div className="w-11 h-11 rounded-full bg-black/80 border border-white/60 flex items-center justify-center text-white shadow-2xl backdrop-blur-xs">
-                  {isPlaying ? (
-                    <Pause className="w-5 h-5 fill-current" />
-                  ) : (
-                    <Play className="w-5 h-5 fill-current translate-x-0.5" />
-                  )}
-                </div>
+            {/* Very Slight Transparent Plastic Effect */}
+            <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-transparent via-white/[0.03] to-white/[0.07]" />
+
+            {/* Subtle Play/Pause Overlay Icon on hover */}
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/art:opacity-100 transition-opacity bg-black/25">
+              <div className="w-10 h-10 rounded-full bg-black/60 border border-white/40 flex items-center justify-center text-white shadow-lg backdrop-blur-xs">
+                {isPlaying ? (
+                  <Pause className="w-5 h-5 fill-current" />
+                ) : (
+                  <Play className="w-5 h-5 fill-current translate-x-0.5" />
+                )}
               </div>
             </div>
 
-            {/* LAYER 3 & 6: Transparent Plastic Front Lid & Physical Highlights Overlay */}
-            {/* Clear acrylic front lid catching light across the entire face */}
-            <div
-              className="absolute inset-0 pointer-events-none"
-              style={{
-                background:
-                  'linear-gradient(130deg, rgba(255,255,255,0.18) 0%, transparent 40%, rgba(255,255,255,0.05) 65%, transparent 100%)'
-              }}
-            />
-
-            {/* Secondary diagonal glare streak */}
-            <div
-              className="absolute inset-0 pointer-events-none opacity-50"
-              style={{
-                background:
-                  'linear-gradient(115deg, transparent 20%, rgba(255,255,255,0.15) 35%, transparent 45%)'
-              }}
-            />
-
-            {/* Top edge bright specular highlight line */}
-            <div className="absolute inset-x-0 top-0 h-[1.5px] bg-white/60 pointer-events-none" />
-
-            {/* Right edge dark bevel & thumb tab opening notch */}
-            <div className="absolute inset-y-0 right-0 w-[2px] bg-black/90 pointer-events-none" />
-            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-black/90 border-l border-white/40 rounded-l-xs pointer-events-none" />
-
-            {/* Bottom edge dark bevel shadow */}
-            <div className="absolute inset-x-0 bottom-0 h-[2px] bg-black/90 pointer-events-none" />
-
-            {/* Inner bevel establishing thick physical acrylic wall around booklet */}
-            <div className="absolute inset-[3px] pointer-events-none rounded-[2px] border border-white/20" />
-
-            {/* Hairline handling micro-scratches on front clear plastic */}
-            <div className="absolute top-[16%] right-[20%] w-8 h-[0.75px] bg-white/25 transform rotate-12 pointer-events-none" />
-            <div className="absolute bottom-[24%] left-[24%] w-6 h-[0.5px] bg-white/20 transform -rotate-6 pointer-events-none" />
+            {/* Subtle outer top and left plastic hairline */}
+            <div className="absolute inset-0 pointer-events-none border-t border-l border-white/15 border-b border-r border-black/40" />
           </div>
         </div>
 

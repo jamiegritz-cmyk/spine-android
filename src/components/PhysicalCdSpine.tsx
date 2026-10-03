@@ -517,74 +517,44 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
       }}
       title={`${release.artist} — ${release.title}`}
     >
-      {/* LAYER 1: Dark Plastic Case / Back Layer Container */}
+      {/* Integrated CD Jewel Case Spine (Subtle, no separate graphic frame) */}
       <div
-        className={`w-full h-full rounded-[2.5px] relative flex flex-col overflow-hidden transition-all bg-[#0a0a09] border border-white/25 ${
+        className={`w-full h-full rounded-[1.5px] relative flex flex-col overflow-hidden transition-all bg-[#121110] ${
           isSelected
-            ? 'shadow-[0_0_26px_rgba(255,255,255,0.35),0_22px_42px_rgba(0,0,0,0.98)] ring-[1.5px] ring-white/80'
-            : 'shadow-[0_3px_8px_rgba(0,0,0,0.95)] hover:shadow-[0_6px_14px_rgba(0,0,0,0.95)]'
+            ? 'shadow-[0_0_18px_rgba(255,255,255,0.25),0_14px_28px_rgba(0,0,0,0.95)]'
+            : 'shadow-[0_2px_4px_rgba(0,0,0,0.95)] hover:shadow-[0_3px_8px_rgba(0,0,0,0.95)]'
         }`}
       >
-        {/* LAYER 4: TOP MOLDED ACRYLIC RAIL (Molded clear plastic cap & hub notch) */}
-        <div className="w-full h-[9px] shrink-0 bg-gradient-to-b from-white/45 via-white/15 to-transparent border-b-2 border-black/90 relative flex items-center justify-center z-10">
-          <div className="w-2 h-2 rounded-full border border-white/60 bg-white/20 shadow-inner flex items-center justify-center">
-            <div className="w-1 h-1 rounded-full bg-black/60" />
-          </div>
-          <div className="absolute inset-x-0 top-0 h-[1px] bg-white/80" />
+        {/* Subtle Top Clear Acrylic Rail */}
+        <div className="w-full h-2 shrink-0 bg-gradient-to-b from-white/30 via-white/10 to-transparent border-b border-black/30 relative flex items-center justify-center z-10">
+          <div className="w-1.5 h-1 rounded-full border border-white/40 bg-white/20" />
+          <div className="absolute inset-x-0 top-0 h-[0.5px] bg-white/60" />
         </div>
 
-        {/* MIDDLE SECTION: Dark Plastic Side Walls framing Inset Paper Artwork */}
-        <div className="flex-1 w-full relative flex overflow-hidden">
-          {/* LAYER 5: VISIBLE DARK/BLACK RECESSED PLASTIC LEFT EDGE (Exaggerated physical case wall thickness) */}
-          <div className="w-[3px] shrink-0 h-full bg-[#141312] border-r-2 border-black/95 border-l border-white/40 relative z-10 flex flex-col justify-between py-8">
-            <div className="w-[1px] h-12 bg-white/25 self-center rounded-full" />
-          </div>
+        {/* Existing Spine Artwork (Full natural width, exactly as it appears) */}
+        <div className="flex-1 w-full relative overflow-hidden flex flex-col">
+          {renderSpineContent()}
 
-          {/* LAYER 2: Printed Paper Spine Insert (Recessed INSIDE the case tray, completely matte) */}
-          <div className="flex-1 h-full relative overflow-hidden bg-[#121212] shadow-[0_1px_4px_rgba(0,0,0,0.9),inset_0_0_3px_rgba(0,0,0,0.85)] border-y border-black/70">
-            {renderSpineContent()}
+          {/* Subtle Black Recessed/Shaded Plastic Edge along the sides */}
+          <div className="absolute inset-0 pointer-events-none shadow-[inset_1px_0_0_rgba(0,0,0,0.55),inset_-1px_0_0_rgba(0,0,0,0.55)]" />
 
-            {/* Inset paper edge shadow inside the plastic cavity */}
-            <div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_3px_rgba(0,0,0,0.8)] border border-black/40" />
-          </div>
+          {/* Very Slight Transparent Plastic Effect across the face */}
+          <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-white/[0.04] via-transparent to-black/[0.06]" />
 
-          {/* LAYER 5: VISIBLE DARK/BLACK RECESSED PLASTIC RIGHT EDGE (Exaggerated physical case wall thickness) */}
-          <div className="w-[3px] shrink-0 h-full bg-[#141312] border-l-2 border-black/95 border-r border-black/90 relative z-10 flex flex-col justify-between py-8">
-            <div className="w-[0.75px] h-12 bg-white/15 self-center rounded-full" />
-          </div>
+          {/* Edge illumination when selected */}
+          {isSelected && (
+            <div className="absolute inset-0 bg-gradient-to-t from-white/10 via-transparent to-white/20 pointer-events-none" />
+          )}
         </div>
 
-        {/* LAYER 4: BOTTOM MOLDED ACRYLIC RAIL (Molded plastic base resting on shelf) */}
-        <div className="w-full h-[8px] shrink-0 bg-gradient-to-t from-black/85 via-white/10 to-transparent border-t-2 border-black/90 relative flex items-center justify-center z-10">
-          <div className="w-3 h-[1px] bg-white/50 rounded-full" />
-          <div className="absolute inset-x-0 bottom-0 h-[2px] bg-black/98" />
+        {/* Subtle Bottom Plastic Base */}
+        <div className="w-full h-1.5 shrink-0 bg-gradient-to-t from-black/60 via-white/5 to-transparent border-t border-black/40 relative flex items-center justify-center z-10">
+          <div className="absolute inset-x-0 bottom-0 h-[1px] bg-black/95" />
         </div>
 
-        {/* LAYER 3 & 6: TRANSPARENT PLASTIC FRONT LAYER (Covers the entire spine & catches the light) */}
-        {/* Left outer edge specular highlight */}
-        <div className="absolute inset-y-0 left-0 w-[1px] bg-white/70 pointer-events-none z-20" />
-
-        {/* Right outer edge seam shadow & fine highlight glint */}
-        <div className="absolute inset-y-0 right-0 w-[1px] bg-black/95 pointer-events-none z-20" />
-        <div className="absolute inset-y-0 right-[1px] w-[0.5px] bg-white/30 pointer-events-none z-20" />
-
-        {/* Subtle transparent surface diagonal plastic sheen across the front */}
-        <div
-          className="absolute inset-0 pointer-events-none z-20"
-          style={{
-            background:
-              'linear-gradient(135deg, rgba(255,255,255,0.22) 0%, transparent 45%, rgba(0,0,0,0.25) 100%)'
-          }}
-        />
-
-        {/* Subtle micro-scratches on clear plastic */}
-        <div className="absolute top-[24%] left-[20%] w-[12px] h-[0.75px] bg-white/20 transform rotate-25 pointer-events-none z-20" />
-        <div className="absolute bottom-[35%] right-[20%] w-[10px] h-[0.5px] bg-white/15 transform -rotate-18 pointer-events-none z-20" />
-
-        {/* Transparent acrylic edge illumination when selected */}
-        {isSelected && (
-          <div className="absolute inset-0 bg-gradient-to-t from-white/25 via-transparent to-white/35 pointer-events-none z-20" />
-        )}
+        {/* Subtle fine outer left hairline highlight and right seam */}
+        <div className="absolute inset-y-0 left-0 w-[0.5px] bg-white/30 pointer-events-none z-20" />
+        <div className="absolute inset-y-0 right-0 w-[0.5px] bg-black/80 pointer-events-none z-20" />
       </div>
     </div>
   );
