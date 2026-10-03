@@ -119,8 +119,8 @@ private fun PortraitPlayerLayout(
     val activeReleases = remember(uiState.releases, filterMode) {
         when (filterMode) {
             LibraryFilterMode.ALBUMS -> {
-                val alb = uiState.releases.filter { it.tracks.size > 1 }
-                if (alb.isNotEmpty()) alb else uiState.releases
+                // Albums view displays the entire album collection without discarding single-track albums
+                uiState.releases
             }
             LibraryFilterMode.SINGLES -> {
                 val sgl = uiState.releases.filter { it.tracks.size <= 1 }
@@ -182,10 +182,7 @@ private fun PortraitPlayerLayout(
                         if (filterMode != newMode) {
                             onFilterModeChange(newMode)
                             val targetList = when (newMode) {
-                                LibraryFilterMode.ALBUMS -> {
-                                    val alb = uiState.releases.filter { it.tracks.size > 1 }
-                                    if (alb.isNotEmpty()) alb else uiState.releases
-                                }
+                                LibraryFilterMode.ALBUMS -> uiState.releases
                                 LibraryFilterMode.SINGLES -> {
                                     val sgl = uiState.releases.filter { it.tracks.size <= 1 }
                                     if (sgl.isNotEmpty()) sgl else uiState.releases
@@ -326,8 +323,8 @@ private fun LandscapePlayerLayout(
     val activeReleases = remember(uiState.releases, filterMode) {
         when (filterMode) {
             LibraryFilterMode.ALBUMS -> {
-                val alb = uiState.releases.filter { it.tracks.size > 1 }
-                if (alb.isNotEmpty()) alb else uiState.releases
+                // Albums view displays the entire album collection without discarding single-track albums
+                uiState.releases
             }
             LibraryFilterMode.SINGLES -> {
                 val sgl = uiState.releases.filter { it.tracks.size <= 1 }
@@ -388,10 +385,7 @@ private fun LandscapePlayerLayout(
                         if (filterMode != newMode) {
                             onFilterModeChange(newMode)
                             val targetList = when (newMode) {
-                                LibraryFilterMode.ALBUMS -> {
-                                    val alb = uiState.releases.filter { it.tracks.size > 1 }
-                                    if (alb.isNotEmpty()) alb else uiState.releases
-                                }
+                                LibraryFilterMode.ALBUMS -> uiState.releases
                                 LibraryFilterMode.SINGLES -> {
                                     val sgl = uiState.releases.filter { it.tracks.size <= 1 }
                                     if (sgl.isNotEmpty()) sgl else uiState.releases
@@ -519,7 +513,11 @@ private fun LandscapePlayerLayout(
 
 /**
  * Realistic Square CD Jewel Case Front Artwork.
- * Includes subtle transparent hinge margin, plastic casing rim, and soft surface sheen.
+ * Authentically models a physical CD jewel case:
+ * - Square outer clear polystyrene case with physical bevelled edges and contact depth
+ * - Real album artwork insert strictly preserving 1:1 square proportions without cropping/distortion
+ * - Transparent plastic front lid with subtle specular sheen and surface reflections
+ * - Clear acrylic hinge tabs on the left border and classic thumb tab notch on the right edge
  */
 @Composable
 fun JewelCaseArtwork(
@@ -529,8 +527,14 @@ fun JewelCaseArtwork(
 ) {
     Box(
         modifier = modifier
-            .shadow(16.dp, RoundedCornerShape(4.dp))
-            .background(Color(0xFF1E1D1B), RoundedCornerShape(4.dp))
+            .aspectRatio(1f) // Strict square CD jewel case proportion
+            .shadow(
+                elevation = 14.dp,
+                shape = RoundedCornerShape(4.dp),
+                ambientColor = Color.Black.copy(alpha = 0.7f),
+                spotColor = Color.Black.copy(alpha = 0.9f)
+            )
+            .background(Color(0xFF161514), RoundedCornerShape(4.dp))
             .then(
                 if (onClick != null) {
                     Modifier.clickable(onClick = onClick)
@@ -539,80 +543,132 @@ fun JewelCaseArtwork(
                 }
             )
             .drawBehind {
-                // Subtle acrylic case edge bevel
-                drawRect(
+                // Subtle acrylic case outer bevel rim
+                drawRoundRect(
                     brush = Brush.linearGradient(
                         colors = listOf(
-                            Color.White.copy(alpha = 0.15f),
-                            Color.Transparent,
-                            Color.Black.copy(alpha = 0.35f)
+                            Color.White.copy(alpha = 0.30f),
+                            Color.White.copy(alpha = 0.08f),
+                            Color.Black.copy(alpha = 0.50f)
                         ),
                         start = Offset(0f, 0f),
                         end = Offset(size.width, size.height)
-                    )
+                    ),
+                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(4.dp.toPx(), 4.dp.toPx()),
+                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.2.dp.toPx())
                 )
             }
     ) {
-        // Inner Booklet Artwork
-        Crossfade(
-            targetState = release?.artworkUri,
-            animationSpec = tween(300),
-            label = "albumArtCrossfade"
-        ) { artUri ->
-            if (artUri != null) {
-                AsyncImage(
-                    model = artUri,
-                    contentDescription = release?.title,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(start = 14.dp, top = 2.dp, end = 2.dp, bottom = 2.dp)
-                        .clip(RoundedCornerShape(2.dp))
-                )
-            } else {
-                // Procedural artwork placeholder with textured backdrop
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(start = 14.dp, top = 2.dp, end = 2.dp, bottom = 2.dp)
-                        .background(Color(0xFF262422), RoundedCornerShape(2.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Album,
-                        contentDescription = null,
-                        tint = Color(0xFF78716C),
-                        modifier = Modifier.size(56.dp)
+        // Inner Square Booklet Insert (Preserves 1:1 artwork proportions perfectly)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(5.dp)
+                .clip(RoundedCornerShape(2.dp))
+                .background(Color(0xFF1E1D1B))
+        ) {
+            Crossfade(
+                targetState = release?.artworkUri,
+                animationSpec = tween(300),
+                label = "albumArtCrossfade"
+            ) { artUri ->
+                if (artUri != null) {
+                    AsyncImage(
+                        model = artUri,
+                        contentDescription = release?.title,
+                        contentScale = ContentScale.Fit, // Complete artwork shown without distortion
+                        modifier = Modifier.fillMaxSize()
                     )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color(0xFF262422)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Album,
+                            contentDescription = null,
+                            tint = Color(0xFF78716C),
+                            modifier = Modifier.size(56.dp)
+                        )
+                    }
                 }
             }
         }
 
-        // Left clear acrylic hinge margin (standard CD jewel case feature)
+        // Overlay 1: Authentic Clear Polystyrene Front Lid & Specular Reflections
         Box(
             modifier = Modifier
-                .width(14.dp)
-                .fillMaxHeight()
+                .fillMaxSize()
                 .drawBehind {
+                    // Soft diagonal specular reflection across the plastic face
                     drawRect(
-                        brush = Brush.horizontalGradient(
+                        brush = Brush.linearGradient(
                             colors = listOf(
-                                Color.White.copy(alpha = 0.12f),
+                                Color.White.copy(alpha = 0.16f),
+                                Color.White.copy(alpha = 0.04f),
                                 Color.Transparent,
-                                Color.Black.copy(alpha = 0.25f)
-                            )
+                                Color.Black.copy(alpha = 0.08f)
+                            ),
+                            start = Offset(0f, 0f),
+                            end = Offset(size.width, size.height * 0.75f)
                         )
                     )
-                    // Hinge circular tabs
+
+                    // Secondary faint reflection streak (classic acrylic glass look)
+                    drawRect(
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color.White.copy(alpha = 0.09f),
+                                Color.Transparent
+                            ),
+                            start = Offset(size.width * 0.15f, 0f),
+                            end = Offset(size.width * 0.55f, size.height)
+                        )
+                    )
+
+                    // Left clear hinge ribbing (2 small circular hinge tabs on the clear outer border)
+                    val hingeRadius = 2.2.dp.toPx()
+                    val hingeX = 3.2.dp.toPx()
                     drawCircle(
-                        color = Color.White.copy(alpha = 0.2f),
-                        radius = 2.5f,
-                        center = Offset(size.width / 2, size.height * 0.25f)
+                        color = Color.White.copy(alpha = 0.35f),
+                        radius = hingeRadius,
+                        center = Offset(hingeX, size.height * 0.22f)
                     )
                     drawCircle(
-                        color = Color.White.copy(alpha = 0.2f),
-                        radius = 2.5f,
-                        center = Offset(size.width / 2, size.height * 0.75f)
+                        color = Color.White.copy(alpha = 0.35f),
+                        radius = hingeRadius,
+                        center = Offset(hingeX, size.height * 0.78f)
+                    )
+
+                    // Top/Left clear acrylic highlight line
+                    drawLine(
+                        color = Color.White.copy(alpha = 0.40f),
+                        start = Offset(1f, 1f),
+                        end = Offset(size.width - 2f, 1f),
+                        strokeWidth = 1.2f
+                    )
+                    drawLine(
+                        color = Color.White.copy(alpha = 0.35f),
+                        start = Offset(1f, 1f),
+                        end = Offset(1f, size.height - 2f),
+                        strokeWidth = 1.2f
+                    )
+
+                    // Bottom/Right dark bevel shadow line
+                    drawLine(
+                        color = Color.Black.copy(alpha = 0.65f),
+                        start = Offset(size.width - 1f, 2f),
+                        end = Offset(size.width - 1f, size.height - 1f),
+                        strokeWidth = 1.5f
+                    )
+                    drawLine(
+                        color = Color.Black.copy(alpha = 0.65f),
+                        start = Offset(2f, size.height - 1f),
+                        end = Offset(size.width - 1f, size.height - 1f),
+                        strokeWidth = 1.5f
                     )
                 }
         )

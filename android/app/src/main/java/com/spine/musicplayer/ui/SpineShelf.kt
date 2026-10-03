@@ -177,16 +177,17 @@ fun SpineShelf(
                 }
         )
 
-        // Spines Row: Full-Height Authentic CD Jewel Cases Centered Vertically
+        // Spines Row: Full-Height Authentic CD Jewel Cases Sitting Physically on Wooden Shelf
         LazyRow(
             state = listState,
             flingBehavior = flingBehavior,
             contentPadding = PaddingValues(horizontal = 140.dp, vertical = 0.dp),
-            horizontalArrangement = Arrangement.spacedBy(2.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(2.5.dp),
+            verticalAlignment = Alignment.Bottom,
             modifier = Modifier
                 .fillMaxWidth()
-                .align(Alignment.Center)
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 35.dp) // Directly touches top surface of 36dp shelf lip
         ) {
             itemsIndexed(releases) { index, release ->
                 val isSelected = index == selectedIndex
@@ -415,38 +416,50 @@ fun CdSpineItem(
                 .drawBehind {
                     // Left edge specular highlight (clear acrylic bevel reflection)
                     drawLine(
-                        color = Color.White.copy(alpha = if (isSelected) 0.55f else 0.30f),
+                        color = Color.White.copy(alpha = if (isSelected) 0.65f else 0.40f),
                         start = Offset(0.5f, 0f),
                         end = Offset(0.5f, size.height),
                         strokeWidth = 1.2f
                     )
                     // Secondary inner refraction line
                     drawLine(
-                        color = Color.White.copy(alpha = 0.12f),
+                        color = Color.White.copy(alpha = 0.18f),
                         start = Offset(2f, 0f),
                         end = Offset(2f, size.height),
                         strokeWidth = 0.8f
                     )
                     // Right edge seam / hinge groove shadow
                     drawLine(
-                        color = Color.Black.copy(alpha = 0.65f),
+                        color = Color.Black.copy(alpha = 0.70f),
                         start = Offset(size.width - 0.5f, 0f),
                         end = Offset(size.width - 0.5f, size.height),
                         strokeWidth = 1.5f
                     )
                     // Top clear plastic edge highlight
                     drawLine(
-                        color = Color.White.copy(alpha = 0.35f),
+                        color = Color.White.copy(alpha = 0.45f),
                         start = Offset(0f, 0.5f),
                         end = Offset(size.width, 0.5f),
                         strokeWidth = 1.0f
                     )
-                    // Bottom edge shelf shadow
+                    // Bottom edge physical shelf contact shadow
                     drawLine(
-                        color = Color.Black.copy(alpha = 0.70f),
+                        color = Color.Black.copy(alpha = 0.85f),
                         start = Offset(0f, size.height - 0.5f),
                         end = Offset(size.width, size.height - 0.5f),
-                        strokeWidth = 1.5f
+                        strokeWidth = 1.8f
+                    )
+                    // Subtle transparent surface diagonal plastic sheen
+                    drawRect(
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                Color.White.copy(alpha = 0.14f),
+                                Color.Transparent,
+                                Color.Black.copy(alpha = 0.10f)
+                            ),
+                            start = Offset(0f, 0f),
+                            end = Offset(size.width, size.height * 0.4f)
+                        )
                     )
                 }
         )
@@ -455,13 +468,31 @@ fun CdSpineItem(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(8.dp)
+                .height(6.dp)
                 .align(Alignment.TopCenter)
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            Color.White.copy(alpha = 0.22f),
+                            Color.White.copy(alpha = 0.30f),
+                            Color.White.copy(alpha = 0.08f),
                             Color.Transparent
+                        )
+                    )
+                )
+        )
+
+        // Bottom molded clear plastic base lip resting on shelf
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(5.dp)
+                .align(Alignment.BottomCenter)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            Color.Black.copy(alpha = 0.35f),
+                            Color.Black.copy(alpha = 0.80f)
                         )
                     )
                 )
@@ -550,19 +581,32 @@ private fun rememberSpineTypography(
         val hash = abs((release.title + release.artist).hashCode())
         val styleIndex = hash % 6
 
-        // Dynamic contrast colors
-        val primaryColor = if (isLight) Color(0xFF151412) else Color(0xFFF9F7F4)
-        val secondaryColor = if (isLight) Color(0xFF3C3834) else Color(0xFFD6D1C9)
-        val shadowColor = if (isLight) Color.White.copy(alpha = 0.45f) else Color.Black.copy(alpha = 0.85f)
+        // Curated palette of authentic CD spine text colours: cream, turquoise, red, yellow, white, mint, etc.
+        val spineTextColorPalette = listOf(
+            Color(0xFFFFF7ED), // Warm Cream
+            Color(0xFF38BDF8), // Vivid Turquoise / Sky
+            Color(0xFFFB7185), // Coral Red / Rose
+            Color(0xFFFDE047), // Sunny Yellow / Gold
+            Color(0xFFFFFFFF), // Crisp Clean White
+            Color(0xFF86EFAC), // Mint Green
+            Color(0xFFFDBA74), // Warm Tangerine / Amber
+            Color(0xFFE9D5FF), // Lilac / Pale Purple
+            Color(0xFF67E8F9), // Ice Aqua
+            Color(0xFFF472B6)  // Vibrant Fuchsia Pink
+        )
+        val textPaletteIndex = abs((hash xor parsedColor.hashCode())) % spineTextColorPalette.size
+        val primaryColor = spineTextColorPalette[textPaletteIndex]
+        val secondaryColor = if (primaryColor == Color(0xFFFFFFFF)) Color(0xFFE2E8F0) else Color.White.copy(alpha = 0.92f)
+        val shadowColor = Color.Black.copy(alpha = 0.95f)
 
-        // Progressive font scaling for title and artist so the complete text fits
+        // Prominent, legible font scaling for title and artist so the complete text fits and pops
         val totalLength = release.title.length + release.artist.length
         val (titleSize, artistSize, spacing) = when {
-            totalLength <= 18 -> Triple(8.5.sp, 7.5.sp, 0.4.sp)
-            totalLength <= 28 -> Triple(7.8.sp, 6.8.sp, 0.2.sp)
-            totalLength <= 40 -> Triple(7.0.sp, 6.0.sp, 0.sp)
-            totalLength <= 55 -> Triple(6.2.sp, 5.5.sp, (-0.2).sp)
-            else -> Triple(5.5.sp, 5.0.sp, (-0.3).sp)
+            totalLength <= 18 -> Triple(9.4.sp, 8.4.sp, 0.4.sp)
+            totalLength <= 28 -> Triple(8.5.sp, 7.6.sp, 0.2.sp)
+            totalLength <= 40 -> Triple(7.8.sp, 6.8.sp, 0.sp)
+            totalLength <= 55 -> Triple(7.0.sp, 6.2.sp, (-0.1).sp)
+            else -> Triple(6.2.sp, 5.6.sp, (-0.2).sp)
         }
 
         when (styleIndex) {

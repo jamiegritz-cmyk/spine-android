@@ -39,11 +39,13 @@ class MediaStoreAudioScanner(private val context: Context) {
             MediaStore.Audio.Media.ALBUM_ID,
             MediaStore.Audio.Media.DURATION,
             MediaStore.Audio.Media.TRACK,
-            MediaStore.Audio.Media.YEAR
+            MediaStore.Audio.Media.YEAR,
+            MediaStore.Audio.Media.DISPLAY_NAME
         )
 
-        val selection = "${MediaStore.Audio.Media.IS_MUSIC} != 0 AND ${MediaStore.Audio.Media.DURATION} > 15000"
-        val sortOrder = "${MediaStore.Audio.Media.ALBUM} ASC, ${MediaStore.Audio.Media.TRACK} ASC"
+        // Broad audio selection: includes IS_MUSIC != 0 OR audio mime-type to capture all local MP3/audio files
+        val selection = "(${MediaStore.Audio.Media.IS_MUSIC} != 0 OR ${MediaStore.Audio.Media.MIME_TYPE} LIKE 'audio/%') AND (${MediaStore.Audio.Media.DURATION} >= 5000 OR ${MediaStore.Audio.Media.DURATION} IS NULL OR ${MediaStore.Audio.Media.DURATION} = 0)"
+        val sortOrder = "${MediaStore.Audio.Media.ALBUM} ASC, ${MediaStore.Audio.Media.TRACK} ASC, ${MediaStore.Audio.Media.TITLE} ASC"
 
         val artworkBaseUri = Uri.parse("content://media/external/audio/albumart")
 
@@ -62,12 +64,24 @@ class MediaStoreAudioScanner(private val context: Context) {
             val durationCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
             val trackCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK)
             val yearCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR)
+            val displayNameCol = cursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME)
 
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idCol)
-                val title = cursor.getString(titleCol) ?: "Untitled Track"
-                val artist = cursor.getString(artistCol) ?: "Unknown Artist"
-                val album = cursor.getString(albumCol) ?: "Unknown Album"
+                val rawTitle = cursor.getString(titleCol)
+                val displayName = if (displayNameCol >= 0) cursor.getString(displayNameCol) else null
+                val title = when {
+                    !rawTitle.isNullOrBlank() -> rawTitle
+                    !displayName.isNullOrBlank() -> displayName.substringBeforeLast(".")
+                    else -> "Track $id"
+                }
+
+                val rawArtist = cursor.getString(artistCol)
+                val artist = if (!rawArtist.isNullOrBlank() && rawArtist != "<unknown>") rawArtist else "Unknown Artist"
+
+                val rawAlbum = cursor.getString(albumCol)
+                val album = if (!rawAlbum.isNullOrBlank() && rawAlbum != "<unknown>") rawAlbum else "Unknown Album"
+
                 val albumId = cursor.getLong(albumIdCol)
                 val duration = cursor.getLong(durationCol)
                 val trackNum = cursor.getInt(trackCol)
@@ -88,21 +102,24 @@ class MediaStoreAudioScanner(private val context: Context) {
                     contentUri = contentUri
                 )
 
-                val albumTracks = tracksByAlbum.getOrPut(album) { mutableListOf() }
+                // Group by album if album tag is present; if no album tag, group by song so singles are not lost
+                val albumKey = if (album != "Unknown Album") album else "${title} - $artist"
+
+                val albumTracks = tracksByAlbum.getOrPut(albumKey) { mutableListOf() }
                 albumTracks.add(track)
 
-                if (!albumArtistMap.containsKey(album)) {
-                    albumArtistMap[album] = artist
+                if (!albumArtistMap.containsKey(albumKey)) {
+                    albumArtistMap[albumKey] = artist
                 }
-                if (!firstTrackUriMap.containsKey(album)) {
-                    firstTrackUriMap[album] = contentUri
+                if (!firstTrackUriMap.containsKey(albumKey)) {
+                    firstTrackUriMap[albumKey] = contentUri
                 }
-                if (!albumArtMap.containsKey(album)) {
+                if (!albumArtMap.containsKey(albumKey)) {
                     val artUri = ContentUris.withAppendedId(artworkBaseUri, albumId)
-                    albumArtMap[album] = artUri
+                    albumArtMap[albumKey] = artUri
                 }
-                if (year > 0 && !albumYearMap.containsKey(album)) {
-                    albumYearMap[album] = year
+                if (year > 0 && !albumYearMap.containsKey(albumKey)) {
+                    albumYearMap[albumKey] = year
                 }
             }
         }
