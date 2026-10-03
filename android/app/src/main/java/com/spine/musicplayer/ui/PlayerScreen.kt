@@ -142,7 +142,7 @@ private fun PortraitPlayerLayout(
 
     // Very subtle tactile paper / lightly brushed texture on near-black background
     val tactileBgBrush = rememberTactileTextureBrush(
-        baseColor = Color(0xFF141312),
+        baseColor = Color(0xFF101114),
         grainVariance = 3,
         seed = 42L
     )
@@ -380,7 +380,7 @@ private fun LandscapePlayerLayout(
     val currentRelease = uiState.currentRelease
 
     val tactileBgBrush = rememberTactileTextureBrush(
-        baseColor = Color(0xFF141312),
+        baseColor = Color(0xFF101114),
         grainVariance = 3,
         seed = 42L
     )
@@ -610,13 +610,15 @@ fun JewelCaseArtwork(
     Box(
         modifier = modifier
             .aspectRatio(1f) // Strict square CD jewel case proportion
+            // Layer 1: BACK - deep physical drop shadow behind the case
             .shadow(
-                elevation = 14.dp,
+                elevation = 16.dp,
                 shape = RoundedCornerShape(3.dp),
-                ambientColor = Color.Black.copy(alpha = 0.7f),
-                spotColor = Color.Black.copy(alpha = 0.85f)
+                ambientColor = Color.Black.copy(alpha = 0.75f),
+                spotColor = Color.Black.copy(alpha = 0.90f)
             )
-            .background(Color(0x18FFFFFF), RoundedCornerShape(3.dp))
+            // Layer 2: CASE - transparent clear plastic shell (subtle refractive acrylic tint, allowing dark background to show through)
+            .background(Color(0x0CFFFFFF), RoundedCornerShape(3.dp))
             .then(
                 if (onClick != null) {
                     Modifier.clickable(onClick = onClick)
@@ -625,28 +627,71 @@ fun JewelCaseArtwork(
                 }
             )
             .drawBehind {
-                // Subtle clear acrylic outer bevel rim
+                // Clear outer perimeter bevel: Top/Left highlight, Bottom/Right darker edge
+                val strokeW = 1.2.dp.toPx()
+                // Top & Left bright refraction highlight
+                drawLine(
+                    color = Color.White.copy(alpha = 0.55f),
+                    start = Offset(0f, 0f),
+                    end = Offset(size.width, 0f),
+                    strokeWidth = strokeW
+                )
+                drawLine(
+                    color = Color.White.copy(alpha = 0.50f),
+                    start = Offset(0f, 0f),
+                    end = Offset(0f, size.height),
+                    strokeWidth = strokeW
+                )
+                // Bottom & Right dark refractive plastic edge
+                drawLine(
+                    color = Color.Black.copy(alpha = 0.70f),
+                    start = Offset(size.width, 0f),
+                    end = Offset(size.width, size.height),
+                    strokeWidth = strokeW
+                )
+                drawLine(
+                    color = Color.Black.copy(alpha = 0.70f),
+                    start = Offset(0f, size.height),
+                    end = Offset(size.width, size.height),
+                    strokeWidth = strokeW
+                )
+
+                // Visible plastic wall thickness (inner refraction line inset by 1.5.dp)
+                val wallInset = 1.5.dp.toPx()
                 drawRoundRect(
                     brush = Brush.linearGradient(
                         colors = listOf(
-                            Color.White.copy(alpha = 0.32f),
-                            Color.White.copy(alpha = 0.08f),
-                            Color.Black.copy(alpha = 0.55f)
+                            Color.White.copy(alpha = 0.28f),
+                            Color.White.copy(alpha = 0.10f),
+                            Color.Black.copy(alpha = 0.45f)
                         ),
                         start = Offset(0f, 0f),
                         end = Offset(size.width, size.height)
                     ),
-                    cornerRadius = CornerRadius(3.dp.toPx(), 3.dp.toPx()),
-                    style = Stroke(width = 1.0.dp.toPx())
+                    topLeft = Offset(wallInset, wallInset),
+                    size = androidx.compose.ui.geometry.Size(
+                        size.width - wallInset * 2,
+                        size.height - wallInset * 2
+                    ),
+                    cornerRadius = CornerRadius(2.dp.toPx(), 2.dp.toPx()),
+                    style = Stroke(width = 0.8.dp.toPx())
                 )
             }
     ) {
-        // Inner Booklet Insert (Nestled inside jewel case with left clear hinge margin)
+        // Layer 3: ARTWORK - Printed CD booklet insert sitting physically INSIDE the case
+        // Noticeably inset from the outer plastic edges (16dp left for hinge, 4.5dp top/bottom, 5dp right)
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(start = 13.dp, top = 3.dp, end = 3.dp, bottom = 3.dp)
-                .clip(RoundedCornerShape(1.5.dp))
+                .padding(start = 16.dp, top = 4.5.dp, end = 5.dp, bottom = 4.5.dp)
+                // Subtle booklet edge drop shadow giving it recessed depth inside the tray cavity
+                .shadow(
+                    elevation = 2.dp,
+                    shape = RoundedCornerShape(1.dp),
+                    ambientColor = Color.Black.copy(alpha = 0.6f),
+                    spotColor = Color.Black.copy(alpha = 0.8f)
+                )
+                .clip(RoundedCornerShape(1.dp))
                 .background(Color(0xFF1E1D1B))
         ) {
             Crossfade(
@@ -677,147 +722,237 @@ fun JewelCaseArtwork(
                     }
                 }
             }
+
+            // Inner tray booklet boundary border
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .drawBehind {
+                        drawRect(
+                            color = Color.Black.copy(alpha = 0.35f),
+                            style = Stroke(width = 1.0f)
+                        )
+                    }
+            )
         }
 
-        // Left Clear Acrylic Hinge Margin (Authentic physical CD jewel case hinge)
+        // Layer 4: LEFT TRANSPARENT SPINE / HINGE SECTION (16.dp wide)
+        // Moulded clear polystyrene hinge details
         Box(
             modifier = Modifier
-                .width(13.dp)
+                .width(16.dp)
                 .fillMaxHeight()
                 .drawBehind {
-                    // Left translucent ribbed bevel
+                    // Transparent acrylic body gradient
                     drawRect(
                         brush = Brush.horizontalGradient(
                             colors = listOf(
-                                Color.White.copy(alpha = 0.16f),
+                                Color.White.copy(alpha = 0.20f),
                                 Color.Transparent,
-                                Color.Black.copy(alpha = 0.30f)
+                                Color.Black.copy(alpha = 0.35f)
                             )
                         )
                     )
-                    // Inner refraction vertical seam
+
+                    // Three moulded vertical ribs/flutes along the hinge
+                    val rib1 = size.width * 0.28f
+                    val rib2 = size.width * 0.50f
+                    val rib3 = size.width * 0.72f
+                    // Highlight lines
                     drawLine(
-                        color = Color.White.copy(alpha = 0.18f),
-                        start = Offset(size.width - 0.5f, 0f),
-                        end = Offset(size.width - 0.5f, size.height),
+                        color = Color.White.copy(alpha = 0.26f),
+                        start = Offset(rib1, 0f),
+                        end = Offset(rib1, size.height),
+                        strokeWidth = 0.8f
+                    )
+                    drawLine(
+                        color = Color.White.copy(alpha = 0.26f),
+                        start = Offset(rib2, 0f),
+                        end = Offset(rib2, size.height),
+                        strokeWidth = 0.8f
+                    )
+                    drawLine(
+                        color = Color.White.copy(alpha = 0.26f),
+                        start = Offset(rib3, 0f),
+                        end = Offset(rib3, size.height),
+                        strokeWidth = 0.8f
+                    )
+                    // Rib shadow lines for 3D depth
+                    drawLine(
+                        color = Color.Black.copy(alpha = 0.35f),
+                        start = Offset(rib1 + 1f, 0f),
+                        end = Offset(rib1 + 1f, size.height),
+                        strokeWidth = 0.8f
+                    )
+                    drawLine(
+                        color = Color.Black.copy(alpha = 0.35f),
+                        start = Offset(rib2 + 1f, 0f),
+                        end = Offset(rib2 + 1f, size.height),
+                        strokeWidth = 0.8f
+                    )
+                    drawLine(
+                        color = Color.Black.copy(alpha = 0.35f),
+                        start = Offset(rib3 + 1f, 0f),
+                        end = Offset(rib3 + 1f, size.height),
+                        strokeWidth = 0.8f
+                    )
+
+                    // Inner vertical hinge joint seam where the front lid pivots
+                    drawLine(
+                        color = Color.White.copy(alpha = 0.35f),
+                        start = Offset(size.width - 1.0f, 0f),
+                        end = Offset(size.width - 1.0f, size.height),
                         strokeWidth = 1.0f
                     )
-                    // Molded circular hinge tabs
-                    val tabRadius = 2.2.dp.toPx()
-                    val tabX = size.width * 0.45f
+                    drawLine(
+                        color = Color.Black.copy(alpha = 0.50f),
+                        start = Offset(size.width - 0.2f, 0f),
+                        end = Offset(size.width - 0.2f, size.height),
+                        strokeWidth = 1.0f
+                    )
+
+                    // Moulded circular hinge pivot tabs (top & bottom)
+                    val tabRadius = 2.6.dp.toPx()
+                    val tabX = size.width * 0.48f
+
+                    // Top pivot
                     drawCircle(
-                        color = Color.White.copy(alpha = 0.35f),
+                        color = Color.White.copy(alpha = 0.60f),
                         radius = tabRadius,
-                        center = Offset(tabX, size.height * 0.20f)
+                        center = Offset(tabX, size.height * 0.18f),
+                        style = Stroke(width = 1.0.dp.toPx())
                     )
                     drawCircle(
-                        color = Color.Black.copy(alpha = 0.40f),
-                        radius = tabRadius - 0.8f,
-                        center = Offset(tabX, size.height * 0.20f)
+                        color = Color.Black.copy(alpha = 0.55f),
+                        radius = tabRadius - 0.6.dp.toPx(),
+                        center = Offset(tabX, size.height * 0.18f)
                     )
                     drawCircle(
-                        color = Color.White.copy(alpha = 0.35f),
+                        color = Color.White.copy(alpha = 0.45f),
+                        radius = 0.8.dp.toPx(),
+                        center = Offset(tabX - 0.6.dp.toPx(), size.height * 0.18f - 0.6.dp.toPx())
+                    )
+
+                    // Bottom pivot
+                    drawCircle(
+                        color = Color.White.copy(alpha = 0.60f),
                         radius = tabRadius,
-                        center = Offset(tabX, size.height * 0.80f)
+                        center = Offset(tabX, size.height * 0.82f),
+                        style = Stroke(width = 1.0.dp.toPx())
                     )
                     drawCircle(
-                        color = Color.Black.copy(alpha = 0.40f),
-                        radius = tabRadius - 0.8f,
-                        center = Offset(tabX, size.height * 0.80f)
+                        color = Color.Black.copy(alpha = 0.55f),
+                        radius = tabRadius - 0.6.dp.toPx(),
+                        center = Offset(tabX, size.height * 0.82f)
+                    )
+                    drawCircle(
+                        color = Color.White.copy(alpha = 0.45f),
+                        radius = 0.8.dp.toPx(),
+                        center = Offset(tabX - 0.6.dp.toPx(), size.height * 0.82f - 0.6.dp.toPx())
                     )
                 }
         )
 
-        // Overlay: Clear Polystyrene Front Lid, Restrained Surface Sheen & Micro-scratches
+        // Layer 5: CLEAR POLYSTYRENE FRONT LID OVERLAY
+        // Neutral studio lighting reflections & micro-scratches over the entire case & booklet
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .drawBehind {
-                    // Restrained diagonal diffuse light sheen across the front lid
+                    // Studio lighting specular sheen across the lid (noticeably visible, natural)
                     drawRect(
                         brush = Brush.linearGradient(
                             colors = listOf(
-                                Color.White.copy(alpha = 0.12f),
-                                Color.White.copy(alpha = 0.03f),
+                                Color.White.copy(alpha = 0.20f),
+                                Color.White.copy(alpha = 0.05f),
                                 Color.Transparent,
-                                Color.Black.copy(alpha = 0.06f)
+                                Color.Black.copy(alpha = 0.08f)
                             ),
                             start = Offset(0f, 0f),
-                            end = Offset(size.width, size.height * 0.72f)
+                            end = Offset(size.width * 0.85f, size.height * 0.70f)
                         )
                     )
 
-                    // Secondary faint diagonal streak
+                    // Secondary faint diagonal reflection
                     drawRect(
                         brush = Brush.linearGradient(
                             colors = listOf(
                                 Color.Transparent,
-                                Color.White.copy(alpha = 0.07f),
+                                Color.White.copy(alpha = 0.10f),
                                 Color.Transparent
                             ),
-                            start = Offset(size.width * 0.20f, 0f),
-                            end = Offset(size.width * 0.60f, size.height)
+                            start = Offset(size.width * 0.25f, 0f),
+                            end = Offset(size.width * 0.68f, size.height)
                         )
                     )
 
                     // Top/Left clear perimeter highlight line
                     drawLine(
-                        color = Color.White.copy(alpha = 0.38f),
-                        start = Offset(1f, 1f),
-                        end = Offset(size.width - 2f, 1f),
+                        color = Color.White.copy(alpha = 0.45f),
+                        start = Offset(1.5f, 1.5f),
+                        end = Offset(size.width - 2f, 1.5f),
                         strokeWidth = 1.0f
                     )
                     drawLine(
-                        color = Color.White.copy(alpha = 0.30f),
-                        start = Offset(1f, 1f),
-                        end = Offset(1f, size.height - 2f),
+                        color = Color.White.copy(alpha = 0.40f),
+                        start = Offset(1.5f, 1.5f),
+                        end = Offset(1.5f, size.height - 2f),
                         strokeWidth = 1.0f
                     )
 
                     // Bottom/Right dark bevel shadow line
                     drawLine(
-                        color = Color.Black.copy(alpha = 0.60f),
-                        start = Offset(size.width - 1f, 2f),
-                        end = Offset(size.width - 1f, size.height - 1f),
+                        color = Color.Black.copy(alpha = 0.65f),
+                        start = Offset(size.width - 1.5f, 2f),
+                        end = Offset(size.width - 1.5f, size.height - 1.5f),
                         strokeWidth = 1.2f
                     )
                     drawLine(
-                        color = Color.Black.copy(alpha = 0.60f),
-                        start = Offset(2f, size.height - 1f),
-                        end = Offset(size.width - 1f, size.height - 1f),
+                        color = Color.Black.copy(alpha = 0.65f),
+                        start = Offset(2f, size.height - 1.5f),
+                        end = Offset(size.width - 1.5f, size.height - 1.5f),
                         strokeWidth = 1.2f
                     )
 
                     // Thumb tab opening notch on the right border
                     val notchY = size.height * 0.50f
+                    val notchH = 10.dp.toPx()
+                    // Shadow indentation
                     drawLine(
-                        color = Color.Black.copy(alpha = 0.45f),
-                        start = Offset(size.width - 1.5.dp.toPx(), notchY - 8.dp.toPx()),
-                        end = Offset(size.width - 1.5.dp.toPx(), notchY + 8.dp.toPx()),
-                        strokeWidth = 1.2f
+                        color = Color.Black.copy(alpha = 0.55f),
+                        start = Offset(size.width - 2.5.dp.toPx(), notchY - notchH),
+                        end = Offset(size.width - 2.5.dp.toPx(), notchY + notchH),
+                        strokeWidth = 1.5f
+                    )
+                    // Notch top highlight
+                    drawLine(
+                        color = Color.White.copy(alpha = 0.40f),
+                        start = Offset(size.width - 3.5.dp.toPx(), notchY - notchH),
+                        end = Offset(size.width - 1.5.dp.toPx(), notchY - notchH),
+                        strokeWidth = 1.0f
                     )
 
-                    // Very subtle microscopic hairline scratches (authentic physical handling wear)
+                    // Subtle microscopic hairline scratches on the plastic front lid
                     // Scratch 1: Near top-right
                     drawLine(
-                        color = Color.White.copy(alpha = 0.12f),
-                        start = Offset(size.width * 0.73f, size.height * 0.16f),
-                        end = Offset(size.width * 0.81f, size.height * 0.20f),
-                        strokeWidth = 0.6f
+                        color = Color.White.copy(alpha = 0.22f),
+                        start = Offset(size.width * 0.72f, size.height * 0.16f),
+                        end = Offset(size.width * 0.82f, size.height * 0.21f),
+                        strokeWidth = 0.7f
                     )
                     // Scratch 2: Near bottom-left
                     drawLine(
-                        color = Color.White.copy(alpha = 0.10f),
-                        start = Offset(size.width * 0.28f, size.height * 0.72f),
-                        end = Offset(size.width * 0.34f, size.height * 0.74f),
-                        strokeWidth = 0.5f
+                        color = Color.White.copy(alpha = 0.18f),
+                        start = Offset(size.width * 0.26f, size.height * 0.72f),
+                        end = Offset(size.width * 0.33f, size.height * 0.75f),
+                        strokeWidth = 0.6f
                     )
                     // Scratch 3: Near lower right
                     drawLine(
-                        color = Color.White.copy(alpha = 0.08f),
-                        start = Offset(size.width * 0.62f, size.height * 0.81f),
-                        end = Offset(size.width * 0.66f, size.height * 0.79f),
-                        strokeWidth = 0.5f
+                        color = Color.White.copy(alpha = 0.16f),
+                        start = Offset(size.width * 0.60f, size.height * 0.82f),
+                        end = Offset(size.width * 0.67f, size.height * 0.79f),
+                        strokeWidth = 0.6f
                     )
                 }
         )
