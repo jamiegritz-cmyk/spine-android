@@ -122,6 +122,9 @@ fun SpineShelf(
         }
     }
 
+    val caseHeight = if (shelfHeight < 280.dp) (shelfHeight - 48.dp).coerceAtLeast(120.dp) else 280.dp
+    val caseWidth = if (shelfHeight < 280.dp) 18.dp else 22.dp
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -190,6 +193,8 @@ fun SpineShelf(
                 CdSpineItem(
                     release = release,
                     isSelected = isSelected,
+                    caseHeight = caseHeight,
+                    caseWidth = caseWidth,
                     onClick = { onSelectRelease(index) }
                 )
             }
@@ -209,11 +214,17 @@ fun SpineShelf(
 fun CdSpineItem(
     release: Release,
     isSelected: Boolean,
+    caseHeight: Dp = 280.dp,
+    caseWidth: Dp = 22.dp,
     onClick: () -> Unit
 ) {
     // Selected spine pulled forward from shelf and enlarged
+    val targetOffset = if (isSelected) {
+        if (caseHeight < 200.dp) (-14).dp else (-26).dp
+    } else 0.dp
+
     val verticalOffset by animateDpAsState(
-        targetValue = if (isSelected) (-26).dp else 0.dp,
+        targetValue = targetOffset,
         animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
         label = "spineOffset"
     )
@@ -242,8 +253,8 @@ fun CdSpineItem(
                 scaleX = scale
                 scaleY = scale
             }
-            .width(22.dp) // Slender authentic jewel case spine width
-            .height(280.dp) // Tall, dominant full-height CD spine
+            .width(caseWidth) // Slender authentic jewel case spine width
+            .height(caseHeight) // Dominant full-height CD spine
             .shadow(elevation, shape = RoundedCornerShape(1.5.dp))
             .background(Color(0xFF0C0B0A), RoundedCornerShape(1.5.dp))
             .clickable(

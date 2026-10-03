@@ -2,6 +2,10 @@ package com.spine.musicplayer.ui
 
 import android.content.res.Configuration
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -33,6 +38,10 @@ import com.spine.musicplayer.model.Track
 import com.spine.musicplayer.viewmodel.PlayerUiState
 import java.util.Locale
 
+enum class LibraryFilterMode {
+    ALBUMS, SINGLES
+}
+
 @Composable
 fun PlayerScreen(
     uiState: PlayerUiState,
@@ -43,10 +52,12 @@ fun PlayerScreen(
     onSeek: (Long) -> Unit,
     onToggleShuffle: () -> Unit,
     onCycleRepeat: () -> Unit,
+    onRefresh: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    var filterMode by remember { mutableStateOf(LibraryFilterMode.ALBUMS) }
 
     Scaffold(
         containerColor = Color(0xFF121110),
@@ -55,6 +66,9 @@ fun PlayerScreen(
         if (isLandscape) {
             LandscapePlayerLayout(
                 uiState = uiState,
+                filterMode = filterMode,
+                onFilterModeChange = { filterMode = it },
+                onRefresh = onRefresh,
                 onSelectRelease = onSelectRelease,
                 onPlayPause = onPlayPause,
                 onNext = onNext,
@@ -67,6 +81,9 @@ fun PlayerScreen(
         } else {
             PortraitPlayerLayout(
                 uiState = uiState,
+                filterMode = filterMode,
+                onFilterModeChange = { filterMode = it },
+                onRefresh = onRefresh,
                 onSelectRelease = onSelectRelease,
                 onPlayPause = onPlayPause,
                 onNext = onNext,
@@ -87,6 +104,9 @@ fun PlayerScreen(
 @Composable
 private fun PortraitPlayerLayout(
     uiState: PlayerUiState,
+    filterMode: LibraryFilterMode,
+    onFilterModeChange: (LibraryFilterMode) -> Unit,
+    onRefresh: () -> Unit,
     onSelectRelease: (Int) -> Unit,
     onPlayPause: () -> Unit,
     onNext: () -> Unit,
@@ -96,8 +116,19 @@ private fun PortraitPlayerLayout(
     onCycleRepeat: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val activeReleases = remember(uiState.releases, filterMode) {
+        when (filterMode) {
+            LibraryFilterMode.ALBUMS -> {
+                val alb = uiState.releases.filter { it.tracks.size > 1 }
+                if (alb.isNotEmpty()) alb else uiState.releases
+            }
+            LibraryFilterMode.SINGLES -> {
+                val sgl = uiState.releases.filter { it.tracks.size <= 1 }
+                if (sgl.isNotEmpty()) sgl else uiState.releases
+            }
+        }
+    }
     val currentRelease = uiState.currentRelease
-    val currentTrack = uiState.currentTrack
 
     Column(
         modifier = modifier
@@ -105,23 +136,75 @@ private fun PortraitPlayerLayout(
             .background(Color(0xFF141312)),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Clean Minimal Top Bar
+        // Top Bar: GRAIZ [menu] on left, [Albums] [Singles] [Refresh] on right
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 12.dp),
+                .padding(horizontal = 20.dp, vertical = 10.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "GRAIZ",
-                style = MaterialTheme.typography.labelMedium.copy(
-                    letterSpacing = 2.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFFA8A29E)
+            // Left: GRAIZ brand title + menu icon
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text(
+                    text = "GRAIZ",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        letterSpacing = 2.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFF5F5F4),
+                        fontSize = 15.sp
+                    )
                 )
-            )
+                IconButton(
+                    onClick = { /* Menu interaction */ },
+                    modifier = Modifier.size(28.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Menu,
+                        contentDescription = "Menu",
+                        tint = Color(0xFFA8A29E),
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
 
+            // Right: [Albums] [Singles] segment + [Refresh]
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                AlbumsSinglesSegment(
+                    currentMode = filterMode,
+                    onModeSelected = { newMode ->
+                        if (filterMode != newMode) {
+                            onFilterModeChange(newMode)
+                            val targetList = when (newMode) {
+                                LibraryFilterMode.ALBUMS -> {
+                                    val alb = uiState.releases.filter { it.tracks.size > 1 }
+                                    if (alb.isNotEmpty()) alb else uiState.releases
+                                }
+                                LibraryFilterMode.SINGLES -> {
+                                    val sgl = uiState.releases.filter { it.tracks.size <= 1 }
+                                    if (sgl.isNotEmpty()) sgl else uiState.releases
+                                }
+                            }
+                            val firstTarget = targetList.firstOrNull()
+                            if (firstTarget != null) {
+                                val targetIdx = uiState.releases.indexOf(firstTarget)
+                                if (targetIdx >= 0) onSelectRelease(targetIdx)
+                            }
+                        }
+                    }
+                )
+
+                RefreshButton(
+                    isRefreshing = uiState.isLoading,
+                    onClick = onRefresh
+                )
+            }
         }
 
         Spacer(modifier = Modifier.weight(0.5f))
@@ -198,10 +281,23 @@ private fun PortraitPlayerLayout(
         Spacer(modifier = Modifier.weight(1f))
 
         // DOMINANT PHYSICAL WOODEN SHELF: Lower 45-50% of the screen
+        val shelfSelectedIndex = remember(activeReleases, currentRelease) {
+            val idx = activeReleases.indexOf(currentRelease)
+            if (idx >= 0) idx else 0
+        }
+
         SpineShelf(
-            releases = uiState.releases,
-            selectedIndex = uiState.selectedReleaseIndex,
-            onSelectRelease = onSelectRelease,
+            releases = activeReleases,
+            selectedIndex = shelfSelectedIndex,
+            onSelectRelease = { index ->
+                if (index in activeReleases.indices) {
+                    val sel = activeReleases[index]
+                    val orig = uiState.releases.indexOf(sel)
+                    if (orig >= 0) {
+                        onSelectRelease(orig)
+                    }
+                }
+            },
             shelfHeight = 380.dp,
             modifier = Modifier.fillMaxWidth()
         )
@@ -215,6 +311,9 @@ private fun PortraitPlayerLayout(
 @Composable
 private fun LandscapePlayerLayout(
     uiState: PlayerUiState,
+    filterMode: LibraryFilterMode,
+    onFilterModeChange: (LibraryFilterMode) -> Unit,
+    onRefresh: () -> Unit,
     onSelectRelease: (Int) -> Unit,
     onPlayPause: () -> Unit,
     onNext: () -> Unit,
@@ -224,6 +323,18 @@ private fun LandscapePlayerLayout(
     onCycleRepeat: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val activeReleases = remember(uiState.releases, filterMode) {
+        when (filterMode) {
+            LibraryFilterMode.ALBUMS -> {
+                val alb = uiState.releases.filter { it.tracks.size > 1 }
+                if (alb.isNotEmpty()) alb else uiState.releases
+            }
+            LibraryFilterMode.SINGLES -> {
+                val sgl = uiState.releases.filter { it.tracks.size <= 1 }
+                if (sgl.isNotEmpty()) sgl else uiState.releases
+            }
+        }
+    }
     val currentRelease = uiState.currentRelease
 
     Column(
@@ -231,23 +342,103 @@ private fun LandscapePlayerLayout(
             .fillMaxSize()
             .background(Color(0xFF141312))
     ) {
-        // Main Content Split: Left Artwork, Right Controls
+        // Top Bar: GRAIZ [menu] on left, [Albums] [Singles] [Refresh] on right
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Left: GRAIZ brand title + menu icon
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text(
+                    text = "GRAIZ",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        letterSpacing = 2.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFF5F5F4),
+                        fontSize = 14.sp
+                    )
+                )
+                IconButton(
+                    onClick = { /* Menu interaction */ },
+                    modifier = Modifier.size(26.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Menu,
+                        contentDescription = "Menu",
+                        tint = Color(0xFFA8A29E),
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+
+            // Right: [Albums] [Singles] segment + [Refresh]
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                AlbumsSinglesSegment(
+                    currentMode = filterMode,
+                    onModeSelected = { newMode ->
+                        if (filterMode != newMode) {
+                            onFilterModeChange(newMode)
+                            val targetList = when (newMode) {
+                                LibraryFilterMode.ALBUMS -> {
+                                    val alb = uiState.releases.filter { it.tracks.size > 1 }
+                                    if (alb.isNotEmpty()) alb else uiState.releases
+                                }
+                                LibraryFilterMode.SINGLES -> {
+                                    val sgl = uiState.releases.filter { it.tracks.size <= 1 }
+                                    if (sgl.isNotEmpty()) sgl else uiState.releases
+                                }
+                            }
+                            val firstTarget = targetList.firstOrNull()
+                            if (firstTarget != null) {
+                                val targetIdx = uiState.releases.indexOf(firstTarget)
+                                if (targetIdx >= 0) onSelectRelease(targetIdx)
+                            }
+                        }
+                    }
+                )
+
+                RefreshButton(
+                    isRefreshing = uiState.isLoading,
+                    onClick = onRefresh
+                )
+            }
+        }
+
+        // Main Content Split: Left Responsive Square Artwork, Right Controls
         Row(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .padding(horizontal = 32.dp, vertical = 16.dp),
+                .padding(horizontal = 24.dp, vertical = 2.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Left: Large Square Artwork
-            JewelCaseArtwork(
-                release = currentRelease,
+            // Left: Square Album Cover (always 1:1, never clipped, fits available height)
+            Box(
                 modifier = Modifier
-                    .size(240.dp)
-                    .padding(8.dp)
-            )
+                    .fillMaxHeight()
+                    .aspectRatio(1f)
+                    .padding(vertical = 2.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                JewelCaseArtwork(
+                    release = currentRelease,
+                    onClick = onPlayPause,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(2.dp)
+                )
+            }
 
-            Spacer(modifier = Modifier.width(36.dp))
+            Spacer(modifier = Modifier.width(24.dp))
 
             // Right: Info and Playback Controls
             Column(
@@ -258,24 +449,26 @@ private fun LandscapePlayerLayout(
             ) {
                 Text(
                     text = currentRelease?.title ?: "Select an Album",
-                    style = MaterialTheme.typography.headlineMedium.copy(
+                    style = MaterialTheme.typography.titleMedium.copy(
                         color = Color(0xFFF5F5F4),
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp
                     ),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = "${currentRelease?.artist ?: ""} · ${currentRelease?.year ?: ""}",
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        color = Color(0xFFA8A29E)
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = Color(0xFFA8A29E),
+                        fontSize = 12.sp
                     ),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 PlaybackProgressBar(
                     positionMs = uiState.currentPositionMs,
@@ -284,7 +477,7 @@ private fun LandscapePlayerLayout(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
                 ControlsRow(
                     isPlaying = uiState.isPlaying,
@@ -301,13 +494,25 @@ private fun LandscapePlayerLayout(
         }
 
         // Horizontal CD Shelf at the bottom
+        val shelfSelectedIndex = remember(activeReleases, currentRelease) {
+            val idx = activeReleases.indexOf(currentRelease)
+            if (idx >= 0) idx else 0
+        }
+
         SpineShelf(
-            releases = uiState.releases,
-            selectedIndex = uiState.selectedReleaseIndex,
-            onSelectRelease = onSelectRelease,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
+            releases = activeReleases,
+            selectedIndex = shelfSelectedIndex,
+            onSelectRelease = { index ->
+                if (index in activeReleases.indices) {
+                    val sel = activeReleases[index]
+                    val orig = uiState.releases.indexOf(sel)
+                    if (orig >= 0) {
+                        onSelectRelease(orig)
+                    }
+                }
+            },
+            shelfHeight = 160.dp,
+            modifier = Modifier.fillMaxWidth()
         )
     }
 }
@@ -545,4 +750,83 @@ private fun formatDuration(durationMs: Long): String {
     val minutes = totalSeconds / 60
     val seconds = totalSeconds % 60
     return String.format(Locale.ROOT, "%02d:%02d", minutes, seconds)
+}
+
+@Composable
+fun AlbumsSinglesSegment(
+    currentMode: LibraryFilterMode,
+    onModeSelected: (LibraryFilterMode) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .background(Color(0xFF1F1D1B), RoundedCornerShape(12.dp))
+            .padding(2.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Albums Tab
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(10.dp))
+                .background(if (currentMode == LibraryFilterMode.ALBUMS) Color(0xFF383430) else Color.Transparent)
+                .clickable { onModeSelected(LibraryFilterMode.ALBUMS) }
+                .padding(horizontal = 9.dp, vertical = 4.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "Albums",
+                color = if (currentMode == LibraryFilterMode.ALBUMS) Color.White else Color(0xFFA8A29E),
+                fontSize = 11.sp,
+                fontWeight = if (currentMode == LibraryFilterMode.ALBUMS) FontWeight.SemiBold else FontWeight.Normal
+            )
+        }
+        // Singles Tab
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(10.dp))
+                .background(if (currentMode == LibraryFilterMode.SINGLES) Color(0xFF383430) else Color.Transparent)
+                .clickable { onModeSelected(LibraryFilterMode.SINGLES) }
+                .padding(horizontal = 9.dp, vertical = 4.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "Singles",
+                color = if (currentMode == LibraryFilterMode.SINGLES) Color.White else Color(0xFFA8A29E),
+                fontSize = 11.sp,
+                fontWeight = if (currentMode == LibraryFilterMode.SINGLES) FontWeight.SemiBold else FontWeight.Normal
+            )
+        }
+    }
+}
+
+@Composable
+fun RefreshButton(
+    isRefreshing: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "refreshSpin")
+    val angle by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(800, easing = LinearEasing),
+            repeatMode = androidx.compose.animation.core.RepeatMode.Restart
+        ),
+        label = "spinAngle"
+    )
+    IconButton(
+        onClick = onClick,
+        enabled = !isRefreshing,
+        modifier = modifier.size(32.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.Refresh,
+            contentDescription = "Refresh Library",
+            tint = if (isRefreshing) Color(0xFFD6D3D1) else Color(0xFFA8A29E),
+            modifier = Modifier
+                .size(18.dp)
+                .then(if (isRefreshing) Modifier.rotate(angle) else Modifier)
+        )
+    }
 }
