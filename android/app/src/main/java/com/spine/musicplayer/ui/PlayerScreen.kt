@@ -592,14 +592,14 @@ private fun LandscapePlayerLayout(
 }
 
 /**
- * Realistic Square CD Jewel Case Front Artwork.
- * Authentically models a physical CD jewel case:
- * - Square outer clear polystyrene case with physical bevelled edges and contact depth
- * - Real album artwork insert strictly preserving proportions without distortion
- * - Left clear acrylic hinge margin with molded pivot tabs and fluted ribbing
- * - Transparent plastic front lid with subtle specular sheen and restrained surface reflections
- * - Very subtle microscopic handling hairline scratches/scuffs
- * - Thumb tab opening notch on the right edge
+ * Realistic Physical CD Jewel Case Component.
+ *
+ * Visual stacking order:
+ * 1. Faint physical shadow underneath the case
+ * 2. Transparent outer case (clear acrylic with rounded corners)
+ * 3. Album artwork insert (inset: left 15dp, top 7.5dp, right 7.5dp, bottom 7.5dp)
+ * 4. Transparent plastic front lid / edge highlights (2-3dp outer edge, 1-2dp inner bevel, drawn over edges)
+ * 5. Left hinge / spine details (15dp wide: darker inner depth, vertical ribs, hinge seam, 2 circular pivot points)
  */
 @Composable
 fun JewelCaseArtwork(
@@ -607,18 +607,24 @@ fun JewelCaseArtwork(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null
 ) {
-    BoxWithConstraints(
+    val spineWidth = 15.dp
+    val topMargin = 7.5.dp
+    val rightMargin = 7.5.dp
+    val bottomMargin = 7.5.dp
+
+    // 1. SHADOW & 2. TRANSPARENT OUTER CASE
+    Box(
         modifier = modifier
             .aspectRatio(1f) // Strict square CD jewel case proportion
-            // E. PHYSICAL DEPTH: Subtle physical shadow underneath the complete jewel case
+            // 1. Faint physical shadow underneath
             .shadow(
-                elevation = 8.dp,
+                elevation = 6.dp,
                 shape = RoundedCornerShape(3.dp),
-                ambientColor = Color.Black.copy(alpha = 0.50f),
-                spotColor = Color.Black.copy(alpha = 0.65f)
+                ambientColor = Color.Black.copy(alpha = 0.45f),
+                spotColor = Color.Black.copy(alpha = 0.60f)
             )
-            // A. OUTER CASE: Transparent clear plastic shell (allowing dark background to show through)
-            .background(Color(0x0AFFFFFF), RoundedCornerShape(3.dp))
+            // 2. Transparent outer case shell (clear plastic allowing dark material through)
+            .background(Color(0x08FFFFFF), RoundedCornerShape(3.dp))
             .then(
                 if (onClick != null) {
                     Modifier.clickable(onClick = onClick)
@@ -627,160 +633,18 @@ fun JewelCaseArtwork(
                 }
             )
     ) {
-        val totalWidth = maxWidth
-        val totalHeight = maxHeight
-
-        // Proportions according to specification:
-        // Left hinge/spine: ~8.5% of case width
-        // Top plastic margin: 6% of case height
-        // Bottom plastic margin: 6% of case height
-        // Right plastic margin: 5% of case width
-        val leftHingeWidth = totalWidth * 0.085f
-        val topMargin = totalHeight * 0.06f
-        val bottomMargin = totalHeight * 0.06f
-        val rightMargin = totalWidth * 0.05f
-
-        // 1. OUTER CASE: Clear transparent moulded plastic shell details
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .drawBehind {
-                    val w = size.width
-                    val h = size.height
-
-                    // Clear outer perimeter bevel
-                    val bevelW = 1.0.dp.toPx()
-                    // Thin highlight along upper edge
-                    drawLine(
-                        color = Color.White.copy(alpha = 0.40f),
-                        start = Offset(0f, 0f),
-                        end = Offset(w, 0f),
-                        strokeWidth = bevelW
-                    )
-                    // Thin highlight along left edge
-                    drawLine(
-                        color = Color.White.copy(alpha = 0.35f),
-                        start = Offset(0f, 0f),
-                        end = Offset(0f, h),
-                        strokeWidth = bevelW
-                    )
-                    // Subtle darker refraction/shadow along bottom and right edges
-                    drawLine(
-                        color = Color.Black.copy(alpha = 0.50f),
-                        start = Offset(w, 0f),
-                        end = Offset(w, h),
-                        strokeWidth = bevelW
-                    )
-                    drawLine(
-                        color = Color.Black.copy(alpha = 0.50f),
-                        start = Offset(0f, h),
-                        end = Offset(w, h),
-                        strokeWidth = bevelW
-                    )
-
-                    // Secondary inner refraction line establishing physical plastic wall thickness (~1.5dp)
-                    val wallInset = 1.5.dp.toPx()
-                    drawRoundRect(
-                        brush = Brush.linearGradient(
-                            colors = listOf(
-                                Color.White.copy(alpha = 0.18f),
-                                Color.Transparent,
-                                Color.Black.copy(alpha = 0.35f)
-                            ),
-                            start = Offset(0f, 0f),
-                            end = Offset(w, h)
-                        ),
-                        topLeft = Offset(wallInset, wallInset),
-                        size = androidx.compose.ui.geometry.Size(w - wallInset * 2, h - wallInset * 2),
-                        cornerRadius = CornerRadius(2.dp.toPx(), 2.dp.toPx()),
-                        style = Stroke(width = 0.75.dp.toPx())
-                    )
-                }
-        )
-
-        // 2. LEFT SPINE / HINGE (C)
-        // Visibly distinct transparent plastic spine/hinge section (~8.5% of case width)
-        Box(
-            modifier = Modifier
-                .width(leftHingeWidth)
-                .fillMaxHeight()
-                .drawBehind {
-                    val hw = size.width
-                    val hh = size.height
-
-                    // Transparent plastic with darker internal depth
-                    drawRect(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(
-                                Color.White.copy(alpha = 0.15f),
-                                Color.Black.copy(alpha = 0.25f),
-                                Color.Black.copy(alpha = 0.40f)
-                            )
-                        )
-                    )
-
-                    // Physical separation line between hinge and artwork area
-                    drawLine(
-                        color = Color.White.copy(alpha = 0.25f),
-                        start = Offset(hw - 1.0f, 0f),
-                        end = Offset(hw - 1.0f, hh),
-                        strokeWidth = 1.0f
-                    )
-                    drawLine(
-                        color = Color.Black.copy(alpha = 0.45f),
-                        start = Offset(hw, 0f),
-                        end = Offset(hw, hh),
-                        strokeWidth = 1.0f
-                    )
-
-                    // Two subtle circular hinge points (upper ~18%, lower ~82%)
-                    val hingeRadius = (hw * 0.28f).coerceIn(2.5.dp.toPx(), 4.5.dp.toPx())
-                    val hingeCenterX = hw * 0.50f
-                    val topHingeY = hh * 0.18f
-                    val bottomHingeY = hh * 0.82f
-
-                    // Top circular hinge point
-                    drawCircle(
-                        color = Color.White.copy(alpha = 0.45f),
-                        radius = hingeRadius,
-                        center = Offset(hingeCenterX, topHingeY),
-                        style = Stroke(width = 1.0.dp.toPx())
-                    )
-                    drawCircle(
-                        color = Color.Black.copy(alpha = 0.50f),
-                        radius = hingeRadius - 0.7.dp.toPx(),
-                        center = Offset(hingeCenterX, topHingeY)
-                    )
-
-                    // Bottom circular hinge point
-                    drawCircle(
-                        color = Color.White.copy(alpha = 0.45f),
-                        radius = hingeRadius,
-                        center = Offset(hingeCenterX, bottomHingeY),
-                        style = Stroke(width = 1.0.dp.toPx())
-                    )
-                    drawCircle(
-                        color = Color.Black.copy(alpha = 0.50f),
-                        radius = hingeRadius - 0.7.dp.toPx(),
-                        center = Offset(hingeCenterX, bottomHingeY)
-                    )
-                }
-        )
-
-        // 3. ARTWORK INSERT (B)
-        // Sits INSIDE the case, not touching the outer edge.
-        // There is a clearly visible plastic margin around all 4 sides.
-        // The artwork begins strictly AFTER the left hinge/spine section!
+        // 3. ALBUM ARTWORK INSERT
+        // Sits INSIDE the case, strictly beginning AFTER the 15dp left spine, with 7.5dp margins on top/right/bottom
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(
-                    start = leftHingeWidth + 2.dp, // Physical separation after hinge
+                    start = spineWidth,
                     top = topMargin,
                     end = rightMargin,
                     bottom = bottomMargin
                 )
-                // Subtle physical drop shadow of the paper booklet inside the plastic tray
+                // Subtle paper booklet drop shadow inside the tray recess
                 .shadow(
                     elevation = 2.dp,
                     shape = RoundedCornerShape(1.dp),
@@ -788,7 +652,7 @@ fun JewelCaseArtwork(
                     spotColor = Color.Black.copy(alpha = 0.7f)
                 )
                 .clip(RoundedCornerShape(1.dp))
-                .background(Color(0xFF1E1D1B))
+                .background(Color(0xFF191816))
         ) {
             Crossfade(
                 targetState = release?.artworkUri,
@@ -806,7 +670,7 @@ fun JewelCaseArtwork(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(Color(0xFF262422)),
+                            .background(Color(0xFF242220)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -825,15 +689,15 @@ fun JewelCaseArtwork(
                     .fillMaxSize()
                     .drawBehind {
                         drawRect(
-                            color = Color.Black.copy(alpha = 0.30f),
+                            color = Color.Black.copy(alpha = 0.35f),
                             style = Stroke(width = 1.0f)
                         )
                     }
             )
         }
 
-        // 4. FRONT LID TRANSPARENT SURFACE REFLECTION (F)
-        // Faint transparent surface reflection across the front of the plastic lid (covering case & insert)
+        // 4. TRANSPARENT PLASTIC FRONT LID & EDGE HIGHLIGHTS / BEVELS
+        // Drawn OVER the artwork at the edges
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -841,26 +705,185 @@ fun JewelCaseArtwork(
                     val w = size.width
                     val h = size.height
 
-                    // Faint diagonal surface reflection (subtle studio light sheen)
+                    // 2-3dp visible outer edge:
+                    // Subtle transparent white highlight along top & left outer edge
+                    val outerEdgeW = 2.2.dp.toPx()
+                    drawLine(
+                        color = Color.White.copy(alpha = 0.40f),
+                        start = Offset(0f, outerEdgeW / 2),
+                        end = Offset(w, outerEdgeW / 2),
+                        strokeWidth = outerEdgeW
+                    )
+                    drawLine(
+                        color = Color.White.copy(alpha = 0.35f),
+                        start = Offset(outerEdgeW / 2, 0f),
+                        end = Offset(outerEdgeW / 2, h),
+                        strokeWidth = outerEdgeW
+                    )
+
+                    // Subtle dark edge/refraction along bottom & right outer edge
+                    drawLine(
+                        color = Color.Black.copy(alpha = 0.55f),
+                        start = Offset(w - outerEdgeW / 2, 0f),
+                        end = Offset(w - outerEdgeW / 2, h),
+                        strokeWidth = outerEdgeW
+                    )
+                    drawLine(
+                        color = Color.Black.copy(alpha = 0.55f),
+                        start = Offset(0f, h - outerEdgeW / 2),
+                        end = Offset(w, h - outerEdgeW / 2),
+                        strokeWidth = outerEdgeW
+                    )
+
+                    // 1-2dp inner bevel refraction line inset by ~2.5dp
+                    val bevelInset = 2.5.dp.toPx()
+                    val bevelW = 1.2.dp.toPx()
+                    drawRoundRect(
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                Color.White.copy(alpha = 0.22f),
+                                Color.Transparent,
+                                Color.Black.copy(alpha = 0.35f)
+                            ),
+                            start = Offset(0f, 0f),
+                            end = Offset(w, h)
+                        ),
+                        topLeft = Offset(bevelInset, bevelInset),
+                        size = androidx.compose.ui.geometry.Size(
+                            w - bevelInset * 2,
+                            h - bevelInset * 2
+                        ),
+                        cornerRadius = CornerRadius(2.dp.toPx(), 2.dp.toPx()),
+                        style = Stroke(width = bevelW)
+                    )
+
+                    // Subtle front lid surface light sheen
                     drawRect(
                         brush = Brush.linearGradient(
                             colors = listOf(
-                                Color.White.copy(alpha = 0.12f),
-                                Color.White.copy(alpha = 0.03f),
+                                Color.White.copy(alpha = 0.08f),
+                                Color.White.copy(alpha = 0.02f),
                                 Color.Transparent,
-                                Color.Black.copy(alpha = 0.05f)
+                                Color.Black.copy(alpha = 0.04f)
                             ),
                             start = Offset(0f, 0f),
                             end = Offset(w * 0.85f, h * 0.70f)
                         )
                     )
 
-                    // Faint highlight/refraction on right edge
+                    // Faint highlight on right edge
+                    val rightEdgeX = w - 1.2.dp.toPx()
+                    drawLine(
+                        color = Color.White.copy(alpha = 0.18f),
+                        start = Offset(rightEdgeX, topMargin.toPx()),
+                        end = Offset(rightEdgeX, h - bottomMargin.toPx()),
+                        strokeWidth = 1.0.dp.toPx()
+                    )
+                }
+        )
+
+        // 5. HINGE DETAILS (Left 15dp transparent plastic hinge / spine)
+        // Remains visibly separate from the artwork; artwork begins strictly AFTER this spine
+        Box(
+            modifier = Modifier
+                .width(spineWidth)
+                .fillMaxHeight()
+                .drawBehind {
+                    val hw = size.width
+                    val hh = size.height
+
+                    // Transparent darker inner spine with depth
+                    drawRect(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(
+                                Color.White.copy(alpha = 0.18f),
+                                Color.Black.copy(alpha = 0.22f),
+                                Color.Black.copy(alpha = 0.45f)
+                            )
+                        )
+                    )
+
+                    // 2-3 very subtle vertical moulded ribs
+                    val rib1 = hw * 0.30f
+                    val rib2 = hw * 0.55f
+                    val rib3 = hw * 0.75f
+                    // Rib highlights
                     drawLine(
                         color = Color.White.copy(alpha = 0.20f),
-                        start = Offset(w - 1.0.dp.toPx(), topMargin.toPx()),
-                        end = Offset(w - 1.0.dp.toPx(), h - bottomMargin.toPx()),
-                        strokeWidth = 1.0.dp.toPx()
+                        start = Offset(rib1, 0f),
+                        end = Offset(rib1, hh),
+                        strokeWidth = 0.8f
+                    )
+                    drawLine(
+                        color = Color.White.copy(alpha = 0.20f),
+                        start = Offset(rib2, 0f),
+                        end = Offset(rib2, hh),
+                        strokeWidth = 0.8f
+                    )
+                    drawLine(
+                        color = Color.White.copy(alpha = 0.18f),
+                        start = Offset(rib3, 0f),
+                        end = Offset(rib3, hh),
+                        strokeWidth = 0.8f
+                    )
+                    // Rib shadows for moulded depth
+                    drawLine(
+                        color = Color.Black.copy(alpha = 0.35f),
+                        start = Offset(rib1 + 1f, 0f),
+                        end = Offset(rib1 + 1f, hh),
+                        strokeWidth = 0.8f
+                    )
+                    drawLine(
+                        color = Color.Black.copy(alpha = 0.35f),
+                        start = Offset(rib2 + 1f, 0f),
+                        end = Offset(rib2 + 1f, hh),
+                        strokeWidth = 0.8f
+                    )
+
+                    // Thin clear highlight along the hinge seam where the spine meets the artwork area
+                    drawLine(
+                        color = Color.White.copy(alpha = 0.30f),
+                        start = Offset(hw - 1.2f, 0f),
+                        end = Offset(hw - 1.2f, hh),
+                        strokeWidth = 1.0f
+                    )
+                    drawLine(
+                        color = Color.Black.copy(alpha = 0.50f),
+                        start = Offset(hw - 0.2f, 0f),
+                        end = Offset(hw - 0.2f, hh),
+                        strokeWidth = 1.0f
+                    )
+
+                    // 2 small circular hinge / pivot details (one near upper 18%, one near lower 82%)
+                    val pivotRadius = 3.0.dp.toPx()
+                    val pivotCenterX = hw * 0.48f
+                    val topPivotY = hh * 0.18f
+                    val bottomPivotY = hh * 0.82f
+
+                    // Top circular hinge pivot
+                    drawCircle(
+                        color = Color.White.copy(alpha = 0.45f),
+                        radius = pivotRadius,
+                        center = Offset(pivotCenterX, topPivotY),
+                        style = Stroke(width = 1.0.dp.toPx())
+                    )
+                    drawCircle(
+                        color = Color.Black.copy(alpha = 0.55f),
+                        radius = pivotRadius - 0.7.dp.toPx(),
+                        center = Offset(pivotCenterX, topPivotY)
+                    )
+
+                    // Bottom circular hinge pivot
+                    drawCircle(
+                        color = Color.White.copy(alpha = 0.45f),
+                        radius = pivotRadius,
+                        center = Offset(pivotCenterX, bottomPivotY),
+                        style = Stroke(width = 1.0.dp.toPx())
+                    )
+                    drawCircle(
+                        color = Color.Black.copy(alpha = 0.55f),
+                        radius = pivotRadius - 0.7.dp.toPx(),
+                        center = Offset(pivotCenterX, bottomPivotY)
                     )
                 }
         )
