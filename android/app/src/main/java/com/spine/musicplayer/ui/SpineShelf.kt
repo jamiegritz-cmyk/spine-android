@@ -608,7 +608,7 @@ private fun rememberSpineTypography(
                 artistFontFamily = FontFamily.SansSerif,
                 titleFontSize = titleSize,
                 artistFontSize = artistSize,
-                letterSpacing = spacing + 0.3.sp,
+                letterSpacing = (spacing.value + 0.3f).sp,
                 isTitleUppercase = false,
                 isArtistUppercase = false,
                 separator = "   :   ",
