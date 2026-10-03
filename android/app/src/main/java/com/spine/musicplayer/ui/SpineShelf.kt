@@ -1,62 +1,44 @@
 package com.spine.musicplayer.ui
 
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.exponentialDecay
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.horizontalDrag
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.spine.musicplayer.model.Release
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
-import java.util.Locale
-import kotlin.math.abs
-import kotlin.math.floor
-import kotlin.math.roundToInt
 
 /**
- * Authentic physical CD shelf centerpiece.
- * Recreates genuine physical audio CD jewel cases (125mm x 10mm proportions):
- * - Clear transparent plastic outer shell with visible side walls, top & bottom rails.
- * - Recessed printed paper spine inlay inside the clear case (artwork doesn't touch outer edge).
- * - Subtle plastic specular highlights, corner bevels, and inter-case shadow seams.
- * - Direct 1:1 thumb-drag tracking, momentum scrolling, and NO post-release snapping.
- * - Haptic feedback connected DIRECTLY to the actual centred-CD index state change.
- * - Selected center CD pulled forward with accentuated transparent acrylic edge reflections.
+ * Premium physical CD shelf component - Dominant visual centerpiece.
+ * Tightly packed, full-height CD spines occupying 40-50% of the screen.
  */
 @Composable
 fun SpineShelf(
@@ -64,257 +46,133 @@ fun SpineShelf(
     selectedIndex: Int,
     onSelectRelease: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    shelfHeight: Dp = 380.dp,
-    caseHeight: Dp = 278.dp,
-    caseWidth: Dp = 22.dp
+    shelfHeight: Dp = 380.dp
 ) {
-    if (releases.isEmpty()) {
-        Box(
-            modifier = modifier
-                .fillMaxWidth()
-                .height(shelfHeight)
-                .background(Color(0xFF0F0D0B)),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("No releases on shelf", color = Color(0xFF78716C), fontSize = 14.sp)
-        }
-        return
-    }
-
+    val listState = rememberLazyListState()
+    val flingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
     val context = LocalContext.current
     val view = LocalView.current
-    val hapticHelper = remember(context) { try { HapticFeedbackHelper(context) } catch (_: Throwable) { null } }
-    val density = LocalDensity.current
-    val itemWidthPx = with(density) { caseWidth.toPx() }
-    val n = releases.size
+    val hapticHelper = remember(context) { HapticFeedbackHelper(context) }
 
-    // Continuous offset tracking the user's thumb
-    val scrollOffset = remember { Animatable(-selectedIndex * itemWidthPx) }
-    val coroutineScope = rememberCoroutineScope()
-
-    // 1. Reactive calculation of current center integer and active release index
-    val currentCenterInt by remember(itemWidthPx) {
+    // Subtle native haptic tick when the visually centred CD changes
+    val centerIndex by remember {
         derivedStateOf {
-            floor((-scrollOffset.value / itemWidthPx) + 0.5f).toInt()
+            val layoutInfo = listState.layoutInfo
+            val visible = layoutInfo.visibleItemsInfo
+            if (visible.isEmpty()) return@derivedStateOf -1
+            val center = (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2
+            visible.minByOrNull { item ->
+                val itemCenter = item.offset + item.size / 2
+                kotlin.math.abs(itemCenter - center)
+            }?.index ?: -1
         }
     }
 
-    val activeCenterIndex by remember(n) {
-        derivedStateOf {
-            ((currentCenterInt % n) + n) % n
-        }
-    }
-
-    // 2. CONNECT HAPTIC DIRECTLY TO THE CENTRED-CD STATE TRANSITION
-    // This triggers reliably whether moving slowly, dragging quickly, flicking,
-    // momentum scrolling, or snapping. Exactly ONE tick per index transition.
-    var lastEmittedIndex by remember { mutableIntStateOf(selectedIndex) }
-
-    LaunchedEffect(activeCenterIndex) {
-        if (activeCenterIndex != lastEmittedIndex) {
-            lastEmittedIndex = activeCenterIndex
-            onSelectRelease(activeCenterIndex)
-            // Trigger native hardware haptic tick
-            try { hapticHelper?.performCdTick(view) } catch (_: Throwable) {}
-        }
-    }
-
-    // Keep shelf centered on external programmatic selection (e.g. skip track or library select)
-    LaunchedEffect(selectedIndex) {
-        if (activeCenterIndex != selectedIndex) {
-            val rawCenter = -scrollOffset.value / itemWidthPx
-            val curInt = floor(rawCenter + 0.5f).toInt()
-            val diff = ((selectedIndex - (curInt % n)) % n)
-            val shortestDiff = when {
-                diff > n / 2 -> diff - n
-                diff < -n / 2 -> diff + n
-                else -> diff
+    var lastHapticIndex by remember { mutableIntStateOf(-1) }
+    LaunchedEffect(centerIndex) {
+        if (centerIndex >= 0 && centerIndex != lastHapticIndex) {
+            if (lastHapticIndex != -1) {
+                hapticHelper.performCdTick(view)
             }
-            val targetInt = curInt + shortestDiff
-            scrollOffset.animateTo(
-                targetValue = -targetInt * itemWidthPx,
-                animationSpec = spring(stiffness = Spring.StiffnessLow)
+            lastHapticIndex = centerIndex
+        }
+    }
+
+    LaunchedEffect(selectedIndex) {
+        if (selectedIndex in releases.indices) {
+            listState.animateScrollToItem(
+                index = (selectedIndex - 2).coerceAtLeast(0)
             )
         }
     }
 
-    BoxWithConstraints(
+    Box(
         modifier = modifier
             .fillMaxWidth()
             .height(shelfHeight)
-            .background(Color(0xFF0C0A09))
-            .pointerInput(releases, n) {
-                coroutineScope {
-                    awaitEachGesture {
-                        val down = awaitFirstDown()
-                        val velocityTracker = VelocityTracker()
-                        velocityTracker.addPosition(down.uptimeMillis, down.position)
-                        var isDragging = false
-
-                        // Direct 1:1 finger tracking
-                        horizontalDrag(down.id) { change ->
-                            val dragAmount = change.position.x - change.previousPosition.x
-                            change.consume()
-                            isDragging = true
-                            velocityTracker.addPosition(change.uptimeMillis, change.position)
-
-                            launch {
-                                scrollOffset.snapTo(scrollOffset.value + dragAmount)
-                            }
-                        }
-
-                        // When thumb is lifted:
-                        // If flicked with velocity, apply exponential momentum decay.
-                        // IMPORTANT: DO NOT SNAP! Leave the shelf exactly where momentum ends.
-                        if (isDragging) {
-                            val velocity = velocityTracker.calculateVelocity().x
-                            if (abs(velocity) > 120f) {
-                                launch {
-                                    scrollOffset.animateDecay(
-                                        initialVelocity = velocity,
-                                        animationSpec = exponentialDecay(frictionMultiplier = 1.25f)
-                                    )
-                                    // Movement ceased: no snapTo or animateTo.
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            .background(Color(0xFF0F0D0B))
     ) {
-        val containerWidthPx = constraints.maxWidth.toFloat()
-        val centerX = containerWidthPx / 2f
-        val visibleSlots = (containerWidthPx / itemWidthPx).toInt() + 6
-
-        // Deep Walnut Shelf Cavity Backplate with overhead shadow
+        // Shelf Cavity Shadow & Dark Walnut Grain Backplate
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .drawBehind {
-                    // Deep dark brown cavity gradient
                     drawRect(
                         brush = Brush.verticalGradient(
                             colors = listOf(
-                                Color(0xFF040302),
-                                Color(0xFF0E0C09),
-                                Color(0xFF19130D)
+                                Color(0xFF050504),
+                                Color(0xFF14110E),
+                                Color(0xFF1F1A15)
                             )
                         )
                     )
-                    // Ambient overhead cavity shadow
+                    // Deep overhead cavity shadow
                     drawRect(
                         brush = Brush.verticalGradient(
                             colors = listOf(
-                                Color(0xF5000000),
-                                Color(0x99000000),
+                                Color(0xEE000000),
+                                Color(0x88000000),
                                 Color.Transparent
                             ),
                             startY = 0f,
-                            endY = 140f
+                            endY = 120f
                         )
                     )
                 }
         )
 
-        // Continuous horizontal shelf of authentic CD jewel cases
-        val currentCenterBase = currentCenterInt
-        val shelfLipHeight = 38.dp
-
-        Box(
+        // Spines Row: Full-Height Authentic CD Jewel Cases Centered Vertically
+        LazyRow(
+            state = listState,
+            flingBehavior = flingBehavior,
+            contentPadding = PaddingValues(horizontal = 140.dp, vertical = 0.dp),
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(caseHeight + 40.dp)
-                .align(Alignment.BottomCenter)
-                .padding(bottom = shelfLipHeight) // Cases rest directly on top of the wooden shelf surface
+                .align(Alignment.Center)
         ) {
-            for (slot in (-visibleSlots / 2)..(visibleSlots / 2)) {
-                val caseIndex = (((currentCenterBase + slot) % n) + n) % n
-                val release = releases[caseIndex]
-
-                val xPos = centerX + (currentCenterBase + slot) * itemWidthPx + scrollOffset.value - (itemWidthPx / 2f)
-                val distFromCenter = abs(xPos + (itemWidthPx / 2f) - centerX)
-                val isCentered = distFromCenter < (itemWidthPx / 2f)
-
-                Box(
-                    modifier = Modifier
-                        .offset { IntOffset(xPos.roundToInt(), 0) }
-                        .align(Alignment.BottomStart)
-                ) {
-                    CdSpineItem(
-                        release = release,
-                        isCentered = isCentered,
-                        caseHeight = caseHeight,
-                        caseWidth = caseWidth,
-                        onClick = {
-                            if (!isCentered) {
-                                coroutineScope.launch {
-                                    val targetOffset = scrollOffset.value - (xPos + (itemWidthPx / 2f) - centerX)
-                                    scrollOffset.animateTo(
-                                        targetOffset,
-                                        animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
-                                    )
-                                }
-                            }
-                        }
-                    )
-                }
+            itemsIndexed(releases) { index, release ->
+                val isSelected = index == selectedIndex
+                CdSpineItem(
+                    release = release,
+                    isSelected = isSelected,
+                    onClick = { onSelectRelease(index) }
+                )
             }
         }
 
-        // Contact shadow where the CD jewel case bottoms meet the wooden shelf
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(3.dp)
-                .align(Alignment.BottomCenter)
-                .padding(bottom = shelfLipHeight)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Transparent,
-                            Color(0x99000000),
-                            Color(0xEE000000)
-                        )
-                    )
-                )
-        )
-
-        // Heavy Walnut Wooden Shelf Base & Lip with rich wood grain & specular bevel
+        // Heavy Walnut Wooden Shelf Base & Lip
         WoodenShelfLip(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(shelfLipHeight)
+                .height(36.dp)
                 .align(Alignment.BottomCenter)
         )
     }
 }
 
-/**
- * Authentic physical CD jewel case viewed from the spine side profile.
- * - Fully transparent/translucent polystyrene (plastic) outer shell.
- * - Visible transparent left & right plastic walls (2.5dp) and top/bottom rails (14dp/12dp).
- * - Printed album spine and square artwork thumbnail visibly RECESSED inside the plastic shell.
- * - Artwork is bounded by the inner paper insert and does NOT touch the outer edge.
- * - Molded injection marks, specular glass/plastic reflections, and realistic contact shadows.
- * - Centered CD pulled forward with accentuated transparent acrylic edge illumination.
- */
 @Composable
 fun CdSpineItem(
     release: Release,
-    isCentered: Boolean,
-    caseHeight: Dp,
-    caseWidth: Dp,
+    isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    // Selected CD pulled forward and upward from the shelf
+    // Selected spine pulled forward from shelf and enlarged
     val verticalOffset by animateDpAsState(
-        targetValue = if (isCentered) (-26).dp else 0.dp,
+        targetValue = if (isSelected) (-26).dp else 0.dp,
         animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-        label = "spinePopOffset"
+        label = "spineOffset"
+    )
+
+    val scale by animateFloatAsState(
+        targetValue = if (isSelected) 1.05f else 1f,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "spineScale"
     )
 
     val elevation by animateDpAsState(
-        targetValue = if (isCentered) 20.dp else 2.5.dp,
+        targetValue = if (isSelected) 18.dp else 2.dp,
         animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
         label = "spineElevation"
     )
@@ -323,317 +181,158 @@ fun CdSpineItem(
         try {
             Color(android.graphics.Color.parseColor(release.spineColorHex))
         } catch (_: Exception) {
-            Color(0xFF221F1D)
+            Color(0xFF222222)
         }
     }
 
     Box(
         modifier = Modifier
             .offset(y = verticalOffset)
-            .width(caseWidth)
-            .height(caseHeight)
-            .shadow(
-                elevation = elevation,
-                shape = RoundedCornerShape(2.5.dp),
-                ambientColor = Color.Black,
-                spotColor = if (isCentered) Color(0xEE000000) else Color(0x77000000)
-            )
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .width(21.dp) // Slender authentic jewel case spine width
+            .height(280.dp) // Tall, dominant full-height CD spine
+            .shadow(elevation, shape = RoundedCornerShape(1.5.dp))
+            .background(Color(0xFF121110), RoundedCornerShape(1.5.dp))
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = onClick
             )
     ) {
-        // =========================================================================
-        // 1. OUTER TRANSPARENT / TRANSLUCENT PLASTIC JEWEL CASE SHELL
-        // =========================================================================
+        // Spine Background Color
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .clip(RoundedCornerShape(2.5.dp))
-                .background(
-                    Brush.horizontalGradient(
-                        colors = listOf(
-                            Color(0x40FFFFFF), // Left transparent plastic wall reflection
-                            Color(0x18FFFFFF),
-                            Color(0x0A000000),
-                            Color(0x20000000), // Right transparent plastic wall
-                            Color(0x55000000)  // Edge crease with adjacent case
-                        )
-                    )
-                )
-                .drawBehind {
-                    // Outer transparent casing specular hairline on the left edge
-                    drawLine(
-                        color = Color.White.copy(alpha = if (isCentered) 0.85f else 0.45f),
-                        start = Offset(0.5f, 0f),
-                        end = Offset(0.5f, size.height),
-                        strokeWidth = 1.2f
-                    )
-                    // Secondary internal plastic refraction line
-                    drawLine(
-                        color = Color.White.copy(alpha = if (isCentered) 0.45f else 0.20f),
-                        start = Offset(2.2f, 0f),
-                        end = Offset(2.2f, size.height),
-                        strokeWidth = 0.8f
-                    )
-                    // Right edge outer plastic seam / adjacent case shadow
-                    drawLine(
-                        color = Color.Black.copy(alpha = 0.85f),
-                        start = Offset(size.width - 0.5f, 0f),
-                        end = Offset(size.width - 0.5f, size.height),
-                        strokeWidth = 1.6f
-                    )
-                }
+                .background(parsedColor)
         )
 
-        // =========================================================================
-        // 2. INNER RECESSED PRINTED PAPER SPINE INLAY (Inset within clear plastic)
-        // =========================================================================
+        // Clear Acrylic Jewel Case Specular Highlights
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(start = 2.4.dp, end = 2.4.dp, top = 14.dp, bottom = 12.dp)
-                .clip(RoundedCornerShape(1.dp))
-                .background(parsedColor)
                 .drawBehind {
-                    // Inner paper insert shadow crease against the clear plastic walls
+                    // Left edge specular shine
                     drawLine(
-                        color = Color.Black.copy(alpha = 0.35f),
+                        color = Color.White.copy(alpha = if (isSelected) 0.45f else 0.22f),
                         start = Offset(0f, 0f),
                         end = Offset(0f, size.height),
-                        strokeWidth = 1f
+                        strokeWidth = 1.8f
                     )
+                    // Right edge groove shadow
                     drawLine(
-                        color = Color.Black.copy(alpha = 0.45f),
+                        color = Color.Black.copy(alpha = 0.7f),
                         start = Offset(size.width, 0f),
                         end = Offset(size.width, size.height),
-                        strokeWidth = 1f
+                        strokeWidth = 2f
                     )
                 }
-        ) {
-            // A. Genuine Album Artwork Thumbnail cropped square at top of inner paper insert
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.TopCenter)
-            ) {
-                if (release.artworkUri != null) {
-                    AsyncImage(
-                        model = release.artworkUri,
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(caseWidth - 4.8.dp) // Square crop recessed inside paper
-                            .clip(RoundedCornerShape(0.dp))
-                    )
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(caseWidth - 4.8.dp)
-                            .background(Color.Black.copy(alpha = 0.35f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = release.artist.take(1).uppercase(Locale.ROOT),
-                            color = Color.White.copy(alpha = 0.85f),
-                            fontSize = 8.5.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-
-                // Fine paper division line under artwork
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(0.8.dp)
-                        .background(Color.Black.copy(alpha = 0.4f))
-                )
-            }
-
-            // B. Vertical Printed Spine Typography (Artist - Title)
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = caseWidth + 8.dp, bottom = 24.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "${release.artist.uppercase(Locale.ROOT)}  ${release.title.uppercase(Locale.ROOT)}",
-                    color = Color.White.copy(alpha = if (isCentered) 1.0f else 0.92f),
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = FontFamily.SansSerif,
-                    letterSpacing = 0.4.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .graphicsLayer {
-                            rotationZ = 90f
-                        }
-                        .width(caseHeight - caseWidth - 54.dp)
-                )
-            }
-
-            // C. Bottom Printed Catalog Number
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .background(Color.Black.copy(alpha = 0.5f))
-                    .padding(vertical = 2.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = release.catalogNumber.split("-").lastOrNull()?.takeLast(4) ?: "6405",
-                    color = Color.White.copy(alpha = 0.9f),
-                    fontSize = 7.5.sp,
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = FontFamily.Monospace
-                )
-                Spacer(modifier = Modifier.height(1.dp))
-                // Digital Audio compact disc symbol
-                Box(
-                    modifier = Modifier
-                        .size(4.5.dp, 2.5.dp)
-                        .background(Color.White.copy(alpha = 0.7f), RoundedCornerShape(0.5.dp))
-                )
-            }
-        }
-
-        // =========================================================================
-        // 3. TOP MOLDED ACRYLIC RAIL (Transparent Polystyrene Cap with Hub Mark)
-        // =========================================================================
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(14.dp)
-                .align(Alignment.TopCenter)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = if (isCentered) 0.55f else 0.35f),
-                            Color.White.copy(alpha = 0.12f),
-                            Color.Black.copy(alpha = 0.25f)
-                        )
-                    )
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            // Circular injection mold hub dimple
-            Box(
-                modifier = Modifier
-                    .size(3.5.dp)
-                    .background(Color.White.copy(alpha = 0.5f), RoundedCornerShape(1.dp))
-            )
-            // Hinge mold parting line
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(0.6.dp)
-                    .align(Alignment.BottomCenter)
-                    .background(Color.White.copy(alpha = 0.4f))
-            )
-        }
-
-        // =========================================================================
-        // 4. BOTTOM MOLDED ACRYLIC FOOT RAIL (Transparent Plastic Base)
-        // =========================================================================
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(12.dp)
-                .align(Alignment.BottomCenter)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Black.copy(alpha = 0.40f),
-                            Color.White.copy(alpha = 0.08f),
-                            Color.White.copy(alpha = if (isCentered) 0.45f else 0.25f)
-                        )
-                    )
-                )
         )
 
-        // =========================================================================
-        // 5. ACCENTUATED TRANSPARENT CASE ILLUMINATION ON POPPED-FORWARD SELECTED CD
-        // =========================================================================
-        if (isCentered) {
+        // Top Molded Acrylic Tab & Artwork slice
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.TopCenter)
+        ) {
+            // Plastic tab
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .drawBehind {
-                        // Clear plastic top rim highlight
-                        drawRoundRect(
-                            color = Color.White.copy(alpha = 0.40f),
-                            size = Size(size.width, 16.dp.toPx()),
-                            cornerRadius = CornerRadius(2.5.dp.toPx(), 2.5.dp.toPx())
-                        )
-                        // Left acrylic side glow
-                        drawLine(
-                            color = Color.White.copy(alpha = 0.60f),
-                            start = Offset(0f, 0f),
-                            end = Offset(0f, size.height),
-                            strokeWidth = 2.0f
-                        )
+                    .fillMaxWidth()
+                    .height(14.dp)
+                    .background(Color.White.copy(alpha = 0.1f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(4.dp)
+                        .background(Color.White.copy(alpha = 0.3f), RoundedCornerShape(1.dp))
+                )
+            }
+
+            // Real Artwork Slice at the top of the spine
+            if (release.artworkUri != null) {
+                AsyncImage(
+                    model = release.artworkUri,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(32.dp)
+                        .clip(RoundedCornerShape(0.dp))
+                )
+            }
+        }
+
+        // Rotated Spine Typography (Artist - Album Title)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(vertical = 52.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "${release.artist.uppercase()} / ${release.title}",
+                color = Color.White.copy(alpha = if (isSelected) 1.0f else 0.75f),
+                fontSize = 9.sp,
+                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                fontFamily = FontFamily.SansSerif,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .graphicsLayer {
+                        rotationZ = 90f
                     }
+                    .width(180.dp)
+            )
+        }
+
+        // Bottom Catalog Number & Digital Audio Symbol
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .background(Color.Black.copy(alpha = 0.45f))
+                .padding(vertical = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = release.catalogNumber.split("-").lastOrNull() ?: "CD",
+                color = Color.White.copy(alpha = 0.6f),
+                fontSize = 7.5.sp,
+                fontFamily = FontFamily.Monospace
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Box(
+                modifier = Modifier
+                    .size(4.dp, 2.dp)
+                    .background(Color.White.copy(alpha = 0.4f))
             )
         }
     }
 }
 
-/**
- * Realistic Dark Walnut Wooden Shelf Base.
- * Recreates the heavy wooden shelf plank with warm wood grain,
- * top surface reflection, and edge bevel highlight.
- */
 @Composable
 fun WoodenShelfLip(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier.drawBehind {
-            // Warm walnut wood plank face
             drawRect(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF6E482F), // Warm walnut highlight rim
-                        Color(0xFF422B1C),
-                        Color(0xFF28190F), // Dark deep walnut face
-                        Color(0xFF170E08)
+                        Color(0xFF5A3D29), // Warm walnut highlight bevel
+                        Color(0xFF3B271A),
+                        Color(0xFF24160E)  // Dark walnut plank face
                     )
                 )
             )
-
-            // Fine wood grain horizontal striations
-            for (y in listOf(6f, 14f, 22f, 30f)) {
-                drawLine(
-                    color = Color(0xFF1B1009).copy(alpha = 0.45f),
-                    start = Offset(0f, y),
-                    end = Offset(size.width, y),
-                    strokeWidth = 1f
-                )
-            }
-
-            // Top shelf edge specular bevel rim
+            // Shelf edge hairline rim
             drawLine(
-                color = Color(0xFF9E6C45).copy(alpha = 0.85f),
+                color = Color(0xFF7A5438).copy(alpha = 0.7f),
                 start = Offset(0f, 0f),
                 end = Offset(size.width, 0f),
                 strokeWidth = 2.5f
-            )
-
-            // Deep shadow cast by jewel cases onto the shelf
-            drawRect(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color.Black.copy(alpha = 0.75f),
-                        Color.Transparent
-                    ),
-                    startY = 0f,
-                    endY = 12f
-                )
             )
         }
     )
