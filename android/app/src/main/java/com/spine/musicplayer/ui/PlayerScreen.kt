@@ -597,9 +597,9 @@ private fun LandscapePlayerLayout(
  * Visual stacking order:
  * 1. Faint physical shadow underneath the case
  * 2. Transparent outer case (clear acrylic with rounded corners)
- * 3. Album artwork insert (inset: left 15dp, top 7.5dp, right 7.5dp, bottom 7.5dp)
- * 4. Transparent plastic front lid / edge highlights (2-3dp outer edge, 1-2dp inner bevel, drawn over edges)
- * 5. Left hinge / spine details (15dp wide: darker inner depth, vertical ribs, hinge seam, 2 circular pivot points)
+ * 3. Album artwork insert (recessed inside clear plastic shell)
+ * 4. Transparent plastic front lid / edge highlights & bevels
+ * 5. Left hinge / spine details (narrow 5-7% transparent plastic hinge with circular pivots and subtle depth)
  */
 @Composable
 fun JewelCaseArtwork(
@@ -607,13 +607,7 @@ fun JewelCaseArtwork(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null
 ) {
-    val spineWidth = 15.dp
-    val topMargin = 7.5.dp
-    val rightMargin = 7.5.dp
-    val bottomMargin = 7.5.dp
-
-    // 1. SHADOW & 2. TRANSPARENT OUTER CASE
-    Box(
+    BoxWithConstraints(
         modifier = modifier
             .aspectRatio(1f) // Strict square CD jewel case proportion
             // 1. Faint physical shadow underneath
@@ -633,16 +627,22 @@ fun JewelCaseArtwork(
                 }
             )
     ) {
+        val totalWidth = maxWidth
+        val totalHeight = maxHeight
+        val spineWidth = totalWidth * 0.06f // Narrow transparent spine: 6% of total case width
+
+        val caseMargin = 7.dp
+
         // 3. ALBUM ARTWORK INSERT
-        // Sits INSIDE the case, strictly beginning AFTER the 15dp left spine, with 7.5dp margins on top/right/bottom
+        // Sits INSIDE the case; visually continues almost all the way to the left side of the case
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(
-                    start = spineWidth,
-                    top = topMargin,
-                    end = rightMargin,
-                    bottom = bottomMargin
+                    start = caseMargin,
+                    top = caseMargin,
+                    end = caseMargin,
+                    bottom = caseMargin
                 )
                 // Subtle paper booklet drop shadow inside the tray recess
                 .shadow(
@@ -775,15 +775,15 @@ fun JewelCaseArtwork(
                     val rightEdgeX = w - 1.2.dp.toPx()
                     drawLine(
                         color = Color.White.copy(alpha = 0.18f),
-                        start = Offset(rightEdgeX, topMargin.toPx()),
-                        end = Offset(rightEdgeX, h - bottomMargin.toPx()),
+                        start = Offset(rightEdgeX, caseMargin.toPx()),
+                        end = Offset(rightEdgeX, h - caseMargin.toPx()),
                         strokeWidth = 1.0.dp.toPx()
                     )
                 }
         )
 
-        // 5. HINGE DETAILS (Left 15dp transparent plastic hinge / spine)
-        // Remains visibly separate from the artwork; artwork begins strictly AFTER this spine
+        // 5. HINGE DETAILS: Clear Plastic Left Spine
+        // Narrow (5-7% of total case width), completely transparent/translucent plastic, NO opaque black fill
         Box(
             modifier = Modifier
                 .width(spineWidth)
@@ -792,97 +792,71 @@ fun JewelCaseArtwork(
                     val hw = size.width
                     val hh = size.height
 
-                    // Transparent darker inner spine with depth
+                    // Very subtle translucent plastic depth across the spine
                     drawRect(
                         brush = Brush.horizontalGradient(
                             colors = listOf(
-                                Color.White.copy(alpha = 0.18f),
-                                Color.Black.copy(alpha = 0.22f),
-                                Color.Black.copy(alpha = 0.45f)
+                                Color.White.copy(alpha = 0.14f),
+                                Color.Transparent,
+                                Color.Black.copy(alpha = 0.14f)
                             )
                         )
                     )
 
-                    // 2-3 very subtle vertical moulded ribs
-                    val rib1 = hw * 0.30f
-                    val rib2 = hw * 0.55f
-                    val rib3 = hw * 0.75f
-                    // Rib highlights
+                    // Subtle inner moulded rib/highlight in the plastic
+                    val ribX = hw * 0.45f
                     drawLine(
-                        color = Color.White.copy(alpha = 0.20f),
-                        start = Offset(rib1, 0f),
-                        end = Offset(rib1, hh),
-                        strokeWidth = 0.8f
-                    )
-                    drawLine(
-                        color = Color.White.copy(alpha = 0.20f),
-                        start = Offset(rib2, 0f),
-                        end = Offset(rib2, hh),
-                        strokeWidth = 0.8f
-                    )
-                    drawLine(
-                        color = Color.White.copy(alpha = 0.18f),
-                        start = Offset(rib3, 0f),
-                        end = Offset(rib3, hh),
-                        strokeWidth = 0.8f
-                    )
-                    // Rib shadows for moulded depth
-                    drawLine(
-                        color = Color.Black.copy(alpha = 0.35f),
-                        start = Offset(rib1 + 1f, 0f),
-                        end = Offset(rib1 + 1f, hh),
-                        strokeWidth = 0.8f
-                    )
-                    drawLine(
-                        color = Color.Black.copy(alpha = 0.35f),
-                        start = Offset(rib2 + 1f, 0f),
-                        end = Offset(rib2 + 1f, hh),
+                        color = Color.White.copy(alpha = 0.16f),
+                        start = Offset(ribX, 0f),
+                        end = Offset(ribX, hh),
                         strokeWidth = 0.8f
                     )
 
-                    // Thin clear highlight along the hinge seam where the spine meets the artwork area
+                    // Faint highlight along the plastic spine
                     drawLine(
-                        color = Color.White.copy(alpha = 0.30f),
-                        start = Offset(hw - 1.2f, 0f),
-                        end = Offset(hw - 1.2f, hh),
-                        strokeWidth = 1.0f
+                        color = Color.White.copy(alpha = 0.25f),
+                        start = Offset(hw - 1.2.dp.toPx(), 0f),
+                        end = Offset(hw - 1.2.dp.toPx(), hh),
+                        strokeWidth = 1.0.dp.toPx()
                     )
+
+                    // Very subtle darker transparent edge at the joint
                     drawLine(
-                        color = Color.Black.copy(alpha = 0.50f),
+                        color = Color.Black.copy(alpha = 0.22f),
                         start = Offset(hw - 0.2f, 0f),
                         end = Offset(hw - 0.2f, hh),
                         strokeWidth = 1.0f
                     )
 
-                    // 2 small circular hinge / pivot details (one near upper 18%, one near lower 82%)
-                    val pivotRadius = 3.0.dp.toPx()
-                    val pivotCenterX = hw * 0.48f
+                    // 2 small circular moulded hinge details
+                    val pivotRadius = 2.4.dp.toPx()
+                    val pivotCenterX = hw * 0.50f
                     val topPivotY = hh * 0.18f
                     val bottomPivotY = hh * 0.82f
 
                     // Top circular hinge pivot
                     drawCircle(
-                        color = Color.White.copy(alpha = 0.45f),
+                        color = Color.White.copy(alpha = 0.38f),
                         radius = pivotRadius,
                         center = Offset(pivotCenterX, topPivotY),
                         style = Stroke(width = 1.0.dp.toPx())
                     )
                     drawCircle(
-                        color = Color.Black.copy(alpha = 0.55f),
-                        radius = pivotRadius - 0.7.dp.toPx(),
+                        color = Color.Black.copy(alpha = 0.20f),
+                        radius = pivotRadius - 0.6.dp.toPx(),
                         center = Offset(pivotCenterX, topPivotY)
                     )
 
                     // Bottom circular hinge pivot
                     drawCircle(
-                        color = Color.White.copy(alpha = 0.45f),
+                        color = Color.White.copy(alpha = 0.38f),
                         radius = pivotRadius,
                         center = Offset(pivotCenterX, bottomPivotY),
                         style = Stroke(width = 1.0.dp.toPx())
                     )
                     drawCircle(
-                        color = Color.Black.copy(alpha = 0.55f),
-                        radius = pivotRadius - 0.7.dp.toPx(),
+                        color = Color.Black.copy(alpha = 0.20f),
+                        radius = pivotRadius - 0.6.dp.toPx(),
                         center = Offset(pivotCenterX, bottomPivotY)
                     )
                 }
