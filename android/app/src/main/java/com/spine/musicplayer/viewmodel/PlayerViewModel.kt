@@ -57,7 +57,9 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
             override fun onPlaybackStateChanged(playbackState: Int) {
                 if (playbackState == Player.STATE_READY) {
-                    _uiState.value = _uiState.value.copy(durationMs = exoPlayer.duration.coerceAtLeast(0L))
+                    val dur = exoPlayer.duration
+                    val finalDuration = if (dur > 0) dur else (_uiState.value.currentTrack?.durationMs ?: 0L)
+                    _uiState.value = _uiState.value.copy(durationMs = finalDuration.coerceAtLeast(0L))
                 } else if (playbackState == Player.STATE_ENDED) {
                     handleTrackEnded()
                 }
@@ -88,14 +90,16 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                 _uiState.value.releases // Retain preview/demo releases until real music is added
             }
 
+            val initialTrack = activeReleases.firstOrNull()?.tracks?.firstOrNull()
             _uiState.value = _uiState.value.copy(
                 releases = activeReleases,
                 selectedReleaseIndex = 0,
                 currentTrackIndex = 0,
+                durationMs = initialTrack?.durationMs ?: 0L,
                 isLoading = false,
                 permissionGranted = true
             )
-            prepareCurrentTrack()
+            prepareCurrentTrack(autoplay = false)
         }
     }
 
@@ -112,10 +116,13 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     fun selectRelease(index: Int) {
         if (index in _uiState.value.releases.indices && index != _uiState.value.selectedReleaseIndex) {
+            val targetRelease = _uiState.value.releases[index]
+            val initialTrack = targetRelease.tracks.firstOrNull()
             _uiState.value = _uiState.value.copy(
                 selectedReleaseIndex = index,
                 currentTrackIndex = 0,
                 currentPositionMs = 0L,
+                durationMs = initialTrack?.durationMs ?: 0L,
                 isPlaying = false
             )
             prepareCurrentTrack(autoplay = false)

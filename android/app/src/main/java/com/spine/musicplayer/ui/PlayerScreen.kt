@@ -121,13 +121,7 @@ private fun PortraitPlayerLayout(
                     color = Color(0xFFA8A29E)
                 )
             )
-            Text(
-                text = currentRelease?.catalogNumber ?: "LOCAL ARCHIVE",
-                style = MaterialTheme.typography.bodySmall.copy(
-                    color = Color(0xFF78716C),
-                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                )
-            )
+
         }
 
         Spacer(modifier = Modifier.weight(0.5f))
