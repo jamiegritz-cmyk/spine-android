@@ -215,87 +215,61 @@ fun CdSpineItem(
                 scaleX = scale
                 scaleY = scale
             }
-            .width(21.dp) // Slender authentic jewel case spine width
+            .width(22.dp) // Slender authentic jewel case spine width
             .height(280.dp) // Tall, dominant full-height CD spine
             .shadow(elevation, shape = RoundedCornerShape(1.5.dp))
-            .background(Color(0xFF121110), RoundedCornerShape(1.5.dp))
+            .background(Color(0xFF0C0B0A), RoundedCornerShape(1.5.dp))
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = onClick
             )
     ) {
-        // Spine Background Color
+        // --- 1. Printed Tray Card Inlay (Full-Height Artwork Insert) ---
+        // Sits inside the clear jewel case, extending vertically through the full spine
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(horizontal = 1.dp, vertical = 2.dp)
+                .clip(RoundedCornerShape(0.5.dp))
                 .background(parsedColor)
-        )
-        // Clear Acrylic Jewel Case Specular Highlights
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .drawBehind {
-                    // Left edge specular shine
-                    drawLine(
-                        color = Color.White.copy(alpha = if (isSelected) 0.45f else 0.22f),
-                        start = Offset(0f, 0f),
-                        end = Offset(0f, size.height),
-                        strokeWidth = 1.8f
-                    )
-                    // Right edge groove shadow
-                    drawLine(
-                        color = Color.Black.copy(alpha = 0.7f),
-                        start = Offset(size.width, 0f),
-                        end = Offset(size.width, size.height),
-                        strokeWidth = 2f
-                    )
-                }
-        )
-        // Top Molded Acrylic Tab & Artwork slice
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.TopCenter)
         ) {
-            // Plastic tab
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(14.dp)
-                    .background(Color.White.copy(alpha = 0.1f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(4.dp)
-                        .background(Color.White.copy(alpha = 0.3f), RoundedCornerShape(1.dp))
-                )
-            }
-            // Real Artwork Slice at the top of the spine
             if (release.artworkUri != null) {
                 AsyncImage(
                     model = release.artworkUri,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(32.dp)
-                        .clip(RoundedCornerShape(0.dp))
+                    modifier = Modifier.fillMaxSize()
                 )
             }
+            // Subtle darkening wash so rotated typography is crisp and legible over any artwork
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Black.copy(alpha = 0.35f),
+                                Color.Black.copy(alpha = 0.15f),
+                                Color.Black.copy(alpha = 0.20f),
+                                Color.Black.copy(alpha = 0.45f)
+                            )
+                        )
+                    )
+            )
         }
-        // Rotated Spine Typography (Artist - Album Title)
+
+        // --- 2. Rotated Spine Typography (Artist - Album Title) ---
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(vertical = 52.dp),
+                .padding(vertical = 36.dp),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = "${release.artist.uppercase()} / ${release.title}",
-                color = Color.White.copy(alpha = if (isSelected) 1.0f else 0.75f),
-                fontSize = 9.sp,
+                color = Color.White.copy(alpha = if (isSelected) 1.0f else 0.85f),
+                fontSize = 8.5.sp,
                 fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
                 fontFamily = FontFamily.SansSerif,
                 maxLines = 1,
@@ -304,31 +278,85 @@ fun CdSpineItem(
                     .graphicsLayer {
                         rotationZ = 90f
                     }
-                    .width(180.dp)
+                    .width(200.dp)
             )
         }
-        // Bottom Catalog Number & Digital Audio Symbol
+
+        // --- 3. Bottom Compact Catalog Number ---
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
-                .background(Color.Black.copy(alpha = 0.45f))
-                .padding(vertical = 4.dp),
+                .padding(bottom = 4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = release.catalogNumber.split("-").lastOrNull() ?: "CD",
-                color = Color.White.copy(alpha = 0.6f),
-                fontSize = 7.5.sp,
-                fontFamily = FontFamily.Monospace
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            Box(
-                modifier = Modifier
-                    .size(4.dp, 2.dp)
-                    .background(Color.White.copy(alpha = 0.4f))
+                color = Color.White.copy(alpha = 0.7f),
+                fontSize = 7.sp,
+                fontFamily = FontFamily.Monospace,
+                fontWeight = FontWeight.Medium
             )
         }
+
+        // --- 4. Authentic Clear Polystyrene Jewel Case Glass & Edge Highlights ---
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .drawBehind {
+                    // Left edge specular highlight (clear acrylic bevel reflection)
+                    drawLine(
+                        color = Color.White.copy(alpha = if (isSelected) 0.55f else 0.30f),
+                        start = Offset(0.5f, 0f),
+                        end = Offset(0.5f, size.height),
+                        strokeWidth = 1.2f
+                    )
+                    // Secondary inner refraction line
+                    drawLine(
+                        color = Color.White.copy(alpha = 0.12f),
+                        start = Offset(2f, 0f),
+                        end = Offset(2f, size.height),
+                        strokeWidth = 0.8f
+                    )
+                    // Right edge seam / hinge groove shadow
+                    drawLine(
+                        color = Color.Black.copy(alpha = 0.65f),
+                        start = Offset(size.width - 0.5f, 0f),
+                        end = Offset(size.width - 0.5f, size.height),
+                        strokeWidth = 1.5f
+                    )
+                    // Top clear plastic edge highlight
+                    drawLine(
+                        color = Color.White.copy(alpha = 0.35f),
+                        start = Offset(0f, 0.5f),
+                        end = Offset(size.width, 0.5f),
+                        strokeWidth = 1.0f
+                    )
+                    // Bottom edge shelf shadow
+                    drawLine(
+                        color = Color.Black.copy(alpha = 0.70f),
+                        start = Offset(0f, size.height - 0.5f),
+                        end = Offset(size.width, size.height - 0.5f),
+                        strokeWidth = 1.5f
+                    )
+                }
+        )
+
+        // Top molded clear plastic tab highlight
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp)
+                .align(Alignment.TopCenter)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = 0.22f),
+                            Color.Transparent
+                        )
+                    )
+                )
+        )
     }
 }
 
