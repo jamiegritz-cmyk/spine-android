@@ -1,18 +1,17 @@
 package com.spine.musicplayer.ui
 
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.horizontalDrag
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -25,35 +24,26 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.spine.musicplayer.model.Release
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import kotlin.math.abs
-import kotlin.math.floor
-import kotlin.math.roundToInt
 
 /**
- * Premium physical CD shelf centerpiece.
- * - Continuous thumb-drag scrolling with 1:1 direct tracking and momentum decay.
- * - Continuous horizontal center selection: whatever CD is at the centre line becomes selected.
- * - The selected CD is brought forward/up (-26.dp) and slightly enlarged.
- * - Settles with the nearest CD centered when the finger is released.
- * - Subtle native haptic tick fires exactly once per CD transition.
- * - Authentic audio CD jewel cases with acrylic specular highlights and spine typography.
+ * Premium physical CD shelf component - Dominant visual centerpiece.
+ * Restored from the known-working d447de9 baseline:
+ * - Built on LazyRow with rememberSnapFlingBehavior and rememberLazyListState.
+ * - Dynamically determines the centered CD on initial layout and during scrolling.
+ * - Triggers a single subtle haptic tick when the centered CD changes.
+ * - Pulls the centered/selected CD forward (-26.dp) with specular highlights.
  */
 @Composable
 fun SpineShelf(
@@ -61,131 +51,73 @@ fun SpineShelf(
     selectedIndex: Int,
     onSelectRelease: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    shelfHeight: Dp = 380.dp,
-    caseHeight: Dp = 280.dp,
-    caseWidth: Dp = 21.dp
+    shelfHeight: Dp = 380.dp
 ) {
-    if (releases.isEmpty()) {
-        Box(
-            modifier = modifier
-                .fillMaxWidth()
-                .height(shelfHeight)
-                .background(Color(0xFF0F0D0B)),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("No releases found", color = Color(0xFF78716C), fontSize = 14.sp)
-        }
-        return
-    }
-
-    val density = LocalDensity.current
+    val listState = rememberLazyListState()
+    val flingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
     val context = LocalContext.current
     val view = LocalView.current
     val hapticHelper = remember(context) { HapticFeedbackHelper(context) }
-    val itemWidthPx = with(density) { caseWidth.toPx() }
-    val n = releases.size
 
-    // Smooth continuous offset tracking the finger
-    val scrollOffset = remember { Animatable(-selectedIndex * itemWidthPx) }
-    val coroutineScope = rememberCoroutineScope()
-    var lastCenterIndex by remember { mutableIntStateOf(selectedIndex) }
-
-    // Keep shelf centered on external programmatic selection (e.g. initial load or skip track)
-    LaunchedEffect(selectedIndex) {
-        val currentCenterInt = floor((-scrollOffset.value / itemWidthPx) + 0.5f).toInt()
-        val currentCenterIndex = ((currentCenterInt % n) + n) % n
-        if (currentCenterIndex != selectedIndex) {
-            val diff = ((selectedIndex - currentCenterIndex) % n)
-            val shortestDiff = when {
-                diff > n / 2 -> diff - n
-                diff < -n / 2 -> diff + n
-                else -> diff
-            }
-            val targetInt = currentCenterInt + shortestDiff
-            scrollOffset.animateTo(
-                targetValue = -targetInt * itemWidthPx,
-                animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
-            )
-            lastCenterIndex = selectedIndex
+    // Continuously detect which CD is closest to the horizontal center
+    val centerIndex by remember {
+        derivedStateOf {
+            val layoutInfo = listState.layoutInfo
+            val visible = layoutInfo.visibleItemsInfo
+            if (visible.isEmpty()) return@derivedStateOf -1
+            val center = (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2
+            visible.minByOrNull { item ->
+                val itemCenter = item.offset + item.size / 2
+                abs(itemCenter - center)
+            }?.index ?: -1
         }
     }
 
-    BoxWithConstraints(
+    var lastCenterIndex by remember { mutableIntStateOf(-1) }
+
+    // Establish centered CD on initial layout and update during scrolling with haptic tick
+    LaunchedEffect(centerIndex) {
+        if (centerIndex in releases.indices && centerIndex != lastCenterIndex) {
+            val isInitial = (lastCenterIndex == -1)
+            lastCenterIndex = centerIndex
+
+            if (centerIndex != selectedIndex) {
+                onSelectRelease(centerIndex)
+            }
+
+            if (!isInitial) {
+                hapticHelper.performCdTick(view)
+            }
+        }
+    }
+
+    // Scroll to selected item only when programmatic (not during active user scroll)
+    LaunchedEffect(selectedIndex) {
+        if (!listState.isScrollInProgress && selectedIndex in releases.indices) {
+            val layoutInfo = listState.layoutInfo
+            val visible = layoutInfo.visibleItemsInfo
+            val currentCenter = if (visible.isNotEmpty()) {
+                val center = (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2
+                visible.minByOrNull { item ->
+                    val itemCenter = item.offset + item.size / 2
+                    abs(itemCenter - center)
+                }?.index ?: -1
+            } else -1
+
+            if (currentCenter != selectedIndex) {
+                listState.animateScrollToItem(
+                    index = (selectedIndex - 2).coerceAtLeast(0)
+                )
+            }
+        }
+    }
+
+    Box(
         modifier = modifier
             .fillMaxWidth()
             .height(shelfHeight)
             .background(Color(0xFF0F0D0B))
-            .pointerInput(releases, n) {
-                coroutineScope {
-                    awaitEachGesture {
-                        val down = awaitFirstDown(requireUnconsumed = false)
-                        val velocityTracker = VelocityTracker()
-                        velocityTracker.addPosition(down.uptimeMillis, down.position)
-                        var isDragging = false
-
-                        horizontalDrag(down.id) { change ->
-                            val dragAmount = change.position.x - change.previousPosition.x
-                            change.consume()
-                            isDragging = true
-                            velocityTracker.addPosition(change.uptimeMillis, change.position)
-
-                            launch {
-                                scrollOffset.snapTo(scrollOffset.value + dragAmount)
-
-                                // Continuous center selection while dragging
-                                val rawCenterPos = -scrollOffset.value / itemWidthPx
-                                val centerInt = floor(rawCenterPos + 0.5f).toInt()
-                                val activeIndex = ((centerInt % n) + n) % n
-                                if (activeIndex != lastCenterIndex) {
-                                    lastCenterIndex = activeIndex
-                                    onSelectRelease(activeIndex)
-                                    hapticHelper.performCdTick(view)
-                                }
-                            }
-                        }
-
-                        // When user lifts finger
-                        if (isDragging) {
-                            val velocity = velocityTracker.calculateVelocity().x
-                            launch {
-                                if (abs(velocity) > 120f) {
-                                    scrollOffset.animateDecay(
-                                        velocity,
-                                        exponentialDecay(frictionMultiplier = 1.2f)
-                                    ) {
-                                        val rawCenterPos = -value / itemWidthPx
-                                        val centerInt = floor(rawCenterPos + 0.5f).toInt()
-                                        val activeIndex = ((centerInt % n) + n) % n
-                                        if (activeIndex != lastCenterIndex) {
-                                            lastCenterIndex = activeIndex
-                                            onSelectRelease(activeIndex)
-                                            hapticHelper.performCdTick(view)
-                                        }
-                                    }
-                                }
-
-                                // Settle with nearest CD centred
-                                val finalCenterInt = floor((-scrollOffset.value / itemWidthPx) + 0.5f).toInt()
-                                scrollOffset.animateTo(
-                                    targetValue = -finalCenterInt * itemWidthPx,
-                                    animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
-                                )
-                                val settledIndex = ((finalCenterInt % n) + n) % n
-                                if (settledIndex != lastCenterIndex) {
-                                    lastCenterIndex = settledIndex
-                                    onSelectRelease(settledIndex)
-                                    hapticHelper.performCdTick(view)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
     ) {
-        val containerWidthPx = constraints.maxWidth.toFloat()
-        val centerX = containerWidthPx / 2f
-        val visibleSlots = (containerWidthPx / itemWidthPx).toInt() + 6
-
         // Shelf Cavity Shadow & Dark Walnut Grain Backplate
         Box(
             modifier = Modifier
@@ -194,9 +126,9 @@ fun SpineShelf(
                     drawRect(
                         brush = Brush.verticalGradient(
                             colors = listOf(
-                                Color(0xFF040302),
-                                Color(0xFF0F0C09),
-                                Color(0xFF1B140E)
+                                Color(0xFF050504),
+                                Color(0xFF14110E),
+                                Color(0xFF1F1A15)
                             )
                         )
                     )
@@ -215,53 +147,24 @@ fun SpineShelf(
                 }
         )
 
-        // Continuous horizontal shelf of audio CD jewel cases
-        val currentCenterInt = floor((-scrollOffset.value / itemWidthPx) + 0.5f).toInt()
-
-        Box(
+        // Spines Row: Full-Height Authentic CD Jewel Cases Centered Vertically
+        LazyRow(
+            state = listState,
+            flingBehavior = flingBehavior,
+            contentPadding = PaddingValues(horizontal = 140.dp, vertical = 0.dp),
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(caseHeight + 36.dp)
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 36.dp)
+                .align(Alignment.Center)
         ) {
-            for (slot in (-visibleSlots / 2)..(visibleSlots / 2)) {
-                val caseIndex = (((currentCenterInt + slot) % n) + n) % n
-                val release = releases[caseIndex]
-                val xPos = centerX + (currentCenterInt + slot) * itemWidthPx + scrollOffset.value - (itemWidthPx / 2f)
-                val distFromCenter = abs(xPos + (itemWidthPx / 2f) - centerX)
-                val isCentered = distFromCenter < (itemWidthPx / 2f)
-
-                Box(
-                    modifier = Modifier
-                        .offset { IntOffset(xPos.roundToInt(), 0) }
-                        .align(Alignment.BottomStart)
-                ) {
-                    CdSpineItem(
-                        release = release,
-                        isSelected = isCentered,
-                        caseHeight = caseHeight,
-                        caseWidth = caseWidth,
-                        onClick = {
-                            if (!isCentered) {
-                                coroutineScope.launch {
-                                    val targetOffset = scrollOffset.value - (xPos + (itemWidthPx / 2f) - centerX)
-                                    scrollOffset.animateTo(
-                                        targetOffset,
-                                        spring(stiffness = Spring.StiffnessMediumLow)
-                                    )
-                                    val newCenterInt = floor((-targetOffset / itemWidthPx) + 0.5f).toInt()
-                                    val activeIndex = ((newCenterInt % n) + n) % n
-                                    if (activeIndex != lastCenterIndex) {
-                                        lastCenterIndex = activeIndex
-                                        onSelectRelease(activeIndex)
-                                        hapticHelper.performCdTick(view)
-                                    }
-                                }
-                            }
-                        }
-                    )
-                }
+            itemsIndexed(releases) { index, release ->
+                val isSelected = index == selectedIndex
+                CdSpineItem(
+                    release = release,
+                    isSelected = isSelected,
+                    onClick = { onSelectRelease(index) }
+                )
             }
         }
 
@@ -279,8 +182,6 @@ fun SpineShelf(
 fun CdSpineItem(
     release: Release,
     isSelected: Boolean,
-    caseHeight: Dp = 280.dp,
-    caseWidth: Dp = 21.dp,
     onClick: () -> Unit
 ) {
     // Selected spine pulled forward from shelf and enlarged
@@ -314,8 +215,8 @@ fun CdSpineItem(
                 scaleX = scale
                 scaleY = scale
             }
-            .width(caseWidth)
-            .height(caseHeight)
+            .width(21.dp) // Slender authentic jewel case spine width
+            .height(280.dp) // Tall, dominant full-height CD spine
             .shadow(elevation, shape = RoundedCornerShape(1.5.dp))
             .background(Color(0xFF121110), RoundedCornerShape(1.5.dp))
             .clickable(

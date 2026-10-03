@@ -65,30 +65,13 @@ class MediaStoreAudioScanner(private val context: Context) {
 
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idCol)
-                val rawTitle = cursor.getString(titleCol)?.trim()
-                val rawArtist = cursor.getString(artistCol)?.trim()
-                val rawAlbum = cursor.getString(albumCol)?.trim()
+                val title = cursor.getString(titleCol) ?: "Untitled Track"
+                val artist = cursor.getString(artistCol) ?: "Unknown Artist"
+                val album = cursor.getString(albumCol) ?: "Unknown Album"
                 val albumId = cursor.getLong(albumIdCol)
                 val duration = cursor.getLong(durationCol)
                 val trackNum = cursor.getInt(trackCol)
                 val year = cursor.getInt(yearCol)
-
-                val artist = when {
-                    rawArtist.isNullOrBlank() || rawArtist.equals("<unknown>", ignoreCase = true) -> "Unknown Artist"
-                    else -> rawArtist
-                }
-                val album = when {
-                    rawAlbum.isNullOrBlank() || rawAlbum.equals("<unknown>", ignoreCase = true) || rawAlbum == "0" -> {
-                        if (artist != "Unknown Artist") "$artist Collection" else "Local Audio"
-                    }
-                    else -> rawAlbum
-                }
-                val title = when {
-                    rawTitle.isNullOrBlank() || rawTitle == "0" -> {
-                        "Track ${if (trackNum > 0) trackNum % 1000 else 1}"
-                    }
-                    else -> rawTitle
-                }
 
                 val contentUri = ContentUris.withAppendedId(
                     MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
@@ -167,8 +150,7 @@ class MediaStoreAudioScanner(private val context: Context) {
 
             val hash = abs((albumName + artist).hashCode())
             val spineColor = palette[hash % palette.size]
-            val cleanPrefix = artist.replace(Regex("[^A-Za-z0-9]"), "").take(2).uppercase(Locale.ROOT)
-            val catPrefix = cleanPrefix.ifEmpty { "GZ" }
+            val catPrefix = (artist.take(2).uppercase(Locale.ROOT)).ifEmpty { "SP" }
             val catNum = String.format(Locale.ROOT, "%s-%04d", catPrefix, (hash % 9000) + 1000)
 
             Release(
