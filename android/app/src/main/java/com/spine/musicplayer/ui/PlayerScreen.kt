@@ -61,11 +61,16 @@ fun PlayerScreen(
     onToggleShuffle: () -> Unit,
     onCycleRepeat: () -> Unit,
     onRefresh: () -> Unit = {},
+    onOrientationChanged: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
     var filterMode by rememberSaveable { mutableStateOf(LibraryFilterMode.ALBUMS) }
+
+    LaunchedEffect(configuration.orientation) {
+        onOrientationChanged()
+    }
 
     Scaffold(
         containerColor = Color(0xFF141312),

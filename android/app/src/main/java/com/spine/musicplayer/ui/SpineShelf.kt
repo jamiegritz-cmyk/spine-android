@@ -134,7 +134,7 @@ fun SpineShelf(
                 val centerOffset = ((viewportWidth - itemWidthPx) / 2f).toInt()
                 isProgrammaticScroll = true
                 try {
-                    listState.animateScrollToItem(targetIndex, -centerOffset)
+                    listState.scrollToItem(targetIndex, -centerOffset)
                 } finally {
                     isProgrammaticScroll = false
                 }
@@ -295,7 +295,7 @@ fun LandscapeSpineShelf(
             val targetOffset = (caseCenterPx - itemWidthPx / 2f).toInt()
             isProgrammaticScroll = true
             try {
-                listState.animateScrollToItem(
+                listState.scrollToItem(
                     index = targetIndex,
                     scrollOffset = -targetOffset
                 )

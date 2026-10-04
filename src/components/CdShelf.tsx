@@ -124,12 +124,16 @@ export const CdShelf: React.FC<CdShelfProps> = ({
     snapAnimIdRef.current = requestAnimationFrame(step);
   }, []);
 
-  // When selectedIndex changes programmatically (e.g. Next/Prev button, search, or local import)
+  // When selectedIndex changes programmatically (e.g. orientation change, Next/Prev button, search)
   useEffect(() => {
     if (isDraggingRef.current || animFrameIdRef.current !== null) return;
     const targetScroll = getCenterScrollForIndex(selectedIndex);
-    animateSnapTo(targetScroll, 280);
-  }, [selectedIndex, getCenterScrollForIndex, animateSnapTo]);
+    const container = containerRef.current;
+    if (container) {
+      container.scrollLeft = targetScroll;
+      lastCenteredIndexRef.current = selectedIndex;
+    }
+  }, [selectedIndex, getCenterScrollForIndex]);
 
   // Cancel any running animations
   const stopAllAnimations = () => {

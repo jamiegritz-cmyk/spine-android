@@ -60,6 +60,7 @@ class MainActivity : ComponentActivity() {
                     onToggleShuffle = playerViewModel::toggleShuffle,
                     onCycleRepeat = playerViewModel::cycleRepeatMode,
                     onRefresh = playerViewModel::loadLocalMusic,
+                    onOrientationChanged = playerViewModel::syncUiWithPlayerState,
                     modifier = Modifier.fillMaxSize()
                 )
             }
