@@ -89,6 +89,8 @@ fun SpineShelf(
     val caseHeight = if (shelfHeight < 280.dp) (shelfHeight - 48.dp).coerceAtLeast(120.dp) else 280.dp
     val caseWidth = if (shelfHeight < 280.dp) 18.dp else 22.dp
 
+    var isProgrammaticScroll by remember { mutableStateOf(false) }
+
     // Continuously detect which CD is closest to the horizontal center
     val centerIndex by remember {
         derivedStateOf {
@@ -112,11 +114,11 @@ fun SpineShelf(
             val isInitial = (lastCenterIndex == -1)
             lastCenterIndex = centerIndex
 
-            if (listState.isScrollInProgress && centerIndex != targetIndex) {
+            if (listState.isScrollInProgress && !isProgrammaticScroll && centerIndex != targetIndex) {
                 onSelectRelease(centerIndex)
             }
 
-            if (!isInitial && listState.isScrollInProgress) {
+            if (!isInitial && listState.isScrollInProgress && !isProgrammaticScroll) {
                 hapticHelper.performCdTick(view)
             }
         }
@@ -130,7 +132,12 @@ fun SpineShelf(
             if (viewportWidth > 0) {
                 val itemWidthPx = with(density) { (caseWidth + 2.5.dp).toPx() }
                 val centerOffset = ((viewportWidth - itemWidthPx) / 2f).toInt()
-                listState.animateScrollToItem(targetIndex, -centerOffset)
+                isProgrammaticScroll = true
+                try {
+                    listState.animateScrollToItem(targetIndex, -centerOffset)
+                } finally {
+                    isProgrammaticScroll = false
+                }
             } else {
                 listState.scrollToItem((targetIndex - 2).coerceAtLeast(0))
             }
@@ -261,16 +268,18 @@ fun LandscapeSpineShelf(
 
     var lastCenterIndex by remember { mutableIntStateOf(-1) }
 
+    var isProgrammaticScroll by remember { mutableStateOf(false) }
+
     // Update centered CD during ACTIVE user scrolling with haptic tick
     // Never trigger on initial layout or orientation change passes when scroll is not in progress
     LaunchedEffect(centerIndex) {
         if (centerIndex in releases.indices && centerIndex != lastCenterIndex) {
             val isInitial = (lastCenterIndex == -1)
             lastCenterIndex = centerIndex
-            if (listState.isScrollInProgress && centerIndex != targetIndex) {
+            if (listState.isScrollInProgress && !isProgrammaticScroll && centerIndex != targetIndex) {
                 onSelectRelease(centerIndex)
             }
-            if (!isInitial && listState.isScrollInProgress) {
+            if (!isInitial && listState.isScrollInProgress && !isProgrammaticScroll) {
                 hapticHelper.performCdTick(view)
             }
         }
@@ -284,10 +293,15 @@ fun LandscapeSpineShelf(
             val caseCenterPx = (caseStartPx + caseEndPx) / 2f
             val itemWidthPx = with(density) { 22.5.dp.toPx() }
             val targetOffset = (caseCenterPx - itemWidthPx / 2f).toInt()
-            listState.animateScrollToItem(
-                index = targetIndex,
-                scrollOffset = -targetOffset
-            )
+            isProgrammaticScroll = true
+            try {
+                listState.animateScrollToItem(
+                    index = targetIndex,
+                    scrollOffset = -targetOffset
+                )
+            } finally {
+                isProgrammaticScroll = false
+            }
         }
     }
 

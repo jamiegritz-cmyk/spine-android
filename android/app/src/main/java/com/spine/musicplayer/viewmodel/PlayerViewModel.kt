@@ -20,6 +20,7 @@ import kotlinx.coroutines.launch
 data class PlayerUiState(
     val releases: List<Release> = emptyList(),
     val selectedReleaseIndex: Int = 0,
+    val playingReleaseIndex: Int = 0,
     val currentTrackIndex: Int = 0,
     val isPlaying: Boolean = false,
     val currentPositionMs: Long = 0L,
@@ -29,11 +30,18 @@ data class PlayerUiState(
     val isLoading: Boolean = true,
     val permissionGranted: Boolean = false
 ) {
+    val selectedRelease: Release?
+        get() = releases.getOrNull(selectedReleaseIndex)
+
+    val playingRelease: Release?
+        get() = releases.getOrNull(playingReleaseIndex)
+
     val currentRelease: Release?
         get() = releases.getOrNull(selectedReleaseIndex)
 
     val currentTrack: Track?
-        get() = currentRelease?.tracks?.getOrNull(currentTrackIndex)
+        get() = playingRelease?.tracks?.getOrNull(currentTrackIndex)
+            ?: currentRelease?.tracks?.getOrNull(currentTrackIndex)
 }
 
 class PlayerViewModel(application: Application) : AndroidViewModel(application) {
@@ -67,7 +75,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 val newIndex = exoPlayer.currentMediaItemIndex
-                val release = _uiState.value.currentRelease
+                val release = _uiState.value.playingRelease ?: _uiState.value.currentRelease
                 if (release != null && newIndex in release.tracks.indices) {
                     val track = release.tracks[newIndex]
                     _uiState.value = _uiState.value.copy(
@@ -103,7 +111,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                 _uiState.value.releases // Retain preview/demo releases until real music is added
             }
 
-            val currentId = _uiState.value.currentRelease?.id
+            val currentId = _uiState.value.playingRelease?.id ?: _uiState.value.currentRelease?.id
             val currentTrackIdx = _uiState.value.currentTrackIndex
             val isCurrentlyPlaying = _uiState.value.isPlaying
 
@@ -115,6 +123,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             _uiState.value = _uiState.value.copy(
                 releases = activeReleases,
                 selectedReleaseIndex = matchedReleaseIdx,
+                playingReleaseIndex = matchedReleaseIdx,
                 currentTrackIndex = safeTrackIdx,
                 durationMs = initialTrack?.durationMs ?: _uiState.value.durationMs,
                 isLoading = false,
@@ -149,16 +158,26 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     fun selectRelease(index: Int, startTrackIndex: Int = 0, autoplay: Boolean = false) {
         if (index in _uiState.value.releases.indices) {
             val targetRelease = _uiState.value.releases[index]
-            val safeTrackIdx = startTrackIndex.coerceIn(0, (targetRelease.tracks.size - 1).coerceAtLeast(0))
-            val initialTrack = targetRelease.tracks.getOrNull(safeTrackIdx)
-            _uiState.value = _uiState.value.copy(
-                selectedReleaseIndex = index,
-                currentTrackIndex = safeTrackIdx,
-                currentPositionMs = 0L,
-                durationMs = initialTrack?.durationMs ?: 0L,
-                isPlaying = autoplay
-            )
-            prepareAlbumQueue(targetRelease, startIndex = safeTrackIdx, autoplay = autoplay)
+            if (autoplay) {
+                val safeTrackIdx = startTrackIndex.coerceIn(0, (targetRelease.tracks.size - 1).coerceAtLeast(0))
+                val initialTrack = targetRelease.tracks.getOrNull(safeTrackIdx)
+                _uiState.value = _uiState.value.copy(
+                    selectedReleaseIndex = index,
+                    playingReleaseIndex = index,
+                    currentTrackIndex = safeTrackIdx,
+                    currentPositionMs = 0L,
+                    durationMs = initialTrack?.durationMs ?: 0L,
+                    isPlaying = true
+                )
+                prepareAlbumQueue(targetRelease, startIndex = safeTrackIdx, autoplay = true)
+            } else {
+                // Shelf browsing / orientation centering:
+                // Only updates the selected CD on the shelf and front jewel case.
+                // Does NOT touch ExoPlayer, does NOT clear queue, does NOT change track or position, does NOT stop playback!
+                _uiState.value = _uiState.value.copy(
+                    selectedReleaseIndex = index
+                )
+            }
         }
     }
 
@@ -166,12 +185,14 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         val release = _uiState.value.currentRelease ?: return
         if (trackIndex in release.tracks.indices) {
             val track = release.tracks[trackIndex]
+            val isSameRelease = (_uiState.value.playingReleaseIndex == _uiState.value.selectedReleaseIndex)
             _uiState.value = _uiState.value.copy(
+                playingReleaseIndex = _uiState.value.selectedReleaseIndex,
                 currentTrackIndex = trackIndex,
                 currentPositionMs = 0L,
                 durationMs = track.durationMs
             )
-            if (exoPlayer.mediaItemCount == release.tracks.size) {
+            if (isSameRelease && exoPlayer.mediaItemCount == release.tracks.size) {
                 exoPlayer.seekTo(trackIndex, 0L)
                 if (autoplay) {
                     exoPlayer.play()
@@ -206,9 +227,11 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             exoPlayer.pause()
         } else {
             if (exoPlayer.playbackState == Player.STATE_IDLE || exoPlayer.mediaItemCount == 0) {
-                val release = _uiState.value.currentRelease
+                val release = _uiState.value.selectedRelease ?: _uiState.value.playingRelease
                 if (release != null) {
-                    prepareAlbumQueue(release, startIndex = _uiState.value.currentTrackIndex, autoplay = true)
+                    val trackIdx = _uiState.value.currentTrackIndex.coerceIn(0, (release.tracks.size - 1).coerceAtLeast(0))
+                    _uiState.value = _uiState.value.copy(playingReleaseIndex = _uiState.value.selectedReleaseIndex)
+                    prepareAlbumQueue(release, startIndex = trackIdx, autoplay = true)
                 }
             } else if (exoPlayer.playbackState == Player.STATE_ENDED) {
                 selectTrack(0, autoplay = true)
@@ -224,10 +247,23 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun nextTrack() {
-        val release = _uiState.value.currentRelease ?: return
+        val release = _uiState.value.playingRelease ?: _uiState.value.currentRelease ?: return
         val nextIdx = _uiState.value.currentTrackIndex + 1
         if (nextIdx < release.tracks.size) {
-            selectTrack(nextIdx, autoplay = _uiState.value.isPlaying)
+            val track = release.tracks[nextIdx]
+            _uiState.value = _uiState.value.copy(
+                currentTrackIndex = nextIdx,
+                currentPositionMs = 0L,
+                durationMs = track.durationMs
+            )
+            if (exoPlayer.mediaItemCount == release.tracks.size) {
+                exoPlayer.seekTo(nextIdx, 0L)
+                if (_uiState.value.isPlaying) {
+                    exoPlayer.play()
+                }
+            } else {
+                prepareAlbumQueue(release, startIndex = nextIdx, autoplay = _uiState.value.isPlaying)
+            }
         } else {
             // Reached final track of this physical album: do not randomly jump to another album
             if (_uiState.value.repeatMode == RepeatMode.ALL) {
@@ -244,9 +280,23 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             seekTo(0)
             return
         }
+        val release = _uiState.value.playingRelease ?: _uiState.value.currentRelease ?: return
         val prevIdx = _uiState.value.currentTrackIndex - 1
         if (prevIdx >= 0) {
-            selectTrack(prevIdx, autoplay = _uiState.value.isPlaying)
+            val track = release.tracks[prevIdx]
+            _uiState.value = _uiState.value.copy(
+                currentTrackIndex = prevIdx,
+                currentPositionMs = 0L,
+                durationMs = track.durationMs
+            )
+            if (exoPlayer.mediaItemCount == release.tracks.size) {
+                exoPlayer.seekTo(prevIdx, 0L)
+                if (_uiState.value.isPlaying) {
+                    exoPlayer.play()
+                }
+            } else {
+                prepareAlbumQueue(release, startIndex = prevIdx, autoplay = _uiState.value.isPlaying)
+            }
         } else {
             seekTo(0)
         }

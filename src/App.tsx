@@ -16,6 +16,7 @@ export default function App() {
   const [releases, setReleases] = useState<Release[]>(DEFAULT_CD_COLLECTION);
   // Default to Post-Rock - Concrete Echoes matching user reference mock-up
   const [selectedReleaseId, setSelectedReleaseId] = useState<string>('post_rock_concrete_echoes');
+  const [playingReleaseId, setPlayingReleaseId] = useState<string>('post_rock_concrete_echoes');
   const [currentTrackIndex, setCurrentTrackIndex] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   // 1:12 current time and 340s duration -> exactly 1:12 and -4:28 as in reference image
@@ -83,12 +84,20 @@ export default function App() {
     );
   }, [filteredReleases, selectedReleaseId, releases]);
 
+  // Currently playing release in audio engine
+  const playingRelease = useMemo(() => {
+    return (
+      releases.find((r) => r.id === playingReleaseId) ||
+      currentRelease
+    );
+  }, [releases, playingReleaseId, currentRelease]);
+
   const selectedIndex = useMemo(() => {
     const idx = filteredReleases.findIndex((r) => r.id === currentRelease?.id);
     return idx >= 0 ? idx : 0;
   }, [filteredReleases, currentRelease]);
 
-  const currentTrack: Track | undefined = currentRelease?.tracks[currentTrackIndex];
+  const currentTrack: Track | undefined = playingRelease?.tracks[currentTrackIndex] || currentRelease?.tracks[currentTrackIndex];
 
   // Configure Audio Engine Callbacks
   useEffect(() => {
@@ -101,7 +110,7 @@ export default function App() {
         handleTrackEnded();
       }
     );
-  }, [repeatMode, isShuffle, currentRelease, currentTrackIndex, filteredReleases]);
+  }, [repeatMode, isShuffle, playingRelease, currentRelease, currentTrackIndex, filteredReleases]);
 
   const handleTrackEnded = useCallback(() => {
     if (repeatMode === 'one') {
@@ -110,7 +119,8 @@ export default function App() {
       return;
     }
 
-    if (currentRelease && currentTrackIndex + 1 < currentRelease.tracks.length) {
+    const rel = playingRelease || currentRelease;
+    if (rel && currentTrackIndex + 1 < rel.tracks.length) {
       const nextIdx = currentTrackIndex + 1;
       setCurrentTrackIndex(nextIdx);
       playCurrentTrack(nextIdx);
@@ -120,13 +130,16 @@ export default function App() {
       setIsPlaying(false);
       audioEngine.pause();
     }
-  }, [repeatMode, isShuffle, currentRelease, currentTrackIndex]);
+  }, [repeatMode, isShuffle, playingRelease, currentRelease, currentTrackIndex]);
 
   const playCurrentTrack = (trackIdx: number) => {
-    if (!currentRelease) return;
-    const track = currentRelease.tracks[trackIdx];
+    const rel = currentRelease || playingRelease;
+    if (!rel) return;
+    const track = rel.tracks[trackIdx];
     if (!track) return;
 
+    setPlayingReleaseId(rel.id);
+    setCurrentTrackIndex(trackIdx);
     setCurrentTime(0);
     setDuration(track.duration);
     setIsPlaying(true);
@@ -135,14 +148,12 @@ export default function App() {
 
   const handleSelectRelease = (index: number) => {
     const target = filteredReleases[index];
-    if (target && target.id !== currentRelease?.id) {
+    if (target && target.id !== selectedReleaseId) {
       setSelectedReleaseId(target.id);
-      setCurrentTrackIndex(0);
-      setCurrentTime(0);
-      setDuration(target.tracks[0]?.duration || 340);
-      // Update album cover, title and artist without automatically starting playback
-      setIsPlaying(false);
-      audioEngine.stop();
+      // Browsing shelf does NOT kill playback or reset playing track/position
+      if (!isPlaying) {
+        setDuration(target.tracks[0]?.duration || 340);
+      }
     }
   };
 
