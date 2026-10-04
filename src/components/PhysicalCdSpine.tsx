@@ -459,46 +459,161 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
           </div>
         );
 
-      default:
-        // Default authentic procedural CD spine for any release (including local user music)
+      default: {
+        const titleNorm = release.title.toLowerCase();
+        const artistNorm = release.artist.toLowerCase();
+        const combined = `${titleNorm} ${artistNorm}`;
+
+        // Distinctive cover-derived typography styles for albums
+        let primaryColor = release.spineTextColor || '#ffffff';
+        let secondaryColor = 'rgba(255,255,255,0.7)';
+        let fontFamily = 'font-sans';
+        let fontWeight = 'font-bold';
+        let isUppercase = true;
+        let badge: string | null = null;
+        let washAlpha = 'bg-black/35';
+
+        if (combined.includes('dirty dancing') || combined.includes('time of my life')) {
+          primaryColor = '#f43f5e'; // Hot pink script
+          secondaryColor = '#fff7ed'; // Cream
+          fontFamily = 'font-serif italic';
+          fontWeight = 'font-bold';
+          isUppercase = false;
+          badge = 'RCA';
+          washAlpha = 'bg-[#1e0a16]/40';
+        } else if (combined.includes('oasis') || combined.includes('morning glory')) {
+          primaryColor = '#ffffff';
+          secondaryColor = '#cbd5e1';
+          fontFamily = 'font-sans';
+          fontWeight = 'font-black';
+          isUppercase = false;
+          badge = 'CREATION';
+          washAlpha = 'bg-[#141c26]/30';
+        } else if (combined.includes('guns n') || combined.includes('appetite')) {
+          primaryColor = '#facc15'; // Vivid yellow
+          secondaryColor = '#ef4444'; // Red
+          fontFamily = 'font-sans';
+          fontWeight = 'font-black';
+          isUppercase = true;
+          badge = 'GEFFEN';
+          washAlpha = 'bg-black/25';
+        } else if (combined.includes('ac/dc') || combined.includes('back in black')) {
+          primaryColor = '#e2e8f0';
+          secondaryColor = '#94a3b8';
+          fontFamily = 'font-sans';
+          fontWeight = 'font-black';
+          isUppercase = true;
+          badge = '⚡ AC/DC';
+          washAlpha = 'bg-black/20';
+        } else if (combined.includes('abba') || combined.includes('gold')) {
+          primaryColor = '#eab308'; // Metallic gold
+          secondaryColor = '#fde047';
+          fontFamily = 'font-serif';
+          fontWeight = 'font-bold';
+          isUppercase = true;
+          badge = 'POLAR';
+          washAlpha = 'bg-black/30';
+        } else if (combined.includes('killers') || combined.includes('hot fuss')) {
+          primaryColor = '#38bdf8'; // Electric cyan
+          secondaryColor = '#e0f2fe';
+          fontFamily = 'font-sans';
+          fontWeight = 'font-bold';
+          isUppercase = true;
+          badge = 'ISLAND';
+          washAlpha = 'bg-[#0a192f]/35';
+        } else if (combined.includes('bob dylan') || combined.includes('highway 61')) {
+          primaryColor = '#dc2626'; // Columbia red
+          secondaryColor = '#f8fafc';
+          fontFamily = 'font-sans';
+          fontWeight = 'font-black';
+          isUppercase = true;
+          badge = 'COLUMBIA';
+          washAlpha = 'bg-black/30';
+        } else if (combined.includes('bill conti') || combined.includes('rocky')) {
+          primaryColor = '#fbbf24'; // Championship gold
+          secondaryColor = '#ffffff';
+          fontFamily = 'font-sans';
+          fontWeight = 'font-black';
+          isUppercase = false;
+          badge = 'UA';
+          washAlpha = 'bg-[#2b1212]/35';
+        } else if (combined.includes('roxette') || combined.includes('must have been love')) {
+          primaryColor = '#ffffff';
+          secondaryColor = '#c4b5fd';
+          fontFamily = 'font-sans';
+          fontWeight = 'font-semibold';
+          isUppercase = true;
+          badge = 'EMI';
+          washAlpha = 'bg-[#1a173b]/35';
+        }
+
+        const formattedTitle = isUppercase ? release.title.toUpperCase() : release.title;
+        const formattedArtist = isUppercase ? release.artist.toUpperCase() : release.artist;
+
         return (
           <div
-            className="w-full h-full flex flex-col justify-between py-1 text-white relative overflow-hidden"
-            style={{ backgroundColor: release.spineColor || '#222222' }}
+            className="w-full h-full flex flex-col justify-between py-1 relative overflow-hidden"
+            style={{ backgroundColor: release.spineColor || '#18181b' }}
           >
-            {/* Top artwork slice thumbnail - enlarged for clarity */}
-            <div className="w-full h-6 shrink-0 overflow-hidden border-b border-white/20">
+            {/* Background: Actual Album Cover Artwork (Intelligently scaled and cropped) */}
+            {release.artworkUrl && (
               <img
                 src={release.artworkUrl}
                 alt=""
                 draggable={false}
-                className="w-full h-full object-cover pointer-events-none"
+                className="absolute inset-0 w-full h-full object-cover pointer-events-none"
                 referrerPolicy="no-referrer"
               />
-            </div>
+            )}
 
-            {/* Rotated text - bold and crisp for effortless readability while scrolling */}
-            <div className="flex-1 w-full flex items-center justify-center overflow-hidden py-0.5">
+            {/* Harmonious cover-derived tonal wash */}
+            <div className={`absolute inset-0 ${washAlpha} backdrop-brightness-75 pointer-events-none`} />
+
+            {/* Top miniature album cover thumbnail badge for instant visual recognition */}
+            {release.artworkUrl && (
+              <div className="w-full flex items-center justify-center pt-0.5 pb-1 relative z-10">
+                <div className="w-3.5 h-3.5 rounded-[1px] overflow-hidden border border-white/35 shadow-xs">
+                  <img
+                    src={release.artworkUrl}
+                    alt=""
+                    draggable={false}
+                    className="w-full h-full object-cover pointer-events-none"
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Rotated text - formatted to match the album cover's visual identity */}
+            <div className="flex-1 w-full flex items-center justify-center overflow-hidden py-0.5 relative z-10">
               <span
-                className="whitespace-nowrap text-[9.5px] font-sans font-bold tracking-tight select-none uppercase"
+                className={`whitespace-nowrap text-[9px] ${fontFamily} ${fontWeight} tracking-tight select-none`}
                 style={{
                   writingMode: 'vertical-rl',
                   textOrientation: 'mixed',
-                  color: release.spineTextColor || '#ffffff',
-                  textShadow: '0 1px 2px rgba(0,0,0,0.85)',
+                  color: primaryColor,
+                  textShadow: '0 1px 3px rgba(0,0,0,0.9)',
                   maxHeight: '150px'
                 }}
               >
-                {release.artist} <span className="opacity-60">/</span> {release.title}
+                {formattedArtist} <span style={{ color: secondaryColor }} className="opacity-70"> - </span> {formattedTitle}
               </span>
             </div>
 
-            {/* Bottom catalog ID */}
-            <div className="w-full shrink-0 pb-0.5 text-center text-[6.5px] font-mono opacity-70">
-              {release.catalogNumber}
+            {/* Bottom: Authentic Label Badge & 4-Digit Catalog */}
+            <div className="w-full shrink-0 flex flex-col items-center pb-0.5 text-center relative z-10 gap-0.5">
+              {badge && (
+                <span className="text-[5.5px] font-sans font-bold text-white/80 leading-none">
+                  {badge}
+                </span>
+              )}
+              <span className="text-[6.5px] font-mono font-medium" style={{ color: secondaryColor }}>
+                {catalogCode}
+              </span>
             </div>
           </div>
         );
+      }
     }
   };
 

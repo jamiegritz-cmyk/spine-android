@@ -339,12 +339,8 @@ fun CdSpineItem(
         animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
         label = "spineElevation"
     )
-    val parsedColor = remember(release.spineColorHex) {
-        try {
-            Color(android.graphics.Color.parseColor(release.spineColorHex))
-        } catch (_: Exception) {
-            Color(0xFF222222)
-        }
+    val style = remember(release.id, release.title, release.artist, release.spineColorHex) {
+        AlbumVisualIdentityResolver.resolve(release)
     }
 
     val caseHash = remember(release.id) { kotlin.math.abs(release.id.hashCode()) }
@@ -368,74 +364,114 @@ fun CdSpineItem(
                 onClick = onClick
             )
     ) {
-        // --- 1. Printed Tray Card Inlay (Full-Height Artwork Insert) ---
-        // Sits inside the clear jewel case, extending vertically through the full spine
+        // --- 1. Printed Tray Card Inlay (Cover-Derived Artwork Insert) ---
+        // Sits inside the clear jewel case, using the actual album cover image as the visual basis
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 1.2.dp, vertical = 2.dp)
                 .clip(RoundedCornerShape(0.5.dp))
-                .background(parsedColor)
+                .background(style.dominantColor)
         ) {
+            // Actual Album Cover Artwork (Intelligently scaled and cropped)
             if (release.artworkUri != null) {
                 AsyncImage(
                     model = release.artworkUri,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
+                    alignment = style.cropAlignment,
                     modifier = Modifier.fillMaxSize()
                 )
             }
-            // Subtle darkening wash so rotated typography is crisp and legible over any artwork
+            // Harmonious tonal wash derived directly from cover's dominant color:
+            // Keeps typography crisp while allowing authentic cover textures and art to shine through
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
-                                Color.Black.copy(alpha = 0.35f),
-                                Color.Black.copy(alpha = 0.15f),
-                                Color.Black.copy(alpha = 0.20f),
-                                Color.Black.copy(alpha = 0.45f)
+                                style.dominantColor.copy(alpha = (style.artworkWashAlpha + 0.15f).coerceAtMost(0.85f)),
+                                style.dominantColor.copy(alpha = (style.artworkWashAlpha * 0.70f).coerceAtMost(0.60f)),
+                                style.dominantColor.copy(alpha = (style.artworkWashAlpha * 0.85f).coerceAtMost(0.70f)),
+                                style.dominantColor.copy(alpha = (style.artworkWashAlpha + 0.25f).coerceAtMost(0.90f))
                             )
                         )
                     )
             )
+
+            // Miniature Cover Art Thumbnail Badge at top of spine for immediate visual recognition
+            if (style.showCoverThumbnail && release.artworkUri != null) {
+                Box(
+                    modifier = Modifier
+                        .padding(top = 4.dp)
+                        .size(13.5.dp)
+                        .align(Alignment.TopCenter)
+                        .clip(RoundedCornerShape(1.dp))
+                        .background(Color.Black.copy(alpha = 0.5f))
+                ) {
+                    AsyncImage(
+                        model = release.artworkUri,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .drawBehind {
+                                drawRect(
+                                    color = Color.White.copy(alpha = 0.35f),
+                                    style = Stroke(width = 0.5f)
+                                )
+                            }
+                    )
+                }
+            }
         }
 
-        // --- 2. Rotated Spine Typography (Artist - Album Title) ---
-        val typo = rememberSpineTypography(release = release, isSelected = isSelected)
-        val formattedTitle = if (typo.isTitleUppercase) release.title.uppercase() else release.title
-        val formattedArtist = if (typo.isArtistUppercase) release.artist.uppercase() else release.artist
+        // --- 2. Rotated Spine Typography (Matching Album Cover Distinctive Font & Style) ---
+        val formattedTitle = if (style.isTitleUppercase) release.title.uppercase(Locale.ROOT) else release.title
+        val formattedArtist = if (style.isArtistUppercase) release.artist.uppercase(Locale.ROOT) else release.artist
 
-        val fullSpineText = remember(release.title, release.artist, typo) {
+        val totalLength = release.title.length + release.artist.length
+        val (titleSize, artistSize) = when {
+            totalLength <= 18 -> Pair(9.2.sp, 8.2.sp)
+            totalLength <= 28 -> Pair(8.4.sp, 7.4.sp)
+            totalLength <= 40 -> Pair(7.6.sp, 6.6.sp)
+            totalLength <= 55 -> Pair(6.8.sp, 6.0.sp)
+            else -> Pair(6.0.sp, 5.4.sp)
+        }
+
+        val fullSpineText = remember(release.title, release.artist, style, titleSize, artistSize) {
             buildAnnotatedString {
-                if (typo.artistFirst) {
+                if (style.artistFirst) {
                     withStyle(
                         SpanStyle(
-                            fontSize = typo.artistFontSize,
-                            fontWeight = typo.artistFontWeight,
-                            fontFamily = typo.artistFontFamily,
-                            color = typo.artistColor,
-                            letterSpacing = typo.letterSpacing
+                            fontSize = artistSize,
+                            fontWeight = style.artistFontWeight,
+                            fontFamily = style.artistFontFamily,
+                            color = style.secondaryTextColor,
+                            letterSpacing = style.letterSpacing
                         )
                     ) {
                         append(formattedArtist)
                     }
                     withStyle(
                         SpanStyle(
-                            fontSize = typo.artistFontSize,
-                            color = typo.artistColor.copy(alpha = 0.6f)
+                            fontSize = artistSize,
+                            color = style.secondaryTextColor.copy(alpha = 0.65f)
                         )
                     ) {
-                        append(typo.separator)
+                        append(style.separator)
                     }
                     withStyle(
                         SpanStyle(
-                            fontSize = typo.titleFontSize,
-                            fontWeight = typo.titleFontWeight,
-                            fontFamily = typo.titleFontFamily,
-                            color = typo.titleColor,
-                            letterSpacing = typo.letterSpacing
+                            fontSize = titleSize,
+                            fontWeight = style.titleFontWeight,
+                            fontFamily = style.titleFontFamily,
+                            color = style.primaryTextColor,
+                            letterSpacing = style.letterSpacing
                         )
                     ) {
                         append(formattedTitle)
@@ -443,30 +479,30 @@ fun CdSpineItem(
                 } else {
                     withStyle(
                         SpanStyle(
-                            fontSize = typo.titleFontSize,
-                            fontWeight = typo.titleFontWeight,
-                            fontFamily = typo.titleFontFamily,
-                            color = typo.titleColor,
-                            letterSpacing = typo.letterSpacing
+                            fontSize = titleSize,
+                            fontWeight = style.titleFontWeight,
+                            fontFamily = style.titleFontFamily,
+                            color = style.primaryTextColor,
+                            letterSpacing = style.letterSpacing
                         )
                     ) {
                         append(formattedTitle)
                     }
                     withStyle(
                         SpanStyle(
-                            fontSize = typo.artistFontSize,
-                            color = typo.artistColor.copy(alpha = 0.6f)
+                            fontSize = artistSize,
+                            color = style.secondaryTextColor.copy(alpha = 0.65f)
                         )
                     ) {
-                        append(typo.separator)
+                        append(style.separator)
                     }
                     withStyle(
                         SpanStyle(
-                            fontSize = typo.artistFontSize,
-                            fontWeight = typo.artistFontWeight,
-                            fontFamily = typo.artistFontFamily,
-                            color = typo.artistColor,
-                            letterSpacing = typo.letterSpacing
+                            fontSize = artistSize,
+                            fontWeight = style.artistFontWeight,
+                            fontFamily = style.artistFontFamily,
+                            color = style.secondaryTextColor,
+                            letterSpacing = style.letterSpacing
                         )
                     ) {
                         append(formattedArtist)
@@ -478,7 +514,10 @@ fun CdSpineItem(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(vertical = 18.dp),
+                .padding(
+                    top = if (style.showCoverThumbnail && release.artworkUri != null) 20.dp else 14.dp,
+                    bottom = 18.dp
+                ),
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -487,7 +526,7 @@ fun CdSpineItem(
                 softWrap = false,
                 style = TextStyle(
                     shadow = Shadow(
-                        color = typo.shadowColor,
+                        color = style.shadowColor,
                         offset = Offset(0f, 1f),
                         blurRadius = 3f
                     )
@@ -496,18 +535,38 @@ fun CdSpineItem(
             )
         }
 
-        // --- 3. Bottom Compact Catalog Number ---
+        // --- 3. Bottom Compact Catalog Number & Distinctive Label Mark ---
+        val catalogCode = remember(release.id, release.catalogNumber, style.catalogPrefix) {
+            val digits = release.catalogNumber.filter { it.isDigit() }
+            if (digits.length >= 4) {
+                digits.takeLast(4)
+            } else {
+                String.format(Locale.ROOT, "%04d", (caseHash % 9000) + 1000)
+            }
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 4.dp),
+                .padding(bottom = 3.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            if (style.labelBadge != null) {
+                Text(
+                    text = style.labelBadge,
+                    color = style.secondaryTextColor.copy(alpha = 0.80f),
+                    fontSize = 5.sp,
+                    fontFamily = FontFamily.SansSerif,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.2.sp
+                )
+                Spacer(modifier = Modifier.height(1.dp))
+            }
             Text(
-                text = release.catalogNumber.split("-").lastOrNull() ?: "CD",
-                color = Color.White.copy(alpha = 0.7f),
-                fontSize = 7.sp,
+                text = catalogCode,
+                color = style.secondaryTextColor.copy(alpha = 0.85f),
+                fontSize = 6.8.sp,
                 fontFamily = FontFamily.Monospace,
                 fontWeight = FontWeight.Medium
             )
@@ -683,165 +742,3 @@ private fun Modifier.verticalSpineText(): Modifier = this.layout { measurable, c
     }
 }
 
-private data class SpineTypographyConfig(
-    val titleColor: Color,
-    val artistColor: Color,
-    val titleFontWeight: FontWeight,
-    val artistFontWeight: FontWeight,
-    val titleFontFamily: FontFamily,
-    val artistFontFamily: FontFamily,
-    val titleFontSize: TextUnit,
-    val artistFontSize: TextUnit,
-    val letterSpacing: TextUnit,
-    val isTitleUppercase: Boolean,
-    val isArtistUppercase: Boolean,
-    val separator: String,
-    val artistFirst: Boolean,
-    val shadowColor: Color
-)
-
-@Composable
-private fun rememberSpineTypography(
-    release: Release,
-    isSelected: Boolean
-): SpineTypographyConfig {
-    return remember(release.title, release.artist, release.spineColorHex, isSelected) {
-        val parsedColor = try {
-            Color(android.graphics.Color.parseColor(release.spineColorHex))
-        } catch (_: Exception) {
-            Color(0xFF222222)
-        }
-        val luminance = 0.299f * parsedColor.red + 0.587f * parsedColor.green + 0.114f * parsedColor.blue
-        val isLight = luminance > 0.55f
-
-        val hash = abs((release.title + release.artist).hashCode())
-        val styleIndex = hash % 6
-
-        // Curated palette of authentic CD spine text colours: cream, turquoise, red, yellow, white, mint, etc.
-        val spineTextColorPalette = listOf(
-            Color(0xFFFFF7ED), // Warm Cream
-            Color(0xFF38BDF8), // Vivid Turquoise / Sky
-            Color(0xFFFB7185), // Coral Red / Rose
-            Color(0xFFFDE047), // Sunny Yellow / Gold
-            Color(0xFFFFFFFF), // Crisp Clean White
-            Color(0xFF86EFAC), // Mint Green
-            Color(0xFFFDBA74), // Warm Tangerine / Amber
-            Color(0xFFE9D5FF), // Lilac / Pale Purple
-            Color(0xFF67E8F9), // Ice Aqua
-            Color(0xFFF472B6)  // Vibrant Fuchsia Pink
-        )
-        val textPaletteIndex = abs((hash xor parsedColor.hashCode())) % spineTextColorPalette.size
-        val primaryColor = spineTextColorPalette[textPaletteIndex]
-        val secondaryColor = if (primaryColor == Color(0xFFFFFFFF)) Color(0xFFE2E8F0) else Color.White.copy(alpha = 0.92f)
-        val shadowColor = Color.Black.copy(alpha = 0.95f)
-
-        // Prominent, legible font scaling for title and artist so the complete text fits and pops
-        val totalLength = release.title.length + release.artist.length
-        val (titleSize, artistSize, spacing) = when {
-            totalLength <= 18 -> Triple(9.4.sp, 8.4.sp, 0.4.sp)
-            totalLength <= 28 -> Triple(8.5.sp, 7.6.sp, 0.2.sp)
-            totalLength <= 40 -> Triple(7.8.sp, 6.8.sp, 0.sp)
-            totalLength <= 55 -> Triple(7.0.sp, 6.2.sp, (-0.1).sp)
-            else -> Triple(6.2.sp, 5.6.sp, (-0.2).sp)
-        }
-
-        when (styleIndex) {
-            0 -> SpineTypographyConfig(
-                titleColor = primaryColor,
-                artistColor = secondaryColor,
-                titleFontWeight = FontWeight.Bold,
-                artistFontWeight = FontWeight.Medium,
-                titleFontFamily = FontFamily.SansSerif,
-                artistFontFamily = FontFamily.SansSerif,
-                titleFontSize = titleSize,
-                artistFontSize = artistSize,
-                letterSpacing = spacing,
-                isTitleUppercase = true,
-                isArtistUppercase = true,
-                separator = "   |   ",
-                artistFirst = false,
-                shadowColor = shadowColor
-            )
-            1 -> SpineTypographyConfig(
-                titleColor = primaryColor,
-                artistColor = secondaryColor,
-                titleFontWeight = FontWeight.SemiBold,
-                artistFontWeight = FontWeight.Normal,
-                titleFontFamily = FontFamily.Monospace,
-                artistFontFamily = FontFamily.Monospace,
-                titleFontSize = titleSize,
-                artistFontSize = artistSize,
-                letterSpacing = spacing,
-                isTitleUppercase = false,
-                isArtistUppercase = true,
-                separator = "   /   ",
-                artistFirst = true,
-                shadowColor = shadowColor
-            )
-            2 -> SpineTypographyConfig(
-                titleColor = primaryColor,
-                artistColor = secondaryColor,
-                titleFontWeight = FontWeight.Bold,
-                artistFontWeight = FontWeight.SemiBold,
-                titleFontFamily = FontFamily.Serif,
-                artistFontFamily = FontFamily.SansSerif,
-                titleFontSize = titleSize,
-                artistFontSize = artistSize,
-                letterSpacing = spacing,
-                isTitleUppercase = false,
-                isArtistUppercase = true,
-                separator = "   •   ",
-                artistFirst = true,
-                shadowColor = shadowColor
-            )
-            3 -> SpineTypographyConfig(
-                titleColor = primaryColor,
-                artistColor = secondaryColor,
-                titleFontWeight = FontWeight.ExtraBold,
-                artistFontWeight = FontWeight.Bold,
-                titleFontFamily = FontFamily.SansSerif,
-                artistFontFamily = FontFamily.SansSerif,
-                titleFontSize = titleSize,
-                artistFontSize = artistSize,
-                letterSpacing = spacing,
-                isTitleUppercase = true,
-                isArtistUppercase = true,
-                separator = "   —   ",
-                artistFirst = false,
-                shadowColor = shadowColor
-            )
-            4 -> SpineTypographyConfig(
-                titleColor = primaryColor,
-                artistColor = secondaryColor,
-                titleFontWeight = FontWeight.Medium,
-                artistFontWeight = FontWeight.Normal,
-                titleFontFamily = FontFamily.SansSerif,
-                artistFontFamily = FontFamily.SansSerif,
-                titleFontSize = titleSize,
-                artistFontSize = artistSize,
-                letterSpacing = (spacing.value + 0.3f).sp,
-                isTitleUppercase = false,
-                isArtistUppercase = false,
-                separator = "   :   ",
-                artistFirst = false,
-                shadowColor = shadowColor
-            )
-            else -> SpineTypographyConfig(
-                titleColor = primaryColor,
-                artistColor = secondaryColor,
-                titleFontWeight = FontWeight.Bold,
-                artistFontWeight = FontWeight.Medium,
-                titleFontFamily = FontFamily.SansSerif,
-                artistFontFamily = FontFamily.Monospace,
-                titleFontSize = titleSize,
-                artistFontSize = artistSize,
-                letterSpacing = spacing,
-                isTitleUppercase = true,
-                isArtistUppercase = false,
-                separator = "   •   ",
-                artistFirst = false,
-                shadowColor = shadowColor
-            )
-        }
-    }
-}

@@ -124,13 +124,6 @@ class MediaStoreAudioScanner(private val context: Context) {
             }
         }
 
-        // Palette of rich jewel case spine colors
-        val palette = listOf(
-            "#1E293B", "#334155", "#0F172A", "#18181B", "#27272A",
-            "#1C1917", "#292524", "#0C4A6E", "#164E63", "#064E3B",
-            "#701A75", "#831843", "#881337", "#431407", "#365314"
-        )
-
         tracksByAlbum.entries.mapIndexed { index, entry ->
             val albumName = entry.key
             val albumTracks = entry.value
@@ -166,7 +159,7 @@ class MediaStoreAudioScanner(private val context: Context) {
             }
 
             val hash = abs((albumName + artist).hashCode())
-            val spineColor = palette[hash % palette.size]
+            val spineColor = com.spine.musicplayer.ui.AlbumVisualIdentityResolver.resolveDominantColorHex(albumName, artist)
             val catPrefix = (artist.take(2).uppercase(Locale.ROOT)).ifEmpty { "SP" }
             val catNum = String.format(Locale.ROOT, "%s-%04d", catPrefix, (hash % 9000) + 1000)
 
