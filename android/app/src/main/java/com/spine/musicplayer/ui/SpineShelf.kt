@@ -252,6 +252,8 @@ fun LandscapeSpineShelf(
     val caseEndPx = with(density) { caseEndDp.toPx() }
     val transitionPx = with(density) { 16.dp.toPx() }
 
+    var isProgrammaticScroll by remember { mutableStateOf(false) }
+
     // Detect centered CD near jewel case center
     val centerIndex by remember {
         derivedStateOf {
@@ -267,8 +269,6 @@ fun LandscapeSpineShelf(
     }
 
     var lastCenterIndex by remember { mutableIntStateOf(-1) }
-
-    var isProgrammaticScroll by remember { mutableStateOf(false) }
 
     // Update centered CD during ACTIVE user scrolling with haptic tick
     // Never trigger on initial layout or orientation change passes when scroll is not in progress
