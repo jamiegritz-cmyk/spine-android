@@ -49,9 +49,6 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     init {
         setupPlayerListener()
         startPositionTracker()
-        PlaybackManager.onTrackSelectedFromAuto = { releaseId, trackIdx ->
-            selectReleaseById(releaseId, trackIdx, autoplay = true)
-        }
     }
 
     private fun setupPlayerListener() {
