@@ -252,33 +252,10 @@ export const CdShelf: React.FC<CdShelfProps> = ({
 
   return (
     <div
-      className={`relative w-full select-none overflow-hidden flex flex-col justify-between bg-[#0e0c0a] cursor-grab active:cursor-grabbing touch-pan-x ${shelfHeightClass}`}
+      className={`relative w-full select-none overflow-hidden flex flex-col justify-end cursor-grab active:cursor-grabbing touch-pan-x ${shelfHeightClass}`}
     >
-      {/* 1. TOP WOODEN SHELF PLANK */}
-      <div
-        className="w-full h-3 sm:h-3.5 relative z-30 shadow-[0_3px_8px_rgba(0,0,0,0.8)] border-b border-[#5c3a21]/60 shrink-0 pointer-events-none"
-        style={{
-          backgroundImage: `url(${woodTexture})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center 20%'
-        }}
-      >
-        <div className="absolute inset-x-0 bottom-0 h-[1px] bg-gradient-to-r from-amber-950 via-amber-800 to-amber-950 opacity-80" />
-        <div className="absolute inset-x-0 bottom-0 h-2 bg-gradient-to-b from-transparent to-black/60 pointer-events-none" />
-      </div>
-
-      {/* 2. INNER SHELF CAVITY: CONTINUOUS CONVEYOR BELT OF CD JEWEL CASES */}
-      <div className="flex-1 w-full relative flex items-center overflow-hidden">
-        {/* Dark walnut grain backing */}
-        <div
-          className="absolute inset-0 opacity-40 mix-blend-luminosity bg-cover bg-center pointer-events-none"
-          style={{ backgroundImage: `url(${woodTexture})` }}
-        />
-
-        {/* Ambient Cavity Shadows */}
-        <div className="absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-black/85 via-black/35 to-transparent pointer-events-none z-10" />
-        <div className="absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-black/70 to-transparent pointer-events-none z-10" />
-
+      {/* INNER SHELF CAVITY: CONTINUOUS CONVEYOR BELT OF CD JEWEL CASES */}
+      <div className="flex-1 w-full relative flex items-end overflow-hidden">
         {/* The Continuous Conveyor Belt Container (Bottom-aligned so CD cases rest directly on the wooden shelf) */}
         <div
           ref={containerRef}

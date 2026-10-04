@@ -144,39 +144,10 @@ fun SpineShelf(
         }
     }
 
-    // Subtle tactile darker/warm charcoal texture for the shelf display cavity
-    val shelfBgBrush = rememberTactileTextureBrush(
-        baseColor = Color(0xFF0C0A09),
-        grainVariance = 4,
-        seed = 101L
-    )
-
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(shelfHeight)
-            .background(shelfBgBrush)
-            .drawBehind {
-                // Subtle horizontal boundary line separating main player background from shelf cavity
-                drawLine(
-                    color = Color(0xFF242220).copy(alpha = 0.65f),
-                    start = Offset(0f, 0f),
-                    end = Offset(size.width, 0f),
-                    strokeWidth = 1.2f
-                )
-                // Ambient top cavity depth shadow extending fully across the shelf
-                drawRect(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Black.copy(alpha = 0.45f),
-                            Color.Black.copy(alpha = 0.15f),
-                            Color.Transparent
-                        ),
-                        startY = 0f,
-                        endY = 48.dp.toPx()
-                    )
-                )
-            }
     ) {
 
         // Spines Row: Full-Height Authentic CD Jewel Cases Sitting Physically on Wooden Shelf
