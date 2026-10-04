@@ -238,13 +238,18 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     fun nextTrack() {
         val release = _uiState.value.currentRelease ?: return
-        val nextIdx = _uiState.value.currentTrackIndex + 1
-        if (nextIdx < release.tracks.size) {
-            selectTrack(nextIdx, autoplay = _uiState.value.isPlaying)
+        val nextTrackIdx = _uiState.value.currentTrackIndex + 1
+        val shouldPlay = _uiState.value.isPlaying || exoPlayer.playWhenReady
+        if (nextTrackIdx < release.tracks.size) {
+            selectTrack(nextTrackIdx, autoplay = shouldPlay)
         } else {
-            // Reached final track of this physical album: do not randomly jump to another album
-            if (_uiState.value.repeatMode == RepeatMode.ALL) {
-                selectTrack(0, autoplay = _uiState.value.isPlaying)
+            // Reached final track of current album: advance to the next album in library order
+            val nextReleaseIdx = _uiState.value.selectedReleaseIndex + 1
+            if (nextReleaseIdx < _uiState.value.releases.size) {
+                selectRelease(nextReleaseIdx, startTrackIndex = 0, autoplay = shouldPlay)
+            } else if (_uiState.value.repeatMode == RepeatMode.ALL) {
+                // Loop back to beginning of the library
+                selectRelease(0, startTrackIndex = 0, autoplay = shouldPlay)
             } else {
                 seekTo(0)
                 exoPlayer.pause()
@@ -257,11 +262,25 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             seekTo(0)
             return
         }
-        val prevIdx = _uiState.value.currentTrackIndex - 1
-        if (prevIdx >= 0) {
-            selectTrack(prevIdx, autoplay = _uiState.value.isPlaying)
+        val prevTrackIdx = _uiState.value.currentTrackIndex - 1
+        val shouldPlay = _uiState.value.isPlaying || exoPlayer.playWhenReady
+        if (prevTrackIdx >= 0) {
+            selectTrack(prevTrackIdx, autoplay = shouldPlay)
         } else {
-            seekTo(0)
+            // Reached beginning of current album: go to previous album's last track in library order
+            val prevReleaseIdx = _uiState.value.selectedReleaseIndex - 1
+            if (prevReleaseIdx >= 0) {
+                val prevRelease = _uiState.value.releases[prevReleaseIdx]
+                val lastTrackIdx = (prevRelease.tracks.size - 1).coerceAtLeast(0)
+                selectRelease(prevReleaseIdx, startTrackIndex = lastTrackIdx, autoplay = shouldPlay)
+            } else if (_uiState.value.repeatMode == RepeatMode.ALL) {
+                val lastReleaseIdx = (_uiState.value.releases.size - 1).coerceAtLeast(0)
+                val lastRelease = _uiState.value.releases[lastReleaseIdx]
+                val lastTrackIdx = (lastRelease.tracks.size - 1).coerceAtLeast(0)
+                selectRelease(lastReleaseIdx, startTrackIndex = lastTrackIdx, autoplay = shouldPlay)
+            } else {
+                seekTo(0)
+            }
         }
     }
 
@@ -279,9 +298,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         }
         _uiState.value = _uiState.value.copy(repeatMode = next)
         exoPlayer.repeatMode = when (next) {
-            RepeatMode.OFF -> Player.REPEAT_MODE_OFF
-            RepeatMode.ALL -> Player.REPEAT_MODE_ALL
             RepeatMode.ONE -> Player.REPEAT_MODE_ONE
+            else -> Player.REPEAT_MODE_OFF
         }
     }
 
@@ -292,12 +310,24 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                 exoPlayer.play()
             }
             RepeatMode.ALL -> {
-                // Loop the current album from the first track in album order
-                selectTrack(0, autoplay = true)
+                // Loop continually: advance to next album or loop back to first album in library order
+                val nextReleaseIdx = _uiState.value.selectedReleaseIndex + 1
+                if (nextReleaseIdx < _uiState.value.releases.size) {
+                    selectRelease(nextReleaseIdx, startTrackIndex = 0, autoplay = true)
+                } else {
+                    selectRelease(0, startTrackIndex = 0, autoplay = true)
+                }
             }
             RepeatMode.OFF -> {
-                // Final track of album has completed: pause cleanly at the end without jumping to another album
-                exoPlayer.pause()
+                // Advance through library; stop cleanly only when the entire music library reaches the end
+                val nextReleaseIdx = _uiState.value.selectedReleaseIndex + 1
+                if (nextReleaseIdx < _uiState.value.releases.size) {
+                    selectRelease(nextReleaseIdx, startTrackIndex = 0, autoplay = true)
+                } else {
+                    seekTo(0)
+                    exoPlayer.pause()
+                    _uiState.value = _uiState.value.copy(isPlaying = false)
+                }
             }
         }
     }
