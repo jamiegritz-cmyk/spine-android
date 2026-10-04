@@ -7,6 +7,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -30,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -140,20 +142,22 @@ private fun PortraitPlayerLayout(
     }
     val currentRelease = uiState.currentRelease
 
-    // Very subtle tactile paper / lightly brushed texture on near-black background
-    val tactileBgBrush = rememberTactileTextureBrush(
-        baseColor = Color(0xFF0E0F11),
-        grainVariance = 3,
-        seed = 42L
-    )
-
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(tactileBgBrush),
-        horizontalAlignment = Alignment.CenterHorizontally
+    Box(
+        modifier = modifier.fillMaxSize()
     ) {
-        // Top Bar: GRAIZ [menu] on left, [Albums] [Singles] [Refresh] on right
+        // Supplied Background PNG: Scale/crop to fill the available player-screen background
+        Image(
+            painter = painterResource(id = com.spine.musicplayer.R.drawable.graiz_background),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
+        )
+
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Top Bar: GRAIZ [menu] on left, [Albums] [Singles] [Refresh] on right
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -340,6 +344,7 @@ private fun PortraitPlayerLayout(
                 onDismiss = { showTracklistSheet = false }
             )
         }
+        }
     }
 }
 
@@ -379,18 +384,21 @@ private fun LandscapePlayerLayout(
     }
     val currentRelease = uiState.currentRelease
 
-    val tactileBgBrush = rememberTactileTextureBrush(
-        baseColor = Color(0xFF0E0F11),
-        grainVariance = 3,
-        seed = 42L
-    )
-
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(tactileBgBrush)
+    Box(
+        modifier = modifier.fillMaxSize()
     ) {
-        // Top Bar: GRAIZ [menu] on left, [Albums] [Singles] [Refresh] on right
+        // Supplied Background PNG: Scale/crop to fill the available player-screen background
+        Image(
+            painter = painterResource(id = com.spine.musicplayer.R.drawable.graiz_background),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
+        )
+
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            // Top Bar: GRAIZ [menu] on left, [Albums] [Singles] [Refresh] on right
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -588,17 +596,16 @@ private fun LandscapePlayerLayout(
                 onDismiss = { showTracklistSheet = false }
             )
         }
+        }
     }
 }
 
 /**
- * Authentic Physical CD Jewel Case Component matching reference image:
- * - 1:1 square acrylic case with 14dp physical contact drop shadow and 3dp rounded corners
- * - Transparent clear outer casing with linear gradient outer bevel rim
- * - Inner booklet insert nestled inside case (left clear hinge margin 13dp, top/right/bottom 3dp)
- * - Authentic left clear acrylic hinge margin with vertical seam and two molded circular hinge tabs
- * - Transparent polystyrene front lid with diagonal diffuse light sheen, secondary specular streak,
- *   crisp perimeter highlights, bottom/right bevel shadow, thumb tab opening notch, and subtle micro-scratches
+ * Authentic Physical CD Jewel Case Component:
+ * Rendering order:
+ * 1. GRAIZ background image
+ * 2. Existing album artwork
+ * 3. Supplied CD jewel case PNG overlay (graiz_cd_case)
  */
 @Composable
 fun JewelCaseArtwork(
@@ -609,13 +616,6 @@ fun JewelCaseArtwork(
     Box(
         modifier = modifier
             .aspectRatio(1f) // Strict square CD jewel case proportion
-            .shadow(
-                elevation = 14.dp,
-                shape = RoundedCornerShape(3.dp),
-                ambientColor = Color.Black.copy(alpha = 0.7f),
-                spotColor = Color.Black.copy(alpha = 0.85f)
-            )
-            .background(Color(0x18FFFFFF), RoundedCornerShape(3.dp))
             .then(
                 if (onClick != null) {
                     Modifier.clickable(onClick = onClick)
@@ -623,29 +623,13 @@ fun JewelCaseArtwork(
                     Modifier
                 }
             )
-            .drawBehind {
-                // Subtle clear acrylic outer bevel rim
-                drawRoundRect(
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = 0.32f),
-                            Color.White.copy(alpha = 0.08f),
-                            Color.Black.copy(alpha = 0.55f)
-                        ),
-                        start = Offset(0f, 0f),
-                        end = Offset(size.width, size.height)
-                    ),
-                    cornerRadius = CornerRadius(3.dp.toPx(), 3.dp.toPx()),
-                    style = Stroke(width = 1.0.dp.toPx())
-                )
-            }
     ) {
-        // Inner Booklet Insert (Nestled inside jewel case with left clear hinge margin)
+        // 1. Existing Album Artwork (Nestled inside booklet area underneath clear plastic frame)
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(start = 13.dp, top = 3.dp, end = 3.dp, bottom = 3.dp)
-                .clip(RoundedCornerShape(1.5.dp))
+                .padding(start = 14.dp, top = 4.dp, end = 4.dp, bottom = 4.dp)
+                .clip(RoundedCornerShape(2.dp))
                 .background(Color(0xFF1E1D1B))
         ) {
             Crossfade(
@@ -678,150 +662,12 @@ fun JewelCaseArtwork(
             }
         }
 
-        // Left Clear Acrylic Hinge Margin (Authentic physical CD jewel case hinge)
-        Box(
-            modifier = Modifier
-                .width(13.dp)
-                .fillMaxHeight()
-                .drawBehind {
-                    // Left translucent ribbed bevel
-                    drawRect(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(
-                                Color.White.copy(alpha = 0.16f),
-                                Color.Transparent,
-                                Color.Black.copy(alpha = 0.30f)
-                            )
-                        )
-                    )
-
-                    // Inner refraction vertical seam
-                    drawLine(
-                        color = Color.White.copy(alpha = 0.18f),
-                        start = Offset(size.width - 0.5f, 0f),
-                        end = Offset(size.width - 0.5f, size.height),
-                        strokeWidth = 1.0f
-                    )
-
-                    // Molded circular hinge tabs
-                    val tabRadius = 2.2.dp.toPx()
-                    val tabX = size.width * 0.45f
-                    drawCircle(
-                        color = Color.White.copy(alpha = 0.35f),
-                        radius = tabRadius,
-                        center = Offset(tabX, size.height * 0.20f)
-                    )
-                    drawCircle(
-                        color = Color.Black.copy(alpha = 0.40f),
-                        radius = tabRadius - 0.8f,
-                        center = Offset(tabX, size.height * 0.20f)
-                    )
-
-                    drawCircle(
-                        color = Color.White.copy(alpha = 0.35f),
-                        radius = tabRadius,
-                        center = Offset(tabX, size.height * 0.80f)
-                    )
-                    drawCircle(
-                        color = Color.Black.copy(alpha = 0.40f),
-                        radius = tabRadius - 0.8f,
-                        center = Offset(tabX, size.height * 0.80f)
-                    )
-                }
-        )
-
-        // Overlay: Clear Polystyrene Front Lid, Restrained Surface Sheen & Micro-scratches
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .drawBehind {
-                    // Restrained diagonal diffuse light sheen across the front lid
-                    drawRect(
-                        brush = Brush.linearGradient(
-                            colors = listOf(
-                                Color.White.copy(alpha = 0.12f),
-                                Color.White.copy(alpha = 0.03f),
-                                Color.Transparent,
-                                Color.Black.copy(alpha = 0.06f)
-                            ),
-                            start = Offset(0f, 0f),
-                            end = Offset(size.width, size.height * 0.72f)
-                        )
-                    )
-
-                    // Secondary faint diagonal streak
-                    drawRect(
-                        brush = Brush.linearGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                Color.White.copy(alpha = 0.07f),
-                                Color.Transparent
-                            ),
-                            start = Offset(size.width * 0.20f, 0f),
-                            end = Offset(size.width * 0.60f, size.height)
-                        )
-                    )
-
-                    // Top/Left clear perimeter highlight line
-                    drawLine(
-                        color = Color.White.copy(alpha = 0.38f),
-                        start = Offset(1f, 1f),
-                        end = Offset(size.width - 2f, 1f),
-                        strokeWidth = 1.0f
-                    )
-                    drawLine(
-                        color = Color.White.copy(alpha = 0.30f),
-                        start = Offset(1f, 1f),
-                        end = Offset(1f, size.height - 2f),
-                        strokeWidth = 1.0f
-                    )
-
-                    // Bottom/Right dark bevel shadow line
-                    drawLine(
-                        color = Color.Black.copy(alpha = 0.60f),
-                        start = Offset(size.width - 1f, 2f),
-                        end = Offset(size.width - 1f, size.height - 1f),
-                        strokeWidth = 1.2f
-                    )
-                    drawLine(
-                        color = Color.Black.copy(alpha = 0.60f),
-                        start = Offset(2f, size.height - 1f),
-                        end = Offset(size.width - 1f, size.height - 1f),
-                        strokeWidth = 1.2f
-                    )
-
-                    // Thumb tab opening notch on the right border
-                    val notchY = size.height * 0.50f
-                    drawLine(
-                        color = Color.Black.copy(alpha = 0.45f),
-                        start = Offset(size.width - 1.5.dp.toPx(), notchY - 8.dp.toPx()),
-                        end = Offset(size.width - 1.5.dp.toPx(), notchY + 8.dp.toPx()),
-                        strokeWidth = 1.2f
-                    )
-
-                    // Very subtle microscopic hairline scratches (authentic physical handling wear)
-                    // Scratch 1: Near top-right
-                    drawLine(
-                        color = Color.White.copy(alpha = 0.12f),
-                        start = Offset(size.width * 0.73f, size.height * 0.16f),
-                        end = Offset(size.width * 0.81f, size.height * 0.20f),
-                        strokeWidth = 0.6f
-                    )
-                    // Scratch 2: Near bottom-left
-                    drawLine(
-                        color = Color.White.copy(alpha = 0.10f),
-                        start = Offset(size.width * 0.28f, size.height * 0.72f),
-                        end = Offset(size.width * 0.34f, size.height * 0.74f),
-                        strokeWidth = 0.5f
-                    )
-                    // Scratch 3: Near lower right
-                    drawLine(
-                        color = Color.White.copy(alpha = 0.08f),
-                        start = Offset(size.width * 0.62f, size.height * 0.81f),
-                        end = Offset(size.width * 0.66f, size.height * 0.79f),
-                        strokeWidth = 0.5f
-                    )
-                }
+        // 2. Supplied Clear Plastic CD Jewel Case Frame (Overlay on Top)
+        Image(
+            painter = painterResource(id = com.spine.musicplayer.R.drawable.graiz_cd_case),
+            contentDescription = "CD Jewel Case",
+            contentScale = ContentScale.Fit,
+            modifier = Modifier.fillMaxSize()
         )
     }
 }
