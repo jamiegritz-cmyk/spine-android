@@ -19,6 +19,14 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Spine">
 
+        <!-- Android Auto Application Descriptor -->
+        <meta-data
+            android:name="com.google.android.gms.car.application"
+            android:resource="@xml/automotive_app_desc" />
+        <meta-data
+            android:name="com.google.android.gms.car.notification.SmallIcon"
+            android:resource="@mipmap/ic_launcher" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -30,13 +38,15 @@
             </intent-filter>
         </activity>
 
-        <!-- Media3 Playback Service for background & lockscreen playback -->
+        <!-- Media3 Playback & Library Service for Android Auto, background, and lockscreen playback -->
         <service
             android:name=".playback.SpineMediaPlaybackService"
             android:exported="true"
             android:foregroundServiceType="mediaPlayback">
             <intent-filter>
+                <action android:name="androidx.media3.session.MediaLibraryService" />
                 <action android:name="androidx.media3.session.MediaSessionService" />
+                <action android:name="android.media.browse.MediaBrowserService" />
             </intent-filter>
         </service>
 

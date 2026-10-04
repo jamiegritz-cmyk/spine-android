@@ -62,6 +62,7 @@ dependencies {
     implementation("androidx.media3:media3-session:1.5.0")
     implementation("androidx.media3:media3-ui:1.5.0")
     implementation("androidx.media3:media3-common:1.5.0")
+    implementation("com.google.guava:guava:33.3.1-android")
 
     // Coil for album artwork loading from MediaStore content URIs
     implementation("io.coil-kt:coil-compose:2.7.0")
