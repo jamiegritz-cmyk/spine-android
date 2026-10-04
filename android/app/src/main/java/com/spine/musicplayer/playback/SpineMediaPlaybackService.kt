@@ -1,5 +1,6 @@
 package com.spine.musicplayer.playback
 
+import android.app.PendingIntent
 import android.content.Intent
 import android.net.Uri
 import androidx.media3.common.MediaItem
@@ -13,6 +14,7 @@ import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.SettableFuture
+import com.spine.musicplayer.MainActivity
 import com.spine.musicplayer.data.MediaStoreAudioScanner
 import com.spine.musicplayer.model.Release
 import com.spine.musicplayer.model.Track
@@ -29,6 +31,7 @@ import kotlinx.coroutines.launch
  */
 class SpineMediaPlaybackService : MediaLibraryService() {
 
+    private var mediaLibrarySession: MediaLibrarySession? = null
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private lateinit var audioScanner: MediaStoreAudioScanner
 
@@ -46,8 +49,16 @@ class SpineMediaPlaybackService : MediaLibraryService() {
         super.onCreate()
         audioScanner = MediaStoreAudioScanner(applicationContext)
 
-        // Ensure shared player and session are initialized
-        PlaybackManager.getSharedMediaLibrarySession(this, LibraryCallback())
+        val player = PlaybackManager.getSharedPlayer(this)
+        val sessionActivityPendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            Intent(this, MainActivity::class.java),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+        mediaLibrarySession = MediaLibrarySession.Builder(this, player, LibraryCallback())
+            .setSessionActivity(sessionActivityPendingIntent)
+            .build()
 
         if (PlaybackManager.currentReleases.isEmpty()) {
             serviceScope.launch(Dispatchers.IO) {
@@ -58,10 +69,14 @@ class SpineMediaPlaybackService : MediaLibraryService() {
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? {
-        return PlaybackManager.getSharedMediaLibrarySession(this, LibraryCallback())
+        return mediaLibrarySession
     }
 
     override fun onDestroy() {
+        mediaLibrarySession?.run {
+            release()
+            mediaLibrarySession = null
+        }
         serviceScope.cancel()
         super.onDestroy()
     }
