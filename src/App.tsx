@@ -246,7 +246,7 @@ export default function App() {
       onOpenSearch={() => setIsSearchOpen(true)}
       onOpenCorrectModal={() => setIsCorrectModalOpen(true)}
       catalogNumber={currentRelease?.catalogNumber || 'RA-6405'}
-      filterMode={filterCategory === 'singles' ? 'singles' : 'albums'}
+      filterMode={filterCategory === 'all' ? 'albums' : filterCategory}
       onFilterModeChange={(m) => setFilterCategory(m)}
       onRefresh={handleRefresh}
       isRefreshing={isRefreshing}

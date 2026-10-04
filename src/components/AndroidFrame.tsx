@@ -1,6 +1,6 @@
 import React from 'react';
 import { DeviceOrientation } from '../types/music';
-import { Smartphone, Tablet, Code2, Wifi, BatteryCharging, Menu, Search, MoreVertical } from 'lucide-react';
+import { Smartphone, Tablet, Code2, Wifi, BatteryCharging, Menu, Search, MoreVertical, Download } from 'lucide-react';
 
 interface AndroidFrameProps {
   orientation: DeviceOrientation;
@@ -73,15 +73,27 @@ export const AndroidFrame: React.FC<AndroidFrameProps> = ({
           </button>
         </div>
 
-        {/* Right: Android Studio Project Export */}
-        <button
-          onClick={onOpenExportModal}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-200 border border-neutral-800 transition-colors active:scale-95 text-xs font-medium"
-          title="Inspect and download Jetpack Compose + Kotlin project"
-        >
-          <Code2 className="w-3.5 h-3.5 text-emerald-400" />
-          <span className="hidden sm:inline">Kotlin Source & Export</span>
-        </button>
+        {/* Right: Actions */}
+        <div className="flex items-center gap-2">
+          <a
+            href="/SpineMusicPlayer-debug.apk"
+            download="SpineMusicPlayer-debug.apk"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium shadow-sm transition-all active:scale-95 text-xs"
+            title="Download compiled Android Debug APK"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Download APK</span>
+          </a>
+
+          <button
+            onClick={onOpenExportModal}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-200 border border-neutral-800 transition-colors active:scale-95 text-xs font-medium"
+            title="Inspect and download Jetpack Compose + Kotlin project"
+          >
+            <Code2 className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="hidden sm:inline">Kotlin Source & Export</span>
+          </button>
+        </div>
       </header>
 
       {/* Realistic Device Frame (Pixel Phone or Android Tablet from Reference Image) */}
