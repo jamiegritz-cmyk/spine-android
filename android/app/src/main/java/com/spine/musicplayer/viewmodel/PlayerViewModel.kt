@@ -103,18 +103,27 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                 _uiState.value.releases // Retain preview/demo releases until real music is added
             }
 
-            val initialRelease = activeReleases.firstOrNull()
-            val initialTrack = initialRelease?.tracks?.firstOrNull()
+            val currentId = _uiState.value.currentRelease?.id
+            val currentTrackIdx = _uiState.value.currentTrackIndex
+            val isCurrentlyPlaying = _uiState.value.isPlaying
+
+            val matchedReleaseIdx = activeReleases.indexOfFirst { it.id == currentId }.takeIf { it >= 0 } ?: 0
+            val targetRelease = activeReleases.getOrNull(matchedReleaseIdx)
+            val safeTrackIdx = currentTrackIdx.coerceIn(0, (targetRelease?.tracks?.size?.minus(1))?.coerceAtLeast(0) ?: 0)
+            val initialTrack = targetRelease?.tracks?.getOrNull(safeTrackIdx)
+
             _uiState.value = _uiState.value.copy(
                 releases = activeReleases,
-                selectedReleaseIndex = 0,
-                currentTrackIndex = 0,
-                durationMs = initialTrack?.durationMs ?: 0L,
+                selectedReleaseIndex = matchedReleaseIdx,
+                currentTrackIndex = safeTrackIdx,
+                durationMs = initialTrack?.durationMs ?: _uiState.value.durationMs,
                 isLoading = false,
                 permissionGranted = true
             )
-            if (initialRelease != null) {
-                prepareAlbumQueue(initialRelease, startIndex = 0, autoplay = false)
+
+            // Only prepare initial queue if no music was previously loaded or playing
+            if (!isCurrentlyPlaying && currentId == null && targetRelease != null) {
+                prepareAlbumQueue(targetRelease, startIndex = 0, autoplay = false)
             }
         }
     }
@@ -128,6 +137,13 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             }
         }
         _uiState.value = _uiState.value.copy(releases = updatedReleases)
+    }
+
+    fun selectReleaseById(releaseId: String, startTrackIndex: Int = 0, autoplay: Boolean = false) {
+        val idx = _uiState.value.releases.indexOfFirst { it.id == releaseId }
+        if (idx >= 0) {
+            selectRelease(idx, startTrackIndex, autoplay)
+        }
     }
 
     fun selectRelease(index: Int, startTrackIndex: Int = 0, autoplay: Boolean = false) {

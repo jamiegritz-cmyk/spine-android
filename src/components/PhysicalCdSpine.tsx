@@ -549,6 +549,7 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
 
         const formattedTitle = isUppercase ? release.title.toUpperCase() : release.title;
         const formattedArtist = isUppercase ? release.artist.toUpperCase() : release.artist;
+        const catalogCode = release.catalogNumber || 'CD-' + release.id.slice(-4).toUpperCase();
 
         return (
           <div

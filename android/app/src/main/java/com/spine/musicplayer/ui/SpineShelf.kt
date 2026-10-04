@@ -65,13 +65,29 @@ fun SpineShelf(
     selectedIndex: Int,
     onSelectRelease: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    selectedReleaseId: String? = null,
     shelfHeight: Dp = 380.dp
 ) {
-    val listState = rememberLazyListState()
+    val targetIndex = remember(releases, selectedReleaseId, selectedIndex) {
+        if (selectedReleaseId != null) {
+            val found = releases.indexOfFirst { it.id == selectedReleaseId }
+            if (found >= 0) found else selectedIndex.coerceIn(0, (releases.size - 1).coerceAtLeast(0))
+        } else {
+            selectedIndex.coerceIn(0, (releases.size - 1).coerceAtLeast(0))
+        }
+    }
+
+    val listState = rememberLazyListState(
+        initialFirstVisibleItemIndex = (targetIndex - 2).coerceAtLeast(0)
+    )
     val flingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
     val context = LocalContext.current
     val view = LocalView.current
     val hapticHelper = remember(context) { HapticFeedbackHelper(context) }
+    val density = LocalDensity.current
+
+    val caseHeight = if (shelfHeight < 280.dp) (shelfHeight - 48.dp).coerceAtLeast(120.dp) else 280.dp
+    val caseWidth = if (shelfHeight < 280.dp) 18.dp else 22.dp
 
     // Continuously detect which CD is closest to the horizontal center
     val centerIndex by remember {
@@ -89,45 +105,37 @@ fun SpineShelf(
 
     var lastCenterIndex by remember { mutableIntStateOf(-1) }
 
-    // Establish centered CD on initial layout and update during scrolling with haptic tick
+    // Update centered CD during ACTIVE user scrolling with haptic tick
+    // Never trigger on initial layout or orientation change passes when scroll is not in progress
     LaunchedEffect(centerIndex) {
         if (centerIndex in releases.indices && centerIndex != lastCenterIndex) {
             val isInitial = (lastCenterIndex == -1)
             lastCenterIndex = centerIndex
 
-            if (centerIndex != selectedIndex) {
+            if (listState.isScrollInProgress && centerIndex != targetIndex) {
                 onSelectRelease(centerIndex)
             }
 
-            if (!isInitial) {
+            if (!isInitial && listState.isScrollInProgress) {
                 hapticHelper.performCdTick(view)
             }
         }
     }
 
-    // Scroll to selected item only when programmatic (not during active user scroll)
-    LaunchedEffect(selectedIndex) {
-        if (!listState.isScrollInProgress && selectedIndex in releases.indices) {
+    // Automatically follow and center the selected album spine on orientation change or programmatic selection
+    LaunchedEffect(targetIndex, releases.size) {
+        if (targetIndex in releases.indices && !listState.isScrollInProgress) {
             val layoutInfo = listState.layoutInfo
-            val visible = layoutInfo.visibleItemsInfo
-            val currentCenter = if (visible.isNotEmpty()) {
-                val center = (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2
-                visible.minByOrNull { item ->
-                    val itemCenter = item.offset + item.size / 2
-                    abs(itemCenter - center)
-                }?.index ?: -1
-            } else -1
-
-            if (currentCenter != selectedIndex) {
-                listState.animateScrollToItem(
-                    index = (selectedIndex - 2).coerceAtLeast(0)
-                )
+            val viewportWidth = layoutInfo.viewportEndOffset - layoutInfo.viewportStartOffset
+            if (viewportWidth > 0) {
+                val itemWidthPx = with(density) { (caseWidth + 2.5.dp).toPx() }
+                val centerOffset = ((viewportWidth - itemWidthPx) / 2f).toInt()
+                listState.animateScrollToItem(targetIndex, -centerOffset)
+            } else {
+                listState.scrollToItem((targetIndex - 2).coerceAtLeast(0))
             }
         }
     }
-
-    val caseHeight = if (shelfHeight < 280.dp) (shelfHeight - 48.dp).coerceAtLeast(120.dp) else 280.dp
-    val caseWidth = if (shelfHeight < 280.dp) 18.dp else 22.dp
 
     // Subtle tactile darker/warm charcoal texture for the shelf display cavity
     val shelfBgBrush = rememberTactileTextureBrush(
@@ -211,10 +219,22 @@ fun LandscapeSpineShelf(
     selectedIndex: Int,
     onSelectRelease: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    selectedReleaseId: String? = null,
     caseStartDp: Dp = 30.dp,
     caseEndDp: Dp = 295.dp
 ) {
-    val listState = rememberLazyListState()
+    val targetIndex = remember(releases, selectedReleaseId, selectedIndex) {
+        if (selectedReleaseId != null) {
+            val found = releases.indexOfFirst { it.id == selectedReleaseId }
+            if (found >= 0) found else selectedIndex.coerceIn(0, (releases.size - 1).coerceAtLeast(0))
+        } else {
+            selectedIndex.coerceIn(0, (releases.size - 1).coerceAtLeast(0))
+        }
+    }
+
+    val listState = rememberLazyListState(
+        initialFirstVisibleItemIndex = (targetIndex - 1).coerceAtLeast(0)
+    )
     val flingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
     val context = LocalContext.current
     val view = LocalView.current
@@ -241,35 +261,33 @@ fun LandscapeSpineShelf(
 
     var lastCenterIndex by remember { mutableIntStateOf(-1) }
 
+    // Update centered CD during ACTIVE user scrolling with haptic tick
+    // Never trigger on initial layout or orientation change passes when scroll is not in progress
     LaunchedEffect(centerIndex) {
         if (centerIndex in releases.indices && centerIndex != lastCenterIndex) {
             val isInitial = (lastCenterIndex == -1)
             lastCenterIndex = centerIndex
-            if (centerIndex != selectedIndex) {
+            if (listState.isScrollInProgress && centerIndex != targetIndex) {
                 onSelectRelease(centerIndex)
             }
-            if (!isInitial) {
+            if (!isInitial && listState.isScrollInProgress) {
                 hapticHelper.performCdTick(view)
             }
         }
     }
 
-    LaunchedEffect(selectedIndex) {
-        if (!listState.isScrollInProgress && selectedIndex in releases.indices) {
+    // Automatically follow and position the selected album spine on orientation change or programmatic selection
+    LaunchedEffect(targetIndex, releases.size) {
+        if (targetIndex in releases.indices && !listState.isScrollInProgress) {
             val layoutInfo = listState.layoutInfo
             val visible = layoutInfo.visibleItemsInfo
             val caseCenterPx = (caseStartPx + caseEndPx) / 2f
-            val currentCenter = if (visible.isNotEmpty()) {
-                visible.minByOrNull { item ->
-                    val itemCenter = item.offset + item.size / 2f
-                    abs(itemCenter - caseCenterPx)
-                }?.index ?: -1
-            } else -1
-            if (currentCenter != selectedIndex) {
-                listState.animateScrollToItem(
-                    index = (selectedIndex - 2).coerceAtLeast(0)
-                )
-            }
+            val itemWidthPx = with(density) { 22.5.dp.toPx() }
+            val targetOffset = (caseCenterPx - itemWidthPx / 2f).toInt()
+            listState.animateScrollToItem(
+                index = targetIndex,
+                scrollOffset = -targetOffset
+            )
         }
     }
 

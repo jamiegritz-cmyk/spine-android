@@ -10,8 +10,8 @@ interface AndroidFrameProps {
   onOpenSearch: () => void;
   onOpenCorrectModal?: () => void;
   catalogNumber?: string;
-  filterMode?: 'albums' | 'singles';
-  onFilterModeChange?: (mode: 'albums' | 'singles') => void;
+  filterMode?: 'albums' | 'singles' | 'artist';
+  onFilterModeChange?: (mode: 'albums' | 'singles' | 'artist') => void;
   onRefresh?: () => void;
   isRefreshing?: boolean;
   children: React.ReactNode;
@@ -128,7 +128,7 @@ export const AndroidFrame: React.FC<AndroidFrameProps> = ({
             </button>
           </div>
 
-          {/* Right: Albums / Singles / A-Z -> Refresh (no numbers or debug text after Refresh) */}
+          {/* Right: Albums / Singles / Artist -> Refresh */}
           <div className="flex items-center gap-1.5 shrink-0 pointer-events-auto">
             {onFilterModeChange && (
               <div className="flex items-center bg-[#1F1D1B] p-0.5 rounded-lg border border-neutral-800/80">
@@ -152,7 +152,16 @@ export const AndroidFrame: React.FC<AndroidFrameProps> = ({
                 >
                   Singles
                 </button>
-                <span className="px-1 text-[9px] font-mono text-neutral-400 font-bold">A–Z</span>
+                <button
+                  onClick={() => onFilterModeChange('artist')}
+                  className={`px-2.5 py-0.5 rounded-md text-[11px] font-medium transition-all ${
+                    filterMode === 'artist'
+                      ? 'bg-[#383430] text-white shadow-xs'
+                      : 'text-neutral-400 hover:text-neutral-200'
+                  }`}
+                >
+                  Artist
+                </button>
               </div>
             )}
 

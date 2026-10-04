@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,7 +46,7 @@ import com.spine.musicplayer.viewmodel.PlayerUiState
 import java.util.Locale
 
 enum class LibraryFilterMode {
-    ALBUMS, SINGLES
+    ALBUMS, SINGLES, ARTIST
 }
 
 @Composable
@@ -64,7 +65,7 @@ fun PlayerScreen(
 ) {
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-    var filterMode by remember { mutableStateOf(LibraryFilterMode.ALBUMS) }
+    var filterMode by rememberSaveable { mutableStateOf(LibraryFilterMode.ALBUMS) }
 
     Scaffold(
         containerColor = Color(0xFF141312),
@@ -138,6 +139,25 @@ private fun PortraitPlayerLayout(
                 val sgl = uiState.releases.filter { it.tracks.size <= 1 }
                 if (sgl.isNotEmpty()) sgl else uiState.releases
             }
+            LibraryFilterMode.ARTIST -> {
+                // Sorted A → Z by artist name (case-insensitive)
+                // If artist metadata is missing, place those items consistently at the end
+                uiState.releases.sortedWith { r1, r2 ->
+                    val a1 = r1.artist.trim()
+                    val a2 = r2.artist.trim()
+                    val a1Empty = a1.isEmpty() || a1.equals("Various Artists", ignoreCase = true) || a1.equals("Unknown Artist", ignoreCase = true)
+                    val a2Empty = a2.isEmpty() || a2.equals("Various Artists", ignoreCase = true) || a2.equals("Unknown Artist", ignoreCase = true)
+                    when {
+                        a1Empty && a2Empty -> r1.title.compareTo(r2.title, ignoreCase = true)
+                        a1Empty -> 1
+                        a2Empty -> -1
+                        else -> {
+                            val comp = a1.compareTo(a2, ignoreCase = true)
+                            if (comp != 0) comp else r1.title.compareTo(r2.title, ignoreCase = true)
+                        }
+                    }
+                }
+            }
         }
     }
     val currentRelease = uiState.currentRelease
@@ -157,7 +177,7 @@ private fun PortraitPlayerLayout(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Top Bar: GRAIZ [menu] on left, [Albums] [Singles] [Refresh] on right
+            // Top Bar: GRAIZ [menu] on left, [Albums] [Singles] [Artist] [Refresh] on right
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -192,7 +212,7 @@ private fun PortraitPlayerLayout(
                 }
             }
 
-            // Right: [Albums] [Singles] segment + [Refresh]
+            // Right: [Albums] [Singles] [Artist] segment + [Refresh]
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -202,18 +222,6 @@ private fun PortraitPlayerLayout(
                     onModeSelected = { newMode ->
                         if (filterMode != newMode) {
                             onFilterModeChange(newMode)
-                            val targetList = when (newMode) {
-                                LibraryFilterMode.ALBUMS -> uiState.releases
-                                LibraryFilterMode.SINGLES -> {
-                                    val sgl = uiState.releases.filter { it.tracks.size <= 1 }
-                                    if (sgl.isNotEmpty()) sgl else uiState.releases
-                                }
-                            }
-                            val firstTarget = targetList.firstOrNull()
-                            if (firstTarget != null) {
-                                val targetIdx = uiState.releases.indexOf(firstTarget)
-                                if (targetIdx >= 0) onSelectRelease(targetIdx)
-                            }
                         }
                     }
                 )
@@ -309,18 +317,19 @@ private fun PortraitPlayerLayout(
         Spacer(modifier = Modifier.weight(1f))
 
         // DOMINANT PHYSICAL WOODEN SHELF: Lower 45-50% of the screen
-        val shelfSelectedIndex = remember(activeReleases, currentRelease) {
-            val idx = activeReleases.indexOf(currentRelease)
+        val shelfSelectedIndex = remember(activeReleases, currentRelease?.id) {
+            val idx = activeReleases.indexOfFirst { it.id == currentRelease?.id }
             if (idx >= 0) idx else 0
         }
 
         SpineShelf(
             releases = activeReleases,
             selectedIndex = shelfSelectedIndex,
+            selectedReleaseId = currentRelease?.id,
             onSelectRelease = { index ->
                 if (index in activeReleases.indices) {
                     val sel = activeReleases[index]
-                    val orig = uiState.releases.indexOf(sel)
+                    val orig = uiState.releases.indexOfFirst { it.id == sel.id }
                     if (orig >= 0) {
                         onSelectRelease(orig)
                     }
@@ -379,11 +388,30 @@ private fun LandscapePlayerLayout(
                 val sgl = uiState.releases.filter { it.tracks.size <= 1 }
                 if (sgl.isNotEmpty()) sgl else uiState.releases
             }
+            LibraryFilterMode.ARTIST -> {
+                // Sorted A → Z by artist name (case-insensitive)
+                // If artist metadata is missing, place those items consistently at the end
+                uiState.releases.sortedWith { r1, r2 ->
+                    val a1 = r1.artist.trim()
+                    val a2 = r2.artist.trim()
+                    val a1Empty = a1.isEmpty() || a1.equals("Various Artists", ignoreCase = true) || a1.equals("Unknown Artist", ignoreCase = true)
+                    val a2Empty = a2.isEmpty() || a2.equals("Various Artists", ignoreCase = true) || a2.equals("Unknown Artist", ignoreCase = true)
+                    when {
+                        a1Empty && a2Empty -> r1.title.compareTo(r2.title, ignoreCase = true)
+                        a1Empty -> 1
+                        a2Empty -> -1
+                        else -> {
+                            val comp = a1.compareTo(a2, ignoreCase = true)
+                            if (comp != 0) comp else r1.title.compareTo(r2.title, ignoreCase = true)
+                        }
+                    }
+                }
+            }
         }
     }
     val currentRelease = uiState.currentRelease
-    val shelfSelectedIndex = remember(activeReleases, currentRelease) {
-        val idx = activeReleases.indexOf(currentRelease)
+    val shelfSelectedIndex = remember(activeReleases, currentRelease?.id) {
+        val idx = activeReleases.indexOfFirst { it.id == currentRelease?.id }
         if (idx >= 0) idx else 0
     }
 
@@ -408,10 +436,11 @@ private fun LandscapePlayerLayout(
         LandscapeSpineShelf(
             releases = activeReleases,
             selectedIndex = shelfSelectedIndex,
+            selectedReleaseId = currentRelease?.id,
             onSelectRelease = { index ->
                 if (index in activeReleases.indices) {
                     val sel = activeReleases[index]
-                    val orig = uiState.releases.indexOf(sel)
+                    val orig = uiState.releases.indexOfFirst { it.id == sel.id }
                     if (orig >= 0) {
                         onSelectRelease(orig)
                     }
@@ -512,7 +541,7 @@ private fun LandscapePlayerLayout(
                 }
             }
 
-            // Right: [Albums] [Singles] segment + [Refresh]
+            // Right: [Albums] [Singles] [Artist] segment + [Refresh]
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -522,18 +551,6 @@ private fun LandscapePlayerLayout(
                     onModeSelected = { newMode ->
                         if (filterMode != newMode) {
                             onFilterModeChange(newMode)
-                            val targetList = when (newMode) {
-                                LibraryFilterMode.ALBUMS -> uiState.releases
-                                LibraryFilterMode.SINGLES -> {
-                                    val sgl = uiState.releases.filter { it.tracks.size <= 1 }
-                                    if (sgl.isNotEmpty()) sgl else uiState.releases
-                                }
-                            }
-                            val firstTarget = targetList.firstOrNull()
-                            if (firstTarget != null) {
-                                val targetIdx = uiState.releases.indexOf(firstTarget)
-                                if (targetIdx >= 0) onSelectRelease(targetIdx)
-                            }
                         }
                     }
                 )
@@ -800,7 +817,7 @@ fun AlbumsSinglesSegment(
                 .clip(RoundedCornerShape(10.dp))
                 .background(if (currentMode == LibraryFilterMode.ALBUMS) Color(0xFF383430) else Color.Transparent)
                 .clickable { onModeSelected(LibraryFilterMode.ALBUMS) }
-                .padding(horizontal = 9.dp, vertical = 4.dp),
+                .padding(horizontal = 8.dp, vertical = 4.dp),
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -816,7 +833,7 @@ fun AlbumsSinglesSegment(
                 .clip(RoundedCornerShape(10.dp))
                 .background(if (currentMode == LibraryFilterMode.SINGLES) Color(0xFF383430) else Color.Transparent)
                 .clickable { onModeSelected(LibraryFilterMode.SINGLES) }
-                .padding(horizontal = 9.dp, vertical = 4.dp),
+                .padding(horizontal = 8.dp, vertical = 4.dp),
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -824,6 +841,22 @@ fun AlbumsSinglesSegment(
                 color = if (currentMode == LibraryFilterMode.SINGLES) Color.White else Color(0xFFA8A29E),
                 fontSize = 11.sp,
                 fontWeight = if (currentMode == LibraryFilterMode.SINGLES) FontWeight.SemiBold else FontWeight.Normal
+            )
+        }
+        // Artist Tab
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(10.dp))
+                .background(if (currentMode == LibraryFilterMode.ARTIST) Color(0xFF383430) else Color.Transparent)
+                .clickable { onModeSelected(LibraryFilterMode.ARTIST) }
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "Artist",
+                color = if (currentMode == LibraryFilterMode.ARTIST) Color.White else Color(0xFFA8A29E),
+                fontSize = 11.sp,
+                fontWeight = if (currentMode == LibraryFilterMode.ARTIST) FontWeight.SemiBold else FontWeight.Normal
             )
         }
     }

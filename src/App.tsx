@@ -25,7 +25,7 @@ export default function App() {
   const [repeatMode, setRepeatMode] = useState<RepeatMode>('off');
 
   // Filter & Search & Modals
-  const [filterCategory, setFilterCategory] = useState<'all' | 'albums' | 'singles'>('albums');
+  const [filterCategory, setFilterCategory] = useState<'all' | 'albums' | 'singles' | 'artist'>('albums');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [orientation, setOrientation] = useState<DeviceOrientation>('portrait');
@@ -35,14 +35,26 @@ export default function App() {
   const [isCorrectModalOpen, setIsCorrectModalOpen] = useState<boolean>(false);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
-  // Compute filtered releases for the CD shelf - Always sorted A-Z
+  // Compute filtered releases for the CD shelf
   const filteredReleases = useMemo(() => {
     let list = [...releases];
 
     if (filterCategory === 'albums') {
-      list = list.filter((r) => r.tracks.length > 2);
+      list = [...releases];
     } else if (filterCategory === 'singles') {
-      list = list.filter((r) => r.tracks.length <= 2);
+      list = list.filter((r) => r.tracks.length <= 1);
+    } else if (filterCategory === 'artist') {
+      list = [...releases].sort((a, b) => {
+        const a1 = a.artist.trim();
+        const b1 = b.artist.trim();
+        const aEmpty = !a1 || a1.toLowerCase() === 'various artists' || a1.toLowerCase() === 'unknown artist';
+        const bEmpty = !b1 || b1.toLowerCase() === 'various artists' || b1.toLowerCase() === 'unknown artist';
+        if (aEmpty && bEmpty) return a.title.localeCompare(b.title);
+        if (aEmpty) return 1;
+        if (bEmpty) return -1;
+        const comp = a1.localeCompare(b1);
+        return comp !== 0 ? comp : a.title.localeCompare(b.title);
+      });
     }
 
     if (searchQuery.trim()) {
@@ -55,8 +67,9 @@ export default function App() {
       });
     }
 
-    // Always sorted alphabetically A–Z as requested
-    list.sort((a, b) => a.title.localeCompare(b.title));
+    if (filterCategory !== 'artist') {
+      list.sort((a, b) => a.title.localeCompare(b.title));
+    }
 
     return list;
   }, [releases, filterCategory, searchQuery]);

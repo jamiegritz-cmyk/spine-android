@@ -41,7 +41,9 @@ class MainActivity : ComponentActivity() {
 
                 LaunchedEffect(permissionState.status.isGranted) {
                     if (permissionState.status.isGranted) {
-                        playerViewModel.loadLocalMusic()
+                        if (playerViewModel.uiState.value.releases.isEmpty()) {
+                            playerViewModel.loadLocalMusic()
+                        }
                     } else {
                         permissionState.launchPermissionRequest()
                     }
