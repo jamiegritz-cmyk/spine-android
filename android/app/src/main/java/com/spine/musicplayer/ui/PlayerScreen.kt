@@ -10,6 +10,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -30,6 +31,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
@@ -61,6 +63,8 @@ fun PlayerScreen(
     onToggleShuffle: () -> Unit,
     onCycleRepeat: () -> Unit,
     onRefresh: () -> Unit = {},
+    onSelectFolder: () -> Unit = {},
+    selectedFolderName: String? = null,
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
@@ -77,6 +81,8 @@ fun PlayerScreen(
                 filterMode = filterMode,
                 onFilterModeChange = { filterMode = it },
                 onRefresh = onRefresh,
+                onSelectFolder = onSelectFolder,
+                selectedFolderName = selectedFolderName,
                 onSelectRelease = onSelectRelease,
                 onSelectTrack = onSelectTrack,
                 onPlayPause = onPlayPause,
@@ -93,6 +99,8 @@ fun PlayerScreen(
                 filterMode = filterMode,
                 onFilterModeChange = { filterMode = it },
                 onRefresh = onRefresh,
+                onSelectFolder = onSelectFolder,
+                selectedFolderName = selectedFolderName,
                 onSelectRelease = onSelectRelease,
                 onSelectTrack = onSelectTrack,
                 onPlayPause = onPlayPause,
@@ -117,6 +125,8 @@ private fun PortraitPlayerLayout(
     filterMode: LibraryFilterMode,
     onFilterModeChange: (LibraryFilterMode) -> Unit,
     onRefresh: () -> Unit,
+    onSelectFolder: () -> Unit,
+    selectedFolderName: String?,
     onSelectRelease: (Int) -> Unit,
     onSelectTrack: (Int) -> Unit,
     onPlayPause: () -> Unit,
@@ -340,11 +350,16 @@ private fun PortraitPlayerLayout(
         )
 
         // Modal Album Tracklist Bottom Sheet
-        if (showTracklistSheet && currentRelease != null) {
+        if (showTracklistSheet) {
             AlbumTracklistSheet(
                 release = currentRelease,
                 currentTrackIndex = uiState.currentTrackIndex,
                 isPlaying = uiState.isPlaying,
+                onSelectFolder = {
+                    onSelectFolder()
+                    showTracklistSheet = false
+                },
+                selectedFolderName = selectedFolderName,
                 onSelectTrack = { trackIdx ->
                     onSelectTrack(trackIdx)
                     showTracklistSheet = false
@@ -366,6 +381,8 @@ private fun LandscapePlayerLayout(
     filterMode: LibraryFilterMode,
     onFilterModeChange: (LibraryFilterMode) -> Unit,
     onRefresh: () -> Unit,
+    onSelectFolder: () -> Unit,
+    selectedFolderName: String?,
     onSelectRelease: (Int) -> Unit,
     onSelectTrack: (Int) -> Unit,
     onPlayPause: () -> Unit,
@@ -455,15 +472,53 @@ private fun LandscapePlayerLayout(
 
         // Main Album Jewel Case (Positioned on the left, sitting directly in front of the shelf)
         // Tapping the main CD/jewel case plays/pauses the current track
+        // Horizontal swipe gestures: Left -> Next Track, Right -> Previous Track
+        var totalDragX by remember { mutableFloatStateOf(0f) }
+        var isSwipeGesture by remember { mutableStateOf(false) }
+
         Box(
             modifier = Modifier
                 .padding(start = 30.dp, top = 52.dp)
                 .width(265.dp)
                 .align(Alignment.TopStart)
+                .pointerInput(onNext, onPrevious, onPlayPause) {
+                    detectHorizontalDragGestures(
+                        onDragStart = {
+                            totalDragX = 0f
+                            isSwipeGesture = false
+                        },
+                        onHorizontalDrag = { change, dragAmount ->
+                            totalDragX += dragAmount
+                            if (kotlin.math.abs(totalDragX) > 20f) {
+                                isSwipeGesture = true
+                                change.consume()
+                            }
+                        },
+                        onDragEnd = {
+                            if (isSwipeGesture && kotlin.math.abs(totalDragX) >= 40f) {
+                                if (totalDragX < 0) {
+                                    onNext()
+                                } else {
+                                    onPrevious()
+                                }
+                            }
+                            totalDragX = 0f
+                            isSwipeGesture = false
+                        },
+                        onDragCancel = {
+                            totalDragX = 0f
+                            isSwipeGesture = false
+                        }
+                    )
+                }
         ) {
             JewelCaseArtwork(
                 release = currentRelease,
-                onClick = onPlayPause,
+                onClick = {
+                    if (!isSwipeGesture) {
+                        onPlayPause()
+                    }
+                },
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -563,11 +618,16 @@ private fun LandscapePlayerLayout(
         }
 
         // Modal Album Tracklist Bottom Sheet
-        if (showTracklistSheet && currentRelease != null) {
+        if (showTracklistSheet) {
             AlbumTracklistSheet(
                 release = currentRelease,
                 currentTrackIndex = uiState.currentTrackIndex,
                 isPlaying = uiState.isPlaying,
+                onSelectFolder = {
+                    onSelectFolder()
+                    showTracklistSheet = false
+                },
+                selectedFolderName = selectedFolderName,
                 onSelectTrack = { trackIdx ->
                     onSelectTrack(trackIdx)
                     showTracklistSheet = false
@@ -902,10 +962,12 @@ fun RefreshButton(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AlbumTracklistSheet(
-    release: Release,
+    release: Release?,
     currentTrackIndex: Int,
     isPlaying: Boolean,
     onSelectTrack: (Int) -> Unit,
+    onSelectFolder: () -> Unit,
+    selectedFolderName: String?,
     onDismiss: () -> Unit
 ) {
     ModalBottomSheet(
@@ -924,89 +986,141 @@ fun AlbumTracklistSheet(
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 32.dp)
         ) {
-            Text(
-                text = release.title,
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFFF5F5F4)
-                ),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                text = "${release.artist} • ${release.tracks.size} tracks",
-                style = MaterialTheme.typography.bodySmall.copy(
-                    color = Color(0xFFA8A29E)
-                ),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
-            LazyColumn(
+            // Music Folder Selection Option
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(max = 380.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(Color(0xFF22201E))
+                    .clickable {
+                        onSelectFolder()
+                    }
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                itemsIndexed(release.tracks) { index, track ->
-                    val isCurrent = index == currentTrackIndex
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(if (isCurrent) Color(0xFF282624) else Color.Transparent)
-                            .clickable {
-                                onSelectTrack(index)
-                                onDismiss()
-                            }
-                            .padding(horizontal = 12.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "${track.trackNumber}",
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                color = if (isCurrent) Color(0xFFF5F5F4) else Color(0xFF78716C),
-                                fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal
-                            ),
-                            modifier = Modifier.width(28.dp)
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "MUSIC FOLDER",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = Color(0xFFA8A29E),
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp,
+                            fontSize = 10.sp
                         )
-                        Column(modifier = Modifier.weight(1f)) {
+                    )
+                    Text(
+                        text = selectedFolderName ?: "All Audio (Tap to choose folder)",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = Color(0xFFF5F5F4),
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 13.sp
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = if (selectedFolderName != null) "Change" else "Choose",
+                    color = Color(0xFFD6D3D1),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .background(Color(0xFF383430), RoundedCornerShape(6.dp))
+                        .padding(horizontal = 10.dp, vertical = 5.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+            HorizontalDivider(color = Color(0xFF2E2C2A))
+            Spacer(modifier = Modifier.height(12.dp))
+
+            if (release != null) {
+                Text(
+                    text = release.title,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFF5F5F4)
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = "${release.artist} • ${release.tracks.size} tracks",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = Color(0xFFA8A29E)
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 380.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    itemsIndexed(release.tracks) { index, track ->
+                        val isCurrent = index == currentTrackIndex
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(if (isCurrent) Color(0xFF282624) else Color.Transparent)
+                                .clickable {
+                                    onSelectTrack(index)
+                                    onDismiss()
+                                }
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Text(
-                                text = track.title,
+                                text = "${track.trackNumber}",
                                 style = MaterialTheme.typography.bodyMedium.copy(
-                                    color = if (isCurrent) Color(0xFFF5F5F4) else Color(0xFFD6D3D1),
-                                    fontWeight = if (isCurrent) FontWeight.SemiBold else FontWeight.Normal
+                                    color = if (isCurrent) Color(0xFFF5F5F4) else Color(0xFF78716C),
+                                    fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal
                                 ),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                modifier = Modifier.width(28.dp)
                             )
-                            if (track.artist != release.artist) {
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = track.artist,
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        color = Color(0xFF78716C)
+                                    text = track.title,
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        color = if (isCurrent) Color(0xFFF5F5F4) else Color(0xFFD6D3D1),
+                                        fontWeight = if (isCurrent) FontWeight.SemiBold else FontWeight.Normal
                                     ),
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
+                                if (track.artist != release.artist) {
+                                    Text(
+                                        text = track.artist,
+                                        style = MaterialTheme.typography.bodySmall.copy(
+                                            color = Color(0xFF78716C)
+                                        ),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
                             }
-                        }
-                        if (isCurrent && isPlaying) {
-                            Icon(
-                                imageVector = Icons.Rounded.VolumeUp,
-                                contentDescription = "Playing",
-                                tint = Color(0xFFF5F5F4),
-                                modifier = Modifier.size(16.dp)
+                            if (isCurrent && isPlaying) {
+                                Icon(
+                                    imageVector = Icons.Rounded.VolumeUp,
+                                    contentDescription = "Playing",
+                                    tint = Color(0xFFF5F5F4),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                            }
+                            Text(
+                                text = formatDuration(track.durationMs),
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = Color(0xFF78716C)
+                                )
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
                         }
-                        Text(
-                            text = formatDuration(track.durationMs),
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                color = Color(0xFF78716C)
-                            )
-                        )
                     }
                 }
             }

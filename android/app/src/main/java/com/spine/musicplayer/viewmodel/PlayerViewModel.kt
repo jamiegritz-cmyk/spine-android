@@ -8,9 +8,11 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.spine.musicplayer.data.MediaStoreAudioScanner
+import com.spine.musicplayer.data.MusicFolderPreferences
 import com.spine.musicplayer.model.Release
 import com.spine.musicplayer.model.RepeatMode
 import com.spine.musicplayer.model.Track
+import com.spine.musicplayer.playback.PlaybackManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,7 +41,7 @@ data class PlayerUiState(
 class PlayerViewModel(application: Application) : AndroidViewModel(application) {
 
     private val audioScanner = MediaStoreAudioScanner(application)
-    private val exoPlayer: ExoPlayer = ExoPlayer.Builder(application).build()
+    private val exoPlayer: ExoPlayer = PlaybackManager.getSharedPlayer(application)
 
     private val _uiState = MutableStateFlow(PlayerUiState())
     val uiState: StateFlow<PlayerUiState> = _uiState.asStateFlow()
@@ -47,6 +49,9 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     init {
         setupPlayerListener()
         startPositionTracker()
+        PlaybackManager.onTrackSelectedFromAuto = { releaseId, trackIdx ->
+            selectReleaseById(releaseId, trackIdx, autoplay = true)
+        }
     }
 
     private fun setupPlayerListener() {
@@ -120,12 +125,23 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                 isLoading = false,
                 permissionGranted = true
             )
+            PlaybackManager.currentReleases = activeReleases
 
             // Only prepare initial queue if no music was previously loaded or playing
             if (!isCurrentlyPlaying && currentId == null && targetRelease != null) {
                 prepareAlbumQueue(targetRelease, startIndex = 0, autoplay = false)
             }
         }
+    }
+
+    fun onFolderSelected(uri: Uri) {
+        MusicFolderPreferences.saveSelectedFolder(getApplication(), uri)
+        loadLocalMusic()
+    }
+
+    fun onFolderCleared() {
+        MusicFolderPreferences.clearSelectedFolder(getApplication())
+        loadLocalMusic()
     }
 
     fun updateReleaseArtwork(releaseId: String, newArtworkUri: Uri) {
@@ -290,7 +306,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     override fun onCleared() {
-        exoPlayer.release()
+        // Shared ExoPlayer lifecycle is retained across UI recreation and background/Android Auto playback
         super.onCleared()
     }
 }

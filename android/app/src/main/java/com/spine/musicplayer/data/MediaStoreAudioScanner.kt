@@ -40,8 +40,11 @@ class MediaStoreAudioScanner(private val context: Context) {
             MediaStore.Audio.Media.DURATION,
             MediaStore.Audio.Media.TRACK,
             MediaStore.Audio.Media.YEAR,
-            MediaStore.Audio.Media.DISPLAY_NAME
+            MediaStore.Audio.Media.DISPLAY_NAME,
+            MediaStore.Audio.Media.DATA
         )
+
+        val selectedFolderPath = MusicFolderPreferences.getSelectedFolderPath(context)?.trim('/')
 
         // Broad audio selection: includes IS_MUSIC != 0 OR audio mime-type to capture all local MP3/audio files
         val selection = "(${MediaStore.Audio.Media.IS_MUSIC} != 0 OR ${MediaStore.Audio.Media.MIME_TYPE} LIKE 'audio/%') AND (${MediaStore.Audio.Media.DURATION} >= 5000 OR ${MediaStore.Audio.Media.DURATION} IS NULL OR ${MediaStore.Audio.Media.DURATION} = 0)"
@@ -65,8 +68,20 @@ class MediaStoreAudioScanner(private val context: Context) {
             val trackCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK)
             val yearCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR)
             val displayNameCol = cursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME)
+            val dataCol = cursor.getColumnIndex(MediaStore.Audio.Media.DATA)
 
             while (cursor.moveToNext()) {
+                val dataPath = if (dataCol >= 0) cursor.getString(dataCol) ?: "" else ""
+
+                // Filter by authoritative selected folder if configured
+                if (!selectedFolderPath.isNullOrEmpty()) {
+                    val cleanDataPath = dataPath.replace('\\', '/')
+                    val isInFolder = cleanDataPath.contains("/$selectedFolderPath/", ignoreCase = true) ||
+                            cleanDataPath.contains("/$selectedFolderPath", ignoreCase = true)
+                    if (!isInFolder) {
+                        continue
+                    }
+                }
                 val id = cursor.getLong(idCol)
                 val rawTitle = cursor.getString(titleCol)
                 val displayName = if (displayNameCol >= 0) cursor.getString(displayNameCol) else null
