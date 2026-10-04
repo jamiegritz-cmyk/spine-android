@@ -440,16 +440,17 @@ private fun LandscapePlayerLayout(
         }
 
         // Track Information: Positioned to the right of the jewel case, above the full-height spines
+        // Top of track title is level with top edge of the main CD jewel case (52.dp)
         Column(
             modifier = Modifier
-                .padding(start = 315.dp, top = 60.dp, end = 24.dp)
+                .padding(start = 315.dp, top = 52.dp, end = 24.dp)
                 .clip(RoundedCornerShape(8.dp))
                 .clickable {
                     if (currentRelease != null && currentRelease.tracks.isNotEmpty()) {
                         showTracklistSheet = true
                     }
                 }
-                .padding(vertical = 4.dp, horizontal = 4.dp)
+                .padding(horizontal = 4.dp, vertical = 0.dp)
                 .align(Alignment.TopStart)
         ) {
             Text(
@@ -457,7 +458,7 @@ private fun LandscapePlayerLayout(
                 style = MaterialTheme.typography.titleLarge.copy(
                     color = Color(0xFFF5F5F4),
                     fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
+                    fontSize = 19.sp,
                     letterSpacing = 0.2.sp
                 ),
                 maxLines = 1,
@@ -468,7 +469,7 @@ private fun LandscapePlayerLayout(
                 text = "$displayArtist · ${currentRelease?.year ?: ""}",
                 style = MaterialTheme.typography.bodyMedium.copy(
                     color = Color(0xFFA8A29E),
-                    fontSize = 14.sp
+                    fontSize = 13.5.sp
                 ),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis

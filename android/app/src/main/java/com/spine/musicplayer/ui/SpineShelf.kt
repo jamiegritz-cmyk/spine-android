@@ -290,34 +290,12 @@ fun LandscapeSpineShelf(
         ) {
             itemsIndexed(releases) { index, release ->
                 val isSelected = index == selectedIndex
-
-                var itemCenterXPx by remember { mutableFloatStateOf(-1f) }
-
-                val underFraction = when {
-                    itemCenterXPx < 0f -> if (index in 1..8) 1f else 0f
-                    itemCenterXPx < caseStartPx - transitionPx -> 0f
-                    itemCenterXPx < caseStartPx -> (itemCenterXPx - (caseStartPx - transitionPx)) / transitionPx
-                    itemCenterXPx <= caseEndPx -> 1f
-                    itemCenterXPx < caseEndPx + transitionPx -> 1f - (itemCenterXPx - caseEndPx) / transitionPx
-                    else -> 0f
-                }
-
-                val targetHeight = androidx.compose.ui.unit.lerp(220.dp, 115.dp, underFraction)
-                val animatedHeight by animateDpAsState(
-                    targetValue = targetHeight,
-                    animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-                    label = "landscapeSpineHeight"
-                )
-
                 CdSpineItem(
                     release = release,
                     isSelected = isSelected,
-                    caseHeight = animatedHeight,
+                    caseHeight = 215.dp,
                     caseWidth = 20.dp,
-                    onClick = { onSelectRelease(index) },
-                    modifier = Modifier.onGloballyPositioned { coordinates ->
-                        itemCenterXPx = coordinates.positionInWindow().x + coordinates.size.width / 2f
-                    }
+                    onClick = { onSelectRelease(index) }
                 )
             }
         }
