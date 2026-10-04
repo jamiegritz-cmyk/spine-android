@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.spine.musicplayer.model.Release
+import java.util.Locale
 import kotlin.math.abs
 
 /**
