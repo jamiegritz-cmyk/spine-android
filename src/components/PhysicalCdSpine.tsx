@@ -502,87 +502,59 @@ export const PhysicalCdSpine: React.FC<PhysicalCdSpineProps> = ({
     }
   };
 
-  const catalogCode = React.useMemo(() => {
-    const digits = release.catalogNumber?.replace(/\D/g, '') || '';
-    if (digits.length >= 4) return digits.slice(-4);
-    const hash = Math.abs((release.id + release.title).split('').reduce((acc, c) => acc * 31 + c.charCodeAt(0), 0));
-    return String((hash % 9000) + 1000);
-  }, [release.id, release.catalogNumber, release.title]);
-
   return (
     <div
       onClick={onClick}
       onDragStart={(e) => e.preventDefault()}
       className={`cd-spine-item group relative transition-all duration-300 ease-out cursor-pointer shrink-0 select-none ${
         isSelected
-          ? '-translate-y-5 scale-y-[1.02] scale-x-[1.02] z-30'
+          ? '-translate-y-6 scale-y-[1.03] scale-x-[1.02] z-30'
           : 'hover:-translate-y-1.5 z-10'
       }`}
       style={{
-        width: '21.5px', // Authentic slim jewel case spine width
-        height: '280px'
+        width: '22.5px', // Authentic slim 10mm CD jewel case proportion
+        height: '280px' // Refined visible scale so album titles and artist names are easily readable while scrolling
       }}
       title={`${release.artist} — ${release.title}`}
     >
-      {/* Outer Physical Clear Jewel Case Shell */}
+      {/* Integrated CD Jewel Case Spine (Subtle, no separate graphic frame) */}
       <div
-        className={`w-full h-full rounded-t-[1.5px] rounded-b-[0.5px] relative overflow-hidden transition-all bg-white/[0.06] ${
+        className={`w-full h-full rounded-[1.5px] relative flex flex-col overflow-hidden transition-all bg-[#121110] ${
           isSelected
-            ? 'shadow-[0_0_16px_rgba(255,255,255,0.22),0_12px_24px_rgba(0,0,0,0.95)]'
-            : 'shadow-[0_2px_4px_rgba(0,0,0,0.95)] hover:shadow-[0_4px_8px_rgba(0,0,0,0.95)]'
+            ? 'shadow-[0_0_18px_rgba(255,255,255,0.25),0_14px_28px_rgba(0,0,0,0.95)]'
+            : 'shadow-[0_2px_4px_rgba(0,0,0,0.95)] hover:shadow-[0_3px_8px_rgba(0,0,0,0.95)]'
         }`}
       >
-        {/* Layer 1: Top Clear Acrylic Cap Background (12px) */}
-        <div className="absolute top-0 inset-x-0 h-[12px] bg-gradient-to-b from-white/20 via-white/5 to-transparent pointer-events-none z-10">
-          {/* Top Edge Specular Hairline */}
-          <div className="absolute top-0 inset-x-0 h-[0.75px] bg-white/60" />
-          {/* Molded Jewel Case Hinge Notches */}
-          <div className="absolute top-[4px] inset-x-[1.5px] h-[0.75px] bg-black/45 shadow-[0_0.5px_0_rgba(255,255,255,0.35)]" />
-          <div className="absolute top-[8px] inset-x-[2px] h-[0.6px] bg-black/30" />
+        {/* Subtle Top Clear Acrylic Rail */}
+        <div className="w-full h-2 shrink-0 bg-gradient-to-b from-white/30 via-white/10 to-transparent border-b border-black/30 relative flex items-center justify-center z-10">
+          <div className="w-1.5 h-1 rounded-full border border-white/40 bg-white/20" />
+          <div className="absolute inset-x-0 top-0 h-[0.5px] bg-white/60" />
         </div>
 
-        {/* Layer 2: Inset Paper / Sleeve Insert (Tray Card Inlay) */}
-        {/* Sits inset inside the transparent plastic case (2px margins on sides, 12px top, 8px bottom) */}
-        <div
-          className="absolute inset-x-[2px] top-[12px] bottom-[8px] rounded-[0.5px] overflow-hidden flex flex-col z-0 border border-black/35 shadow-xs"
-          style={{
-            backgroundColor: release.spineColor || '#222222'
-          }}
-        >
-          {/* Render paper sleeve content (artwork, typography, catalog) */}
-          <div className="w-full h-full relative overflow-hidden flex flex-col">
-            {renderSpineContent()}
+        {/* Existing Spine Artwork (Full natural width, exactly as it appears) */}
+        <div className="flex-1 w-full relative overflow-hidden flex flex-col">
+          {renderSpineContent()}
 
-            {/* Printed cardstock paper texture overlay (eliminates flat digital look) */}
-            <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-white/[0.08] via-transparent to-black/[0.18]" />
-          </div>
+          {/* Subtle Black Recessed/Shaded Plastic Edge along the sides */}
+          <div className="absolute inset-0 pointer-events-none shadow-[inset_1px_0_0_rgba(0,0,0,0.55),inset_-1px_0_0_rgba(0,0,0,0.55)]" />
+
+          {/* Very Slight Transparent Plastic Effect across the face */}
+          <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-white/[0.04] via-transparent to-black/[0.06]" />
+
+          {/* Edge illumination when selected */}
+          {isSelected && (
+            <div className="absolute inset-0 bg-gradient-to-t from-white/10 via-transparent to-white/20 pointer-events-none" />
+          )}
         </div>
 
-        {/* Layer 3: Bottom Clear Acrylic Foot & Physical Shelf Contact */}
-        <div className="absolute bottom-0 inset-x-0 h-[8px] bg-gradient-to-t from-black/60 via-white/5 to-transparent pointer-events-none z-10">
-          {/* Clear reflection catch */}
-          <div className="absolute bottom-[2px] inset-x-[1.5px] h-[0.5px] bg-white/25" />
-          {/* Grounding contact shadow onto wooden shelf */}
-          <div className="absolute bottom-0 inset-x-0 h-[1.5px] bg-black/95" />
+        {/* Subtle Bottom Plastic Base */}
+        <div className="w-full h-1.5 shrink-0 bg-gradient-to-t from-black/60 via-white/5 to-transparent border-t border-black/40 relative flex items-center justify-center z-10">
+          <div className="absolute inset-x-0 bottom-0 h-[1px] bg-black/95" />
         </div>
 
-        {/* Layer 4: Transparent Plastic Shell Walls & Specular Reflections */}
-        {/* Left Acrylic Side Wall (2px) */}
-        <div className="absolute inset-y-0 left-0 w-[2px] pointer-events-none z-20 flex">
-          <div className="w-[0.75px] h-full bg-white/45" />
-          <div className="w-[1px] h-full bg-black/45" />
-          <div className="w-[0.25px] h-full bg-white/20" />
-        </div>
-
-        {/* Right Acrylic Side Wall (2px) */}
-        <div className="absolute inset-y-0 right-0 w-[2px] pointer-events-none z-20 flex justify-end">
-          <div className="w-[0.5px] h-full bg-black/35" />
-          <div className="w-[1px] h-full bg-black/65" />
-          <div className="w-[0.5px] h-full bg-white/25" />
-        </div>
-
-        {/* Front Face Light Sheen (Subtle, Restrained Polystyrene Reflection) */}
-        <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-white/[0.07] via-transparent to-black/[0.05] z-20" />
+        {/* Subtle fine outer left hairline highlight and right seam */}
+        <div className="absolute inset-y-0 left-0 w-[0.5px] bg-white/30 pointer-events-none z-20" />
+        <div className="absolute inset-y-0 right-0 w-[0.5px] bg-black/80 pointer-events-none z-20" />
       </div>
     </div>
   );

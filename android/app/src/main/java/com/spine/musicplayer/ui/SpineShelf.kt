@@ -351,17 +351,6 @@ fun CdSpineItem(
     val hasScratch = (caseHash % 3) != 0
     val scratchYFrac = remember(caseHash) { 0.22f + ((caseHash % 55) / 100f) }
 
-    // 4-digit catalog code (e.g. 5802, 1772, 8279)
-    val catalogCode = remember(release.id, release.catalogNumber) {
-        val digits = release.catalogNumber.filter { it.isDigit() }
-        if (digits.length >= 4) {
-            digits.takeLast(4)
-        } else {
-            String.format(java.util.Locale.ROOT, "%04d", (caseHash % 9000) + 1000)
-        }
-    }
-
-    // Outer physical jewel case shell container
     Box(
         modifier = modifier
             .offset(y = verticalOffset)
@@ -369,65 +358,25 @@ fun CdSpineItem(
                 scaleX = scale
                 scaleY = scale
             }
-            .width(caseWidth)
-            .height(caseHeight)
-            .shadow(
-                elevation,
-                shape = RoundedCornerShape(topStart = 1.5.dp, topEnd = 1.5.dp, bottomStart = 0.5.dp, bottomEnd = 0.5.dp)
-            )
-            .background(
-                Color(0x0EFFFFFF),
-                RoundedCornerShape(topStart = 1.5.dp, topEnd = 1.5.dp, bottomStart = 0.5.dp, bottomEnd = 0.5.dp)
-            )
+            .width(caseWidth) // Slender authentic jewel case spine width
+            .height(caseHeight) // Dominant full-height CD spine
+            .shadow(elevation, shape = RoundedCornerShape(1.5.dp))
+            .background(Color(0x1AFFFFFF), RoundedCornerShape(1.5.dp))
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = onClick
             )
     ) {
-        // --- 1. Clear Acrylic Case Base (Visible in top cap and bottom foot) ---
-        // Sits behind the paper sleeve, creating authentic jewel case depth
+        // --- 1. Printed Tray Card Inlay (Full-Height Artwork Insert) ---
+        // Sits inside the clear jewel case, extending vertically through the full spine
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .drawBehind {
-                    // Top clear cap acrylic gradient (top 13dp)
-                    drawRect(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                Color.White.copy(alpha = 0.16f),
-                                Color.White.copy(alpha = 0.05f),
-                                Color.Transparent
-                            )
-                        ),
-                        topLeft = Offset(0f, 0f),
-                        size = Size(size.width, 13.dp.toPx())
-                    )
-                    // Bottom clear foot acrylic gradient (bottom 9dp)
-                    drawRect(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                Color.Black.copy(alpha = 0.25f),
-                                Color.Black.copy(alpha = 0.55f)
-                            )
-                        ),
-                        topLeft = Offset(0f, size.height - 9.dp.toPx()),
-                        size = Size(size.width, 9.dp.toPx())
-                    )
-                }
-        )
-
-        // --- 2. Inset Printed Paper Sleeve / Tray Card Inlay ---
-        // Inset slightly inside the transparent plastic case (2dp left/right, 13dp top, 9dp bottom)
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(start = 2.dp, end = 2.dp, top = 13.dp, bottom = 9.dp)
+                .padding(horizontal = 1.2.dp, vertical = 2.dp)
                 .clip(RoundedCornerShape(0.5.dp))
                 .background(parsedColor)
         ) {
-            // Background Artwork Slice or Paper Texture
             if (release.artworkUri != null) {
                 AsyncImage(
                     model = release.artworkUri,
@@ -436,334 +385,253 @@ fun CdSpineItem(
                     modifier = Modifier.fillMaxSize()
                 )
             }
-
-            // Printed Cardstock Paper Sheen & Grain (eliminates flat digital look)
+            // Subtle darkening wash so rotated typography is crisp and legible over any artwork
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
-                                Color.White.copy(alpha = 0.10f),
-                                Color.Black.copy(alpha = 0.22f),
-                                Color.Black.copy(alpha = 0.18f),
-                                Color.Black.copy(alpha = 0.48f)
+                                Color.Black.copy(alpha = 0.35f),
+                                Color.Black.copy(alpha = 0.15f),
+                                Color.Black.copy(alpha = 0.20f),
+                                Color.Black.copy(alpha = 0.45f)
                             )
                         )
                     )
             )
+        }
 
-            // Fine printed die-cut paper edge
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .drawBehind {
-                        drawRect(
-                            color = Color.Black.copy(alpha = 0.35f),
-                            style = Stroke(width = 0.6f)
+        // --- 2. Rotated Spine Typography (Artist - Album Title) ---
+        val typo = rememberSpineTypography(release = release, isSelected = isSelected)
+        val formattedTitle = if (typo.isTitleUppercase) release.title.uppercase() else release.title
+        val formattedArtist = if (typo.isArtistUppercase) release.artist.uppercase() else release.artist
+
+        val fullSpineText = remember(release.title, release.artist, typo) {
+            buildAnnotatedString {
+                if (typo.artistFirst) {
+                    withStyle(
+                        SpanStyle(
+                            fontSize = typo.artistFontSize,
+                            fontWeight = typo.artistFontWeight,
+                            fontFamily = typo.artistFontFamily,
+                            color = typo.artistColor,
+                            letterSpacing = typo.letterSpacing
                         )
+                    ) {
+                        append(formattedArtist)
                     }
-            )
-
-            // Optional Top Artwork Badge / Thumbnail (as seen in reference image)
-            val showArtworkBadge = (caseHash % 2 == 0) && release.artworkUri != null
-            if (showArtworkBadge) {
-                Box(
-                    modifier = Modifier
-                        .padding(top = 3.dp)
-                        .size(13.dp)
-                        .align(Alignment.TopCenter)
-                        .clip(RoundedCornerShape(1.dp))
-                        .background(Color.Black.copy(alpha = 0.5f))
-                ) {
-                    AsyncImage(
-                        model = release.artworkUri,
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .drawBehind {
-                                drawRect(
-                                    color = Color.White.copy(alpha = 0.25f),
-                                    style = Stroke(width = 0.5f)
-                                )
-                            }
-                    )
-                }
-            }
-
-            // Vertically Printed Spine Typography
-            val typo = rememberSpineTypography(release = release, isSelected = isSelected)
-            val formattedTitle = if (typo.isTitleUppercase) release.title.uppercase() else release.title
-            val formattedArtist = if (typo.isArtistUppercase) release.artist.uppercase() else release.artist
-
-            val fullSpineText = remember(release.title, release.artist, typo) {
-                buildAnnotatedString {
-                    if (typo.artistFirst) {
-                        withStyle(
-                            SpanStyle(
-                                fontSize = typo.artistFontSize,
-                                fontWeight = typo.artistFontWeight,
-                                fontFamily = typo.artistFontFamily,
-                                color = typo.artistColor,
-                                letterSpacing = typo.letterSpacing
-                            )
-                        ) {
-                            append(formattedArtist)
-                        }
-                        withStyle(
-                            SpanStyle(
-                                fontSize = typo.artistFontSize,
-                                color = typo.artistColor.copy(alpha = 0.65f)
-                            )
-                        ) {
-                            append(typo.separator)
-                        }
-                        withStyle(
-                            SpanStyle(
-                                fontSize = typo.titleFontSize,
-                                fontWeight = typo.titleFontWeight,
-                                fontFamily = typo.titleFontFamily,
-                                color = typo.titleColor,
-                                letterSpacing = typo.letterSpacing
-                            )
-                        ) {
-                            append(formattedTitle)
-                        }
-                    } else {
-                        withStyle(
-                            SpanStyle(
-                                fontSize = typo.titleFontSize,
-                                fontWeight = typo.titleFontWeight,
-                                fontFamily = typo.titleFontFamily,
-                                color = typo.titleColor,
-                                letterSpacing = typo.letterSpacing
-                            )
-                        ) {
-                            append(formattedTitle)
-                        }
-                        withStyle(
-                            SpanStyle(
-                                fontSize = typo.artistFontSize,
-                                color = typo.artistColor.copy(alpha = 0.65f)
-                            )
-                        ) {
-                            append(typo.separator)
-                        }
-                        withStyle(
-                            SpanStyle(
-                                fontSize = typo.artistFontSize,
-                                fontWeight = typo.artistFontWeight,
-                                fontFamily = typo.artistFontFamily,
-                                color = typo.artistColor,
-                                letterSpacing = typo.letterSpacing
-                            )
-                        ) {
-                            append(formattedArtist)
-                        }
+                    withStyle(
+                        SpanStyle(
+                            fontSize = typo.artistFontSize,
+                            color = typo.artistColor.copy(alpha = 0.6f)
+                        )
+                    ) {
+                        append(typo.separator)
+                    }
+                    withStyle(
+                        SpanStyle(
+                            fontSize = typo.titleFontSize,
+                            fontWeight = typo.titleFontWeight,
+                            fontFamily = typo.titleFontFamily,
+                            color = typo.titleColor,
+                            letterSpacing = typo.letterSpacing
+                        )
+                    ) {
+                        append(formattedTitle)
+                    }
+                } else {
+                    withStyle(
+                        SpanStyle(
+                            fontSize = typo.titleFontSize,
+                            fontWeight = typo.titleFontWeight,
+                            fontFamily = typo.titleFontFamily,
+                            color = typo.titleColor,
+                            letterSpacing = typo.letterSpacing
+                        )
+                    ) {
+                        append(formattedTitle)
+                    }
+                    withStyle(
+                        SpanStyle(
+                            fontSize = typo.artistFontSize,
+                            color = typo.artistColor.copy(alpha = 0.6f)
+                        )
+                    ) {
+                        append(typo.separator)
+                    }
+                    withStyle(
+                        SpanStyle(
+                            fontSize = typo.artistFontSize,
+                            fontWeight = typo.artistFontWeight,
+                            fontFamily = typo.artistFontFamily,
+                            color = typo.artistColor,
+                            letterSpacing = typo.letterSpacing
+                        )
+                    ) {
+                        append(formattedArtist)
                     }
                 }
-            }
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = if (showArtworkBadge) 18.dp else 6.dp, bottom = 22.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = fullSpineText,
-                    maxLines = 1,
-                    softWrap = false,
-                    style = TextStyle(
-                        shadow = Shadow(
-                            color = typo.shadowColor,
-                            offset = Offset(0f, 1f),
-                            blurRadius = 2.5f
-                        )
-                    ),
-                    modifier = Modifier.verticalSpineText()
-                )
-            }
-
-            // Bottom Section: Mini Record Label / Disc Emblem + 4-Digit Catalog Number
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 3.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // Tiny Compact Disc / Record Label Mark (subtle circle emblem)
-                Box(
-                    modifier = Modifier
-                        .size(5.dp)
-                        .clip(RoundedCornerShape(2.5.dp))
-                        .background(Color.White.copy(alpha = 0.40f))
-                        .drawBehind {
-                            drawCircle(
-                                color = Color.Black.copy(alpha = 0.6f),
-                                radius = 1.0f
-                            )
-                        }
-                )
-                Spacer(modifier = Modifier.height(1.5.dp))
-                // 4-Digit Printed Catalog Number (e.g. 5802, 1772, 8279)
-                Text(
-                    text = catalogCode,
-                    color = Color.White.copy(alpha = 0.85f),
-                    fontSize = 6.8.sp,
-                    fontFamily = FontFamily.Monospace,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 0.3.sp,
-                    style = TextStyle(
-                        shadow = Shadow(
-                            color = Color.Black.copy(alpha = 0.8f),
-                            offset = Offset(0f, 1f),
-                            blurRadius = 1.5f
-                        )
-                    )
-                )
             }
         }
 
-        // --- 3. Authentic Clear Polystyrene Jewel Case Glass, Edges & Reflections ---
-        // Top overlay layer: provides visible case thickness, edge refractions, and restrained highlights
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(vertical = 18.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = fullSpineText,
+                maxLines = 1,
+                softWrap = false,
+                style = TextStyle(
+                    shadow = Shadow(
+                        color = typo.shadowColor,
+                        offset = Offset(0f, 1f),
+                        blurRadius = 3f
+                    )
+                ),
+                modifier = Modifier.verticalSpineText()
+            )
+        }
+
+        // --- 3. Bottom Compact Catalog Number ---
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = release.catalogNumber.split("-").lastOrNull() ?: "CD",
+                color = Color.White.copy(alpha = 0.7f),
+                fontSize = 7.sp,
+                fontFamily = FontFamily.Monospace,
+                fontWeight = FontWeight.Medium
+            )
+        }
+
+        // --- 4. Authentic Clear Polystyrene Jewel Case Glass & Edge Highlights ---
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .drawBehind {
-                    val w = size.width
-                    val h = size.height
-                    val leftWallPx = 2.dp.toPx()
-                    val rightWallPx = w - 2.dp.toPx()
-
-                    // --- TOP CLEAR ACRYLIC CAP DETAILS ---
-                    // Specular rim at very top edge
+                    // Left edge specular highlight (clear acrylic bevel reflection)
                     drawLine(
-                        color = Color.White.copy(alpha = if (isSelected) 0.70f else 0.50f),
-                        start = Offset(0.5f, 0.5f),
-                        end = Offset(w - 0.5f, 0.5f),
-                        strokeWidth = 1.0f
-                    )
-                    // Molded horizontal notch 1 (jewel case hinge tooth)
-                    drawLine(
-                        color = Color.Black.copy(alpha = 0.45f),
-                        start = Offset(1.5.dp.toPx(), 4.dp.toPx()),
-                        end = Offset(w - 1.5.dp.toPx(), 4.dp.toPx()),
-                        strokeWidth = 0.8f
-                    )
-                    drawLine(
-                        color = Color.White.copy(alpha = 0.35f),
-                        start = Offset(1.5.dp.toPx(), 4.8.dp.toPx()),
-                        end = Offset(w - 1.5.dp.toPx(), 4.8.dp.toPx()),
-                        strokeWidth = 0.6f
-                    )
-                    // Molded horizontal notch 2 (secondary ridge)
-                    drawLine(
-                        color = Color.Black.copy(alpha = 0.30f),
-                        start = Offset(2.dp.toPx(), 8.dp.toPx()),
-                        end = Offset(w - 2.dp.toPx(), 8.dp.toPx()),
-                        strokeWidth = 0.7f
-                    )
-
-                    // --- LEFT TRANSPARENT PLASTIC WALL (Visible Thickness) ---
-                    // Left outer specular hairline highlight
-                    drawLine(
-                        color = Color.White.copy(alpha = if (isSelected) 0.65f else 0.45f),
+                        color = Color.White.copy(alpha = if (isSelected) 0.70f else 0.45f),
                         start = Offset(0.5f, 0f),
-                        end = Offset(0.5f, h),
-                        strokeWidth = 1.0f
-                    )
-                    // Left acrylic plastic wall refraction shadow (creates physical thickness)
-                    drawLine(
-                        color = Color.Black.copy(alpha = 0.50f),
-                        start = Offset(1.2.dp.toPx(), 0f),
-                        end = Offset(1.2.dp.toPx(), h),
-                        strokeWidth = 1.0.dp.toPx()
-                    )
-                    // Left inner refraction highlight where plastic meets paper sleeve
-                    drawLine(
-                        color = Color.White.copy(alpha = 0.22f),
-                        start = Offset(leftWallPx, 0f),
-                        end = Offset(leftWallPx, h),
-                        strokeWidth = 0.6f
-                    )
-
-                    // --- RIGHT TRANSPARENT PLASTIC WALL (Visible Thickness) ---
-                    // Right inner paper-edge refraction shadow
-                    drawLine(
-                        color = Color.Black.copy(alpha = 0.40f),
-                        start = Offset(rightWallPx, 0f),
-                        end = Offset(rightWallPx, h),
-                        strokeWidth = 0.8f
-                    )
-                    // Right acrylic plastic wall thickness
-                    drawLine(
-                        color = Color.Black.copy(alpha = 0.55f),
-                        start = Offset(w - 1.2.dp.toPx(), 0f),
-                        end = Offset(w - 1.2.dp.toPx(), h),
-                        strokeWidth = 1.0.dp.toPx()
-                    )
-                    // Right edge case seam / hinge groove
-                    drawLine(
-                        color = Color.Black.copy(alpha = 0.70f),
-                        start = Offset(w - 0.5f, 0f),
-                        end = Offset(w - 0.5f, h),
+                        end = Offset(0.5f, size.height),
                         strokeWidth = 1.2f
                     )
-                    // Right edge corner specular highlight
+                    // Left dark recessed side edge (distinct jewel case plastic wall depth)
                     drawLine(
-                        color = Color.White.copy(alpha = if (isSelected) 0.35f else 0.20f),
-                        start = Offset(w - 1.0f, 0f),
-                        end = Offset(w - 1.0f, h),
+                        color = Color.Black.copy(alpha = 0.65f),
+                        start = Offset(1.2.dp.toPx(), 0f),
+                        end = Offset(1.2.dp.toPx(), size.height),
+                        strokeWidth = 1.2.dp.toPx()
+                    )
+                    // Secondary inner refraction line
+                    drawLine(
+                        color = Color.White.copy(alpha = 0.22f),
+                        start = Offset(2.2.dp.toPx(), 0f),
+                        end = Offset(2.2.dp.toPx(), size.height),
                         strokeWidth = 0.8f
                     )
-
-                    // --- BOTTOM CLEAR FOOT & PHYSICAL SHELF CONTACT ---
-                    // Dark grounding ambient contact shadow line (case firmly seated on wood)
+                    // Right dark recessed side edge (distinct jewel case plastic wall depth)
                     drawLine(
-                        color = Color.Black.copy(alpha = 0.95f),
-                        start = Offset(0f, h - 0.75f),
-                        end = Offset(w, h - 0.75f),
-                        strokeWidth = 1.5.dp.toPx()
+                        color = Color.Black.copy(alpha = 0.55f),
+                        start = Offset(size.width - 2.0.dp.toPx(), 0f),
+                        end = Offset(size.width - 2.0.dp.toPx(), size.height),
+                        strokeWidth = 1.0.dp.toPx()
                     )
-                    // Clear plastic bottom edge reflection catch
+                    // Right edge seam / hinge groove shadow
                     drawLine(
-                        color = Color.White.copy(alpha = 0.20f),
-                        start = Offset(1.dp.toPx(), h - 2.dp.toPx()),
-                        end = Offset(w - 1.dp.toPx(), h - 2.dp.toPx()),
-                        strokeWidth = 0.7f
+                        color = Color.Black.copy(alpha = 0.75f),
+                        start = Offset(size.width - 0.5f, 0f),
+                        end = Offset(size.width - 0.5f, size.height),
+                        strokeWidth = 1.5f
                     )
-
-                    // --- RESTRAINED FRONT SURFACE SHEEN ---
-                    // Very subtle realistic polystyrene light sheen (no neon, no heavy glow)
+                    // Right edge subtle specular highlight
+                    drawLine(
+                        color = Color.White.copy(alpha = if (isSelected) 0.35f else 0.18f),
+                        start = Offset(size.width - 1.0f, 0f),
+                        end = Offset(size.width - 1.0f, size.height),
+                        strokeWidth = 0.8f
+                    )
+                    // Top clear plastic edge highlight
+                    drawLine(
+                        color = Color.White.copy(alpha = 0.45f),
+                        start = Offset(0f, 0.5f),
+                        end = Offset(size.width, 0.5f),
+                        strokeWidth = 1.0f
+                    )
+                    // Bottom edge physical shelf contact shadow
+                    drawLine(
+                        color = Color.Black.copy(alpha = 0.85f),
+                        start = Offset(0f, size.height - 0.5f),
+                        end = Offset(size.width, size.height - 0.5f),
+                        strokeWidth = 1.8f
+                    )
+                    // Subtle transparent surface diagonal plastic sheen
                     drawRect(
                         brush = Brush.linearGradient(
                             colors = listOf(
-                                Color.White.copy(alpha = 0.08f),
+                                Color.White.copy(alpha = 0.14f),
                                 Color.Transparent,
-                                Color.Black.copy(alpha = 0.06f)
+                                Color.Black.copy(alpha = 0.10f)
                             ),
                             start = Offset(0f, 0f),
-                            end = Offset(w, h * 0.45f)
+                            end = Offset(size.width, size.height * 0.4f)
                         )
                     )
 
-                    // Occasional fine physical hairline scratch
+                    // Occasional tiny physical micro-scratch across clear plastic case
                     if (hasScratch) {
-                        val sy = h * scratchYFrac
+                        val sy = size.height * scratchYFrac
                         drawLine(
-                            color = Color.White.copy(alpha = 0.12f),
-                            start = Offset(w * 0.20f, sy),
-                            end = Offset(w * 0.75f, sy + 5.dp.toPx()),
-                            strokeWidth = 0.5f
+                            color = Color.White.copy(alpha = 0.10f),
+                            start = Offset(size.width * 0.20f, sy),
+                            end = Offset(size.width * 0.75f, sy + 6.dp.toPx()),
+                            strokeWidth = 0.6f
                         )
                     }
                 }
+        )
+
+        // Top molded clear plastic tab highlight
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(6.dp)
+                .align(Alignment.TopCenter)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = 0.30f),
+                            Color.White.copy(alpha = 0.08f),
+                            Color.Transparent
+                        )
+                    )
+                )
+        )
+
+        // Bottom molded clear plastic base lip resting on shelf
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(5.dp)
+                .align(Alignment.BottomCenter)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            Color.Black.copy(alpha = 0.35f),
+                            Color.Black.copy(alpha = 0.80f)
+                        )
+                    )
+                )
         )
     }
 }
