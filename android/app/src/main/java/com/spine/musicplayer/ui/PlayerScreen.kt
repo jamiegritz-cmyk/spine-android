@@ -227,13 +227,12 @@ private fun PortraitPlayerLayout(
 
         Spacer(modifier = Modifier.weight(0.5f))
 
-        // Compact Square Jewel Case Artwork (Secondary to the CD collection, tapping toggles play/pause)
+        // Physical CD Jewel Case Artwork (Noticeably larger, authentic physical jewel case)
         JewelCaseArtwork(
             release = currentRelease,
             onClick = onPlayPause,
             modifier = Modifier
-                .size(170.dp)
-                .padding(4.dp)
+                .width(235.dp)
         )
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -474,11 +473,11 @@ private fun LandscapePlayerLayout(
                 .padding(horizontal = 24.dp, vertical = 2.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Left: Square Album Cover (always 1:1, never clipped, fits available height)
+            // Left: CD Jewel Case
             Box(
                 modifier = Modifier
                     .fillMaxHeight()
-                    .aspectRatio(1f)
+                    .aspectRatio(883f / 796f)
                     .padding(vertical = 2.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -603,9 +602,8 @@ private fun LandscapePlayerLayout(
 /**
  * Authentic Physical CD Jewel Case Component:
  * Rendering order:
- * 1. GRAIZ background image
- * 2. Existing album artwork
- * 3. Supplied CD jewel case PNG overlay (graiz_cd_case)
+ * 1. Printed paper inlay / existing album artwork clipped to the inner square of the case
+ * 2. Clear plastic CD jewel-case frame, transparent center, edges and reflections on top
  */
 @Composable
 fun JewelCaseArtwork(
@@ -613,9 +611,9 @@ fun JewelCaseArtwork(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null
 ) {
-    Box(
+    BoxWithConstraints(
         modifier = modifier
-            .aspectRatio(1f) // Strict square CD jewel case proportion
+            .aspectRatio(883f / 796f) // Authentic physical CD jewel case ratio (~1.109:1)
             .then(
                 if (onClick != null) {
                     Modifier.clickable(onClick = onClick)
@@ -624,12 +622,29 @@ fun JewelCaseArtwork(
                 }
             )
     ) {
-        // 1. Existing Album Artwork (Nestled inside booklet area underneath clear plastic frame)
+        val caseWidth = maxWidth
+        val caseHeight = maxHeight
+
+        // Physical jewel case geometry:
+        // Case: 883w x 796h
+        // Inner Square Booklet: left=141px (15.97%), top=71px (8.92%), right=87px (9.85%), bottom=71px (8.92%)
+        // Booklet dimensions: 655px x 654px (Strict 1:1 physical square)
+        val startPadding = caseWidth * (141f / 883f)
+        val endPadding = caseWidth * (87f / 883f)
+        val topPadding = caseHeight * (71f / 796f)
+        val bottomPadding = caseHeight * (71f / 796f)
+
+        // 1. Existing Album Artwork (Paper Inlay inside the case, clipped precisely to the inner square)
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(start = 14.dp, top = 4.dp, end = 4.dp, bottom = 4.dp)
-                .clip(RoundedCornerShape(2.dp))
+                .padding(
+                    start = startPadding,
+                    top = topPadding,
+                    end = endPadding,
+                    bottom = bottomPadding
+                )
+                .clip(RoundedCornerShape(1.5.dp))
                 .background(Color(0xFF1E1D1B))
         ) {
             Crossfade(
@@ -641,7 +656,7 @@ fun JewelCaseArtwork(
                     AsyncImage(
                         model = artUri,
                         contentDescription = release?.title,
-                        contentScale = ContentScale.Crop, // Fills booklet insert crisply
+                        contentScale = ContentScale.Crop, // Scaled precisely to fit the inner square
                         modifier = Modifier.fillMaxSize()
                     )
                 } else {
@@ -662,11 +677,11 @@ fun JewelCaseArtwork(
             }
         }
 
-        // 2. Supplied Clear Plastic CD Jewel Case Frame (Overlay on Top)
+        // 2. Supplied Clear Plastic CD Jewel-Case Structure & Reflections Overlay (On Top)
         Image(
             painter = painterResource(id = com.spine.musicplayer.R.drawable.graiz_cd_case),
             contentDescription = "CD Jewel Case",
-            contentScale = ContentScale.Fit,
+            contentScale = ContentScale.FillBounds,
             modifier = Modifier.fillMaxSize()
         )
     }
