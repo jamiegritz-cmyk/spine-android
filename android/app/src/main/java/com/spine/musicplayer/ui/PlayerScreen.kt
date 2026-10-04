@@ -382,6 +382,14 @@ private fun LandscapePlayerLayout(
         }
     }
     val currentRelease = uiState.currentRelease
+    val shelfSelectedIndex = remember(activeReleases, currentRelease) {
+        val idx = activeReleases.indexOf(currentRelease)
+        if (idx >= 0) idx else 0
+    }
+
+    val currentTrack = uiState.currentTrack
+    val displayTitle = currentTrack?.title ?: currentRelease?.title ?: "Select an Album"
+    val displayArtist = currentTrack?.artist ?: currentRelease?.artist ?: "Physical Collection"
 
     Box(
         modifier = modifier.fillMaxSize()
@@ -394,14 +402,85 @@ private fun LandscapePlayerLayout(
             modifier = Modifier.fillMaxSize()
         )
 
-        Column(
-            modifier = Modifier.fillMaxSize()
+        // Continuous CD Shelf across the entire bottom:
+        // Spines under the jewel case (x in 30.dp..295.dp) remain partially hidden (~115dp tall)
+        // Spines extending past the left and right edges become full-height (~220dp tall)
+        LandscapeSpineShelf(
+            releases = activeReleases,
+            selectedIndex = shelfSelectedIndex,
+            onSelectRelease = { index ->
+                if (index in activeReleases.indices) {
+                    val sel = activeReleases[index]
+                    val orig = uiState.releases.indexOf(sel)
+                    if (orig >= 0) {
+                        onSelectRelease(orig)
+                    }
+                }
+            },
+            caseStartDp = 30.dp,
+            caseEndDp = 295.dp,
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+        )
+
+        // Main Album Jewel Case (Positioned on the left, sitting directly in front of the shelf)
+        // Tapping the main CD/jewel case plays/pauses the current track
+        Box(
+            modifier = Modifier
+                .padding(start = 30.dp, top = 52.dp)
+                .width(265.dp)
+                .align(Alignment.TopStart)
         ) {
-            // Top Bar: GRAIZ [menu] on left, [Albums] [Singles] [Refresh] on right
+            JewelCaseArtwork(
+                release = currentRelease,
+                onClick = onPlayPause,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        // Track Information: Positioned to the right of the jewel case, above the full-height spines
+        Column(
+            modifier = Modifier
+                .padding(start = 315.dp, top = 60.dp, end = 24.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .clickable {
+                    if (currentRelease != null && currentRelease.tracks.isNotEmpty()) {
+                        showTracklistSheet = true
+                    }
+                }
+                .padding(vertical = 4.dp, horizontal = 4.dp)
+                .align(Alignment.TopStart)
+        ) {
+            Text(
+                text = displayTitle,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    color = Color(0xFFF5F5F4),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    letterSpacing = 0.2.sp
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "$displayArtist · ${currentRelease?.year ?: ""}",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = Color(0xFFA8A29E),
+                    fontSize = 14.sp
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+
+        // Top Bar: GRAIZ [menu] on left, [Albums] [Singles] [Refresh] on right
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 6.dp),
+                .padding(horizontal = 20.dp, vertical = 6.dp)
+                .align(Alignment.TopCenter),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -416,18 +495,18 @@ private fun LandscapePlayerLayout(
                         letterSpacing = 2.5.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFFF5F5F4),
-                        fontSize = 14.sp
+                        fontSize = 15.sp
                     )
                 )
                 IconButton(
                     onClick = { showTracklistSheet = true },
-                    modifier = Modifier.size(26.dp)
+                    modifier = Modifier.size(28.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.Menu,
                         contentDescription = "Tracklist Menu",
                         tint = Color(0xFFA8A29E),
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }
@@ -465,123 +544,6 @@ private fun LandscapePlayerLayout(
             }
         }
 
-        // Main Content Split: Left Responsive Square Artwork, Right Controls
-        Row(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 2.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Left: CD Jewel Case
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .aspectRatio(883f / 796f)
-                    .padding(vertical = 2.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                JewelCaseArtwork(
-                    release = currentRelease,
-                    onClick = onPlayPause,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(2.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(24.dp))
-
-            // Right: Info and Playback Controls
-            val currentTrack = uiState.currentTrack
-            val displayTitle = currentTrack?.title ?: currentRelease?.title ?: "Select an Album"
-            val displayArtist = currentTrack?.artist ?: currentRelease?.artist ?: "Physical Collection"
-
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight(),
-                verticalArrangement = Arrangement.Center
-            ) {
-                Column(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(6.dp))
-                        .clickable {
-                            if (currentRelease != null && currentRelease.tracks.isNotEmpty()) {
-                                showTracklistSheet = true
-                            }
-                        }
-                        .padding(vertical = 2.dp)
-                ) {
-                    Text(
-                        text = displayTitle,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            color = Color(0xFFF5F5F4),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "$displayArtist · ${currentRelease?.year ?: ""}",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = Color(0xFFA8A29E),
-                            fontSize = 12.sp
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                PlaybackProgressBar(
-                    positionMs = uiState.currentPositionMs,
-                    durationMs = uiState.durationMs,
-                    onSeek = onSeek,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                ControlsRow(
-                    isPlaying = uiState.isPlaying,
-                    isShuffle = uiState.isShuffle,
-                    repeatMode = uiState.repeatMode,
-                    onPlayPause = onPlayPause,
-                    onNext = onNext,
-                    onPrevious = onPrevious,
-                    onToggleShuffle = onToggleShuffle,
-                    onCycleRepeat = onCycleRepeat,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        }
-
-        // Horizontal CD Shelf at the bottom
-        val shelfSelectedIndex = remember(activeReleases, currentRelease) {
-            val idx = activeReleases.indexOf(currentRelease)
-            if (idx >= 0) idx else 0
-        }
-
-        SpineShelf(
-            releases = activeReleases,
-            selectedIndex = shelfSelectedIndex,
-            onSelectRelease = { index ->
-                if (index in activeReleases.indices) {
-                    val sel = activeReleases[index]
-                    val orig = uiState.releases.indexOf(sel)
-                    if (orig >= 0) {
-                        onSelectRelease(orig)
-                    }
-                }
-            },
-            shelfHeight = 160.dp,
-            modifier = Modifier.fillMaxWidth()
-        )
-
         // Modal Album Tracklist Bottom Sheet
         if (showTracklistSheet && currentRelease != null) {
             AlbumTracklistSheet(
@@ -594,7 +556,6 @@ private fun LandscapePlayerLayout(
                 },
                 onDismiss = { showTracklistSheet = false }
             )
-        }
         }
     }
 }

@@ -30,7 +30,10 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -194,13 +197,149 @@ fun SpineShelf(
     }
 }
 
+/**
+ * Continuous physical CD shelf for Landscape Mode:
+ * - Spines underneath the main CD jewel case (x in caseStartDp..caseEndDp) remain partially hidden (115dp tall)
+ * - Spines extending past the left and right edges become full-height (220dp tall)
+ * - Smooth natural physical transition as spines scroll into or out from behind the case
+ * - Continuous wooden shelf lip along the entire bottom of the screen
+ */
+@Composable
+fun LandscapeSpineShelf(
+    releases: List<Release>,
+    selectedIndex: Int,
+    onSelectRelease: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    caseStartDp: Dp = 30.dp,
+    caseEndDp: Dp = 295.dp
+) {
+    val listState = rememberLazyListState()
+    val flingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
+    val context = LocalContext.current
+    val view = LocalView.current
+    val hapticHelper = remember(context) { HapticFeedbackHelper(context) }
+    val density = LocalDensity.current
+
+    val caseStartPx = with(density) { caseStartDp.toPx() }
+    val caseEndPx = with(density) { caseEndDp.toPx() }
+    val transitionPx = with(density) { 16.dp.toPx() }
+
+    // Detect centered CD near jewel case center
+    val centerIndex by remember {
+        derivedStateOf {
+            val layoutInfo = listState.layoutInfo
+            val visible = layoutInfo.visibleItemsInfo
+            if (visible.isEmpty()) return@derivedStateOf -1
+            val caseCenterPx = (caseStartPx + caseEndPx) / 2f
+            visible.minByOrNull { item ->
+                val itemCenter = item.offset + item.size / 2f
+                abs(itemCenter - caseCenterPx)
+            }?.index ?: -1
+        }
+    }
+
+    var lastCenterIndex by remember { mutableIntStateOf(-1) }
+
+    LaunchedEffect(centerIndex) {
+        if (centerIndex in releases.indices && centerIndex != lastCenterIndex) {
+            val isInitial = (lastCenterIndex == -1)
+            lastCenterIndex = centerIndex
+            if (centerIndex != selectedIndex) {
+                onSelectRelease(centerIndex)
+            }
+            if (!isInitial) {
+                hapticHelper.performCdTick(view)
+            }
+        }
+    }
+
+    LaunchedEffect(selectedIndex) {
+        if (!listState.isScrollInProgress && selectedIndex in releases.indices) {
+            val layoutInfo = listState.layoutInfo
+            val visible = layoutInfo.visibleItemsInfo
+            val caseCenterPx = (caseStartPx + caseEndPx) / 2f
+            val currentCenter = if (visible.isNotEmpty()) {
+                visible.minByOrNull { item ->
+                    val itemCenter = item.offset + item.size / 2f
+                    abs(itemCenter - caseCenterPx)
+                }?.index ?: -1
+            } else -1
+            if (currentCenter != selectedIndex) {
+                listState.animateScrollToItem(
+                    index = (selectedIndex - 2).coerceAtLeast(0)
+                )
+            }
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(265.dp)
+    ) {
+        LazyRow(
+            state = listState,
+            flingBehavior = flingBehavior,
+            contentPadding = PaddingValues(start = 12.dp, end = 40.dp),
+            horizontalArrangement = Arrangement.spacedBy(2.5.dp),
+            verticalAlignment = Alignment.Bottom,
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 35.dp) // Directly touches top surface of 36dp shelf lip
+        ) {
+            itemsIndexed(releases) { index, release ->
+                val isSelected = index == selectedIndex
+
+                var itemCenterXPx by remember { mutableFloatStateOf(-1f) }
+
+                val underFraction = when {
+                    itemCenterXPx < 0f -> if (index in 1..8) 1f else 0f
+                    itemCenterXPx < caseStartPx - transitionPx -> 0f
+                    itemCenterXPx < caseStartPx -> (itemCenterXPx - (caseStartPx - transitionPx)) / transitionPx
+                    itemCenterXPx <= caseEndPx -> 1f
+                    itemCenterXPx < caseEndPx + transitionPx -> 1f - (itemCenterXPx - caseEndPx) / transitionPx
+                    else -> 0f
+                }
+
+                val targetHeight = androidx.compose.ui.unit.lerp(220.dp, 115.dp, underFraction)
+                val animatedHeight by animateDpAsState(
+                    targetValue = targetHeight,
+                    animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                    label = "landscapeSpineHeight"
+                )
+
+                CdSpineItem(
+                    release = release,
+                    isSelected = isSelected,
+                    caseHeight = animatedHeight,
+                    caseWidth = 20.dp,
+                    onClick = { onSelectRelease(index) },
+                    modifier = Modifier.onGloballyPositioned { coordinates ->
+                        itemCenterXPx = coordinates.positionInWindow().x + coordinates.size.width / 2f
+                    }
+                )
+            }
+        }
+
+        // Heavy Walnut Wooden Shelf Base & Lip
+        WoodenShelfLip(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(36.dp)
+                .align(Alignment.BottomCenter)
+        )
+    }
+}
+
 @Composable
 fun CdSpineItem(
     release: Release,
     isSelected: Boolean,
     caseHeight: Dp = 280.dp,
     caseWidth: Dp = 22.dp,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     // Selected spine pulled forward from shelf and enlarged
     val targetOffset = if (isSelected) {
@@ -235,7 +374,7 @@ fun CdSpineItem(
     val scratchYFrac = remember(caseHash) { 0.22f + ((caseHash % 55) / 100f) }
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .offset(y = verticalOffset)
             .graphicsLayer {
                 scaleX = scale
