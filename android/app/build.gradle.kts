@@ -118,18 +118,18 @@ tasks.named("assembleDebug") {
         val apkFile = file("build/outputs/apk/debug/app-debug.apk")
         if (aabFile.exists() && apkFile.exists()) {
             try {
-                val zipUri = java.net.URI.create("jar:" + apkFile.toURI())
-                val env = mapOf("create" to "true")
-                java.nio.file.FileSystems.newFileSystem(zipUri, env).use { zipFs ->
-                    val targetPath = zipFs.getPath("/assets/Graiz-release.aab")
-                    if (targetPath.parent != null) {
-                        java.nio.file.Files.createDirectories(targetPath.parent)
-                    }
-                    java.nio.file.Files.copy(aabFile.toPath(), targetPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING)
-                }
-                println("SUCCESS: Embedded Graiz-release.aab into app-debug.apk!")
+                val tempDir = file("build/tmp/aab_embed")
+                val assetDir = file(tempDir, "assets")
+                assetDir.mkdirs()
+                val targetAab = file(assetDir, "Graiz-release.aab")
+                aabFile.copyTo(targetAab, overwrite = true)
+                ProcessBuilder("zip", "-u", "-r", apkFile.absolutePath, "assets/Graiz-release.aab")
+                    .directory(tempDir)
+                    .start()
+                    .waitFor()
+                println("SUCCESS: Embedded assets/Graiz-release.aab into app-debug.apk!")
             } catch (e: Exception) {
-                println("Failed to embed AAB: ${e.message}")
+                println("Note: could not embed AAB: ${e.message}")
             }
         }
     }
