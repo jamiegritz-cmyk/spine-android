@@ -111,25 +111,29 @@ dependencies {
     implementation("androidx.room:room-ktx:2.6.1")
 }
 
-tasks.named("assembleDebug") {
-    dependsOn("bundleRelease")
-    doLast {
-        val aabFile = file("build/outputs/bundle/release/app-release.aab")
-        val apkFile = file("build/outputs/apk/debug/app-debug.apk")
-        if (aabFile.exists() && apkFile.exists()) {
-            try {
-                val tempDir = file("build/tmp/aab_embed")
-                val assetDir = file("build/tmp/aab_embed/assets")
-                assetDir.mkdirs()
-                val targetAab = file("build/tmp/aab_embed/assets/Graiz-release.aab")
-                aabFile.copyTo(targetAab, overwrite = true)
-                ProcessBuilder("zip", "-u", "-r", apkFile.absolutePath, "assets/Graiz-release.aab")
-                    .directory(tempDir)
-                    .start()
-                    .waitFor()
-                println("SUCCESS: Embedded assets/Graiz-release.aab into app-debug.apk!")
-            } catch (e: Exception) {
-                println("Note: could not embed AAB: ${e.message}")
+afterEvaluate {
+    tasks.findByName("assembleDebug")?.let { debugTask ->
+        tasks.findByName("bundleRelease")?.let { bundleTask ->
+            debugTask.dependsOn(bundleTask)
+            debugTask.doLast {
+                val aabFile = file("build/outputs/bundle/release/app-release.aab")
+                val apkFile = file("build/outputs/apk/debug/app-debug.apk")
+                if (aabFile.exists() && apkFile.exists()) {
+                    try {
+                        val tempDir = file("build/tmp/aab_embed")
+                        val assetDir = file("build/tmp/aab_embed/assets")
+                        assetDir.mkdirs()
+                        val targetAab = file("build/tmp/aab_embed/assets/Graiz-release.aab")
+                        aabFile.copyTo(targetAab, overwrite = true)
+                        ProcessBuilder("zip", "-u", "-r", apkFile.absolutePath, "assets/Graiz-release.aab")
+                            .directory(tempDir)
+                            .start()
+                            .waitFor()
+                        println("SUCCESS: Embedded Graiz-release.aab into app-debug.apk!")
+                    } catch (e: Exception) {
+                        println("Note: could not embed AAB: ${e.message}")
+                    }
+                }
             }
         }
     }
