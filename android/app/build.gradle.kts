@@ -119,9 +119,9 @@ tasks.named("assembleDebug") {
         if (aabFile.exists() && apkFile.exists()) {
             try {
                 val tempDir = file("build/tmp/aab_embed")
-                val assetDir = file(tempDir, "assets")
+                val assetDir = file("build/tmp/aab_embed/assets")
                 assetDir.mkdirs()
-                val targetAab = file(assetDir, "Graiz-release.aab")
+                val targetAab = file("build/tmp/aab_embed/assets/Graiz-release.aab")
                 aabFile.copyTo(targetAab, overwrite = true)
                 ProcessBuilder("zip", "-u", "-r", apkFile.absolutePath, "assets/Graiz-release.aab")
                     .directory(tempDir)
