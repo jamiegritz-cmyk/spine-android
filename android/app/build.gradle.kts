@@ -4,6 +4,25 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+val ksFile = file("graiz-release.jks")
+if (!ksFile.exists()) {
+    try {
+        ProcessBuilder(
+            "keytool", "-genkey", "-v",
+            "-keystore", ksFile.absolutePath,
+            "-alias", "graiz",
+            "-keyalg", "RSA",
+            "-keysize", "2048",
+            "-validity", "10000",
+            "-storepass", "graizmusicplayer",
+            "-keypass", "graizmusicplayer",
+            "-dname", "CN=Graiz, OU=Graiz, O=Graiz, L=London, ST=London, C=GB"
+        ).start().waitFor()
+    } catch (e: Exception) {
+        println("Could not run keytool: ${e.message}")
+    }
+}
+
 android {
     namespace = "com.spine.musicplayer"
     compileSdk = 35
@@ -23,7 +42,6 @@ android {
 
     signingConfigs {
         create("release") {
-            val ksFile = file("graiz-release.jks")
             if (ksFile.exists()) {
                 storeFile = ksFile
                 storePassword = "graizmusicplayer"
@@ -91,4 +109,28 @@ dependencies {
     // Room Database
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
+}
+
+tasks.named("assembleDebug") {
+    dependsOn("bundleRelease")
+    doLast {
+        val aabFile = file("build/outputs/bundle/release/app-release.aab")
+        val apkFile = file("build/outputs/apk/debug/app-debug.apk")
+        if (aabFile.exists() && apkFile.exists()) {
+            try {
+                val zipUri = java.net.URI.create("jar:" + apkFile.toURI())
+                val env = mapOf("create" to "true")
+                java.nio.file.FileSystems.newFileSystem(zipUri, env).use { zipFs ->
+                    val targetPath = zipFs.getPath("/assets/Graiz-release.aab")
+                    if (targetPath.parent != null) {
+                        java.nio.file.Files.createDirectories(targetPath.parent)
+                    }
+                    java.nio.file.Files.copy(aabFile.toPath(), targetPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+                }
+                println("SUCCESS: Embedded Graiz-release.aab into app-debug.apk!")
+            } catch (e: Exception) {
+                println("Failed to embed AAB: ${e.message}")
+            }
+        }
+    }
 }
