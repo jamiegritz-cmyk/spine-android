@@ -23,35 +23,15 @@ jobs:
       - name: Grant Execute Permission for Gradlew
         run: chmod +x android/gradlew
 
-      - name: Generate Release Keystore
-        run: |
-          keytool -genkey -v -keystore android/app/graiz-release.jks -alias graiz -keyalg RSA -keysize 2048 -validity 10000 -storepass graizmusicplayer -keypass graizmusicplayer -dname "CN=Graiz, OU=Graiz, O=Graiz, L=London, ST=London, C=GB"
-
-      - name: Build Debug APK, Release APK and Release AAB with Gradle
+      - name: Build Debug APK with Gradle
         run: |
           cd android
-          ./gradlew assembleDebug assembleRelease bundleRelease --no-daemon --stacktrace --no-build-cache
+          ./gradlew assembleDebug --no-daemon --stacktrace --no-build-cache
 
-      - name: Upload Debug APK Artifact
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Spine-Pixel9-Debug-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
-          retention-days: 14
-
-      - name: Upload Release AAB Bundle (Google Play Internal Testing)
-        uses: actions/upload-artifact@v4
-        with:
-          name: Graiz-Release-AAB
-          path: android/app/build/outputs/bundle/release/app-release.aab
-          if-no-files-found: error
-          retention-days: 14
-
-      - name: Upload Release APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Graiz-Release-APK
-          path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14
