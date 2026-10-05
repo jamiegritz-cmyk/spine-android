@@ -21,9 +21,24 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            val ksFile = file("graiz-release.jks")
+            if (ksFile.exists()) {
+                storeFile = ksFile
+                storePassword = "graizmusicplayer"
+                keyAlias = "graiz"
+                keyPassword = "graizmusicplayer"
+            } else {
+                initWith(getByName("debug"))
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
